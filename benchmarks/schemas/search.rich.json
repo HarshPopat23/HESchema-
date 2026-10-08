@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "maxResults": {
+      "maximum": 10,
+      "minimum": 1,
+      "type": "integer",
+      "description": "The user's requested maxResults; preserve supplied values and ask when missing."
+    },
+    "query": {
+      "minLength": 1,
+      "type": "string",
+      "description": "The user's requested query; preserve supplied values and ask when missing."
+    },
+    "topic": {
+      "enum": [
+        "general",
+        "news",
+        "finance"
+      ],
+      "type": "string",
+      "description": "The user's requested topic; preserve supplied values and ask when missing."
+    }
+  },
+  "required": [
+    "query",
+    "maxResults",
+    "topic"
+  ],
+  "type": "object"
+}

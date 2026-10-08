@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "departureDate": {
+      "format": "date",
+      "type": "string",
+      "description": "The user's requested departureDate; preserve supplied values and ask when missing."
+    },
+    "destination": {
+      "minLength": 1,
+      "type": "string",
+      "description": "The user's requested destination; preserve supplied values and ask when missing."
+    },
+    "origin": {
+      "minLength": 1,
+      "type": "string",
+      "description": "The user's requested origin; preserve supplied values and ask when missing."
+    },
+    "travellers": {
+      "maximum": 9,
+      "minimum": 1,
+      "type": "integer",
+      "description": "The user's requested travellers; preserve supplied values and ask when missing."
+    }
+  },
+  "required": [
+    "origin",
+    "destination",
+    "departureDate",
+    "travellers"
+  ],
+  "type": "object"
+}

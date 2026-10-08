@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "date": {
+      "format": "date",
+      "type": "string"
+    },
+    "durationMinutes": {
+      "maximum": 240,
+      "minimum": 5,
+      "type": "integer"
+    },
+    "startTime": {
+      "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
+      "type": "string"
+    },
+    "title": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "venue": {
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "title",
+    "date",
+    "startTime",
+    "durationMinutes",
+    "venue"
+  ],
+  "type": "object",
+  "allOf": [
+    {
+      "not": {}
+    }
+  ]
+}

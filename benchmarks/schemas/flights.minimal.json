@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "origin",
+    "destination",
+    "departureDate",
+    "travellers"
+  ],
+  "properties": {
+    "origin": {
+      "type": "string"
+    },
+    "destination": {
+      "type": "string"
+    },
+    "departureDate": {
+      "type": "string"
+    },
+    "travellers": {
+      "type": "integer"
+    }
+  }
+}

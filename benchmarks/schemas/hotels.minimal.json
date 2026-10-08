@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "city",
+    "checkIn",
+    "checkOut",
+    "guests",
+    "maxNightlyPrice"
+  ],
+  "properties": {
+    "city": {
+      "type": "string"
+    },
+    "checkIn": {
+      "type": "string"
+    },
+    "checkOut": {
+      "type": "string"
+    },
+    "guests": {
+      "type": "integer"
+    },
+    "maxNightlyPrice": {
+      "type": "integer"
+    }
+  }
+}

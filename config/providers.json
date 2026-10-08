@@ -1,0 +1,11 @@
+{
+  "mock": {"kind": "mock", "model": "offline-stub", "access": "offline harness test; not LLM evidence"},
+  "groq": {"kind": "chat", "base_url": "https://api.groq.com/openai/v1", "key_env": "GROQ_API_KEY", "model": "openai/gpt-oss-20b", "access": "free tier subject to account quotas", "seed_supported": false},
+  "mistral": {"kind": "chat", "base_url": "https://api.mistral.ai/v1", "key_env": "MISTRAL_API_KEY", "model": "mistral-small-latest", "access": "free experiment tier subject to account quotas", "seed_supported": false},
+  "gemini": {"kind": "chat", "base_url": "https://generativelanguage.googleapis.com/v1beta/openai", "key_env": "GEMINI_API_KEY", "model": "gemini-2.5-flash", "access": "eligible models have limited free quotas; verify account", "seed_supported": false},
+  "ollama": {"kind": "ollama", "base_url": "http://localhost:11434", "model": "qwen3:4b-instruct", "access": "local; no hosted token fee; hardware costs apply", "seed_supported": true},
+  "openrouter": {"kind": "chat", "base_url": "https://openrouter.ai/api/v1", "key_env": "OPENROUTER_API_KEY", "model": "openrouter/free", "access": "free router; pin one model ID for scientific comparisons", "seed_supported": false},
+  "huggingface": {"kind": "chat", "base_url": "https://router.huggingface.co/v1", "key_env": "HF_TOKEN", "model": "Qwen/Qwen3-8B", "access": "limited credits, availability/provider dependent", "seed_supported": false},
+  "openai": {"kind": "responses", "base_url": "https://api.openai.com/v1", "key_env": "OPENAI_API_KEY", "model": "gpt-6-luna", "access": "paid API; ChatGPT subscription does not fund these calls", "seed_supported": false},
+  "anthropic": {"kind": "anthropic", "base_url": "https://api.anthropic.com/v1", "key_env": "ANTHROPIC_API_KEY", "model": "claude-haiku-4-5", "access": "paid API; configure a model available to your account", "seed_supported": false}
+}

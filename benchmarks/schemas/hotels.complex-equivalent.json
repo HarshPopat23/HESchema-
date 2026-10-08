@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "checkIn": {
+      "format": "date",
+      "type": "string"
+    },
+    "checkOut": {
+      "format": "date",
+      "type": "string"
+    },
+    "city": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "guests": {
+      "maximum": 8,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "maxNightlyPrice": {
+      "maximum": 20000,
+      "minimum": 1,
+      "type": "integer"
+    }
+  },
+  "required": [
+    "city",
+    "checkIn",
+    "checkOut",
+    "guests",
+    "maxNightlyPrice"
+  ],
+  "type": "object",
+  "allOf": [
+    {
+      "anyOf": [
+        {
+          "required": [
+            "city"
+          ]
+        },
+        {
+          "not": {
+            "required": [
+              "city"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "anyOf": [
+        {
+          "required": [
+            "checkIn"
+          ]
+        },
+        {
+          "not": {
+            "required": [
+              "checkIn"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "anyOf": [
+        {
+          "required": [
+            "checkOut"
+          ]
+        },
+        {
+          "not": {
+            "required": [
+              "checkOut"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "anyOf": [
+        {
+          "required": [
+            "guests"
+          ]
+        },
+        {
+          "not": {
+            "required": [
+              "guests"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "anyOf": [
+        {
+          "required": [
+            "maxNightlyPrice"
+          ]
+        },
+        {
+          "not": {
+            "required": [
+              "maxNightlyPrice"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

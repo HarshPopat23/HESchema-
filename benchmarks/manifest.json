@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "cases": 480,
+  "sha256": "2f66d80bbc04542096dd24d0c7b8366b26526253d75f8b377183808de503a755",
+  "domains": {
+    "flights": 80,
+    "hotels": 80,
+    "calendar": 80,
+    "payments": 80,
+    "inventory": 80,
+    "search": 80
+  },
+  "categories": {
+    "complete": 120,
+    "paraphrase": 60,
+    "missing": 60,
+    "ambiguous": 60,
+    "conflict": 60,
+    "invalid": 60,
+    "injection": 60
+  },
+  "provenance": "Synthetic, template-generated cases; no external benchmark results or human review claimed"
+}

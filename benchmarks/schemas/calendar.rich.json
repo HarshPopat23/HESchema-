@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "date": {
+      "format": "date",
+      "type": "string",
+      "description": "The user's requested date; preserve supplied values and ask when missing."
+    },
+    "durationMinutes": {
+      "maximum": 240,
+      "minimum": 5,
+      "type": "integer",
+      "description": "The user's requested durationMinutes; preserve supplied values and ask when missing."
+    },
+    "startTime": {
+      "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
+      "type": "string",
+      "description": "The user's requested startTime; preserve supplied values and ask when missing."
+    },
+    "title": {
+      "minLength": 1,
+      "type": "string",
+      "description": "The user's requested title; preserve supplied values and ask when missing."
+    },
+    "venue": {
+      "minLength": 1,
+      "type": "string",
+      "description": "The user's requested venue; preserve supplied values and ask when missing."
+    }
+  },
+  "required": [
+    "title",
+    "date",
+    "startTime",
+    "durationMinutes",
+    "venue"
+  ],
+  "type": "object"
+}

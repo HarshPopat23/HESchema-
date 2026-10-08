@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "amountMinor": {
+      "maximum": 100000,
+      "minimum": 1,
+      "type": "integer",
+      "description": "The user's requested amountMinor; preserve supplied values and ask when missing."
+    },
+    "currency": {
+      "enum": [
+        "INR",
+        "USD",
+        "EUR"
+      ],
+      "type": "string",
+      "description": "The user's requested currency; preserve supplied values and ask when missing."
+    },
+    "recipient": {
+      "minLength": 1,
+      "type": "string",
+      "description": "The user's requested recipient; preserve supplied values and ask when missing."
+    },
+    "reference": {
+      "minLength": 1,
+      "type": "string",
+      "description": "The user's requested reference; preserve supplied values and ask when missing."
+    }
+  },
+  "required": [
+    "recipient",
+    "amountMinor",
+    "currency",
+    "reference"
+  ],
+  "type": "object"
+}

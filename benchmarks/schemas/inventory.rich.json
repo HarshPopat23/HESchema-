@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "orderId": {
+      "minLength": 1,
+      "type": "string",
+      "description": "The user's requested orderId; preserve supplied values and ask when missing."
+    },
+    "quantity": {
+      "maximum": 50,
+      "minimum": 1,
+      "type": "integer",
+      "description": "The user's requested quantity; preserve supplied values and ask when missing."
+    },
+    "sku": {
+      "minLength": 1,
+      "type": "string",
+      "description": "The user's requested sku; preserve supplied values and ask when missing."
+    },
+    "warehouse": {
+      "enum": [
+        "DEL",
+        "MUM",
+        "BLR"
+      ],
+      "type": "string",
+      "description": "The user's requested warehouse; preserve supplied values and ask when missing."
+    }
+  },
+  "required": [
+    "sku",
+    "warehouse",
+    "quantity",
+    "orderId"
+  ],
+  "type": "object"
+}

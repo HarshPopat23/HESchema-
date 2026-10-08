@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "title",
+    "date",
+    "startTime",
+    "durationMinutes",
+    "venue"
+  ],
+  "properties": {
+    "title": {
+      "type": "string"
+    },
+    "date": {
+      "type": "string"
+    },
+    "startTime": {
+      "type": "string"
+    },
+    "durationMinutes": {
+      "type": "integer"
+    },
+    "venue": {
+      "type": "string"
+    }
+  }
+}

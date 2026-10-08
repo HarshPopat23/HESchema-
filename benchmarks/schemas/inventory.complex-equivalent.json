@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "orderId": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "quantity": {
+      "maximum": 50,
+      "minimum": 1,
+      "type": "integer"
+    },
+    "sku": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "warehouse": {
+      "enum": [
+        "DEL",
+        "MUM",
+        "BLR"
+      ],
+      "type": "string"
+    }
+  },
+  "required": [
+    "sku",
+    "warehouse",
+    "quantity",
+    "orderId"
+  ],
+  "type": "object",
+  "allOf": [
+    {
+      "anyOf": [
+        {
+          "required": [
+            "sku"
+          ]
+        },
+        {
+          "not": {
+            "required": [
+              "sku"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "anyOf": [
+        {
+          "required": [
+            "warehouse"
+          ]
+        },
+        {
+          "not": {
+            "required": [
+              "warehouse"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "anyOf": [
+        {
+          "required": [
+            "quantity"
+          ]
+        },
+        {
+          "not": {
+            "required": [
+              "quantity"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "anyOf": [
+        {
+          "required": [
+            "orderId"
+          ]
+        },
+        {
+          "not": {
+            "required": [
+              "orderId"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

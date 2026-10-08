@@ -1,0 +1,6 @@
+{
+  "name": "heschema-blaze-worker",
+  "private": true,
+  "type": "module",
+  "dependencies": {"@sourcemeta/blaze": "*", "@sourcemeta/jsonschema": "*"}
+}

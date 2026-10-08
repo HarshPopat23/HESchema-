@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "checkIn": {
+      "format": "date",
+      "type": "string",
+      "description": "The user's requested checkIn; preserve supplied values and ask when missing."
+    },
+    "checkOut": {
+      "format": "date",
+      "type": "string",
+      "description": "The user's requested checkOut; preserve supplied values and ask when missing."
+    },
+    "city": {
+      "minLength": 1,
+      "type": "string",
+      "description": "The user's requested city; preserve supplied values and ask when missing."
+    },
+    "guests": {
+      "maximum": 8,
+      "minimum": 1,
+      "type": "integer",
+      "description": "The user's requested guests; preserve supplied values and ask when missing."
+    },
+    "maxNightlyPrice": {
+      "maximum": 20000,
+      "minimum": 1,
+      "type": "integer",
+      "description": "The user's requested maxNightlyPrice; preserve supplied values and ask when missing."
+    }
+  },
+  "required": [
+    "city",
+    "checkIn",
+    "checkOut",
+    "guests",
+    "maxNightlyPrice"
+  ],
+  "type": "object"
+}
