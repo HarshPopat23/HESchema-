@@ -42,6 +42,36 @@ Windows can use `.venv\Scripts\activate`; the default Python validator works the
 
 Open http://127.0.0.1:8000/docs for interactive API documentation, or `/openapi.json` for the machine-readable OpenAPI document. **The mock run is only a pipeline test:** it always returns a fixed refusal, does not consult gold answers, and cannot establish real LLM improvement. Its reports mark `empiricalLLMEvidence: false` and `comparisonValid: false`.
 
+## Web UI
+
+A simple, dependency-free local web UI is served directly through FastAPI.
+
+### Launch command
+```bash
+python -m heschema.cli serve --port 8000
+```
+Open **http://127.0.0.1:8000/** in your browser. API docs remain at **http://127.0.0.1:8000/docs**.
+
+### Workflows supported
+1. **Prompt-test workflow**:
+   - Enter a prompt, select a provider and model, and choose generation mode (*With argument schema* or *Without argument schema*).
+   - Inspect raw model output, parsed tool arguments, envelope conformance, Draft 2020-12 schema validation, and declared domain policies.
+   - Without confirmed state, semantic correctness is displayed as **Not checked**; a complete correctness `PASS` is never reported without ground truth.
+2. **State-confirmation workflow**:
+   - Click **Extract Proposed State** to propose state from the prompt.
+   - An LLM extraction is only a proposal: review values in the editor and click **Confirm Actual State**.
+   - Editing values removes confirmation; stale versions are visibly rejected (HTTP 409).
+   - Confirmed state enforces strict parameter binding: if confirmed destination is `Goa` and generated destination is `Pune`, validation fails with `STATE_MISMATCH`.
+3. **Single-prompt comparison**:
+   - Click **Compare Three Arms** on a confirmed state to evaluate `no_schema`, `minimal_schema`, and `input_schema` on that prompt.
+   - **Limits of single-prompt percentages**: Labeled *Single-prompt trial*. It reflects only that specific prompt and cannot claim a domain-wide schema effect.
+4. **Schema-benchmark workflow**:
+   - Select Quick Test (14 cases across all 7 categories = 42 calls) or Full Domain (80 cases = 720 calls), or configure custom cases, repeats, repairs, interval, and token prices.
+   - Run in the background with live progress tracking (completed runs, requests attempted, provider errors) and graceful cancellation.
+   - Inspect 3-arm comparison tables, paired uplift, and 95% clustered bootstrap intervals.
+   - Scientific conclusions apply: an interval crossing zero is strictly reported as **Inconclusive**.
+   - **Report storage**: Results are stored in `results/jobs/<jobId>/` (`report.json`, `report.md`, and `runs.jsonl`), with direct download buttons in the UI.
+
 For a real run, add the relevant backend API key to `.env`. Do not commit keys. Start with a small request budget:
 
 ```bash

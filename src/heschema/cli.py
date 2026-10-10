@@ -119,3 +119,7 @@ def main():
 
         from .api import create_app
         uvicorn.run(create_app(), host=args.host, port=args.port)
+
+
+if __name__ == "__main__":
+    main()

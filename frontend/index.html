@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HESchema — Tool Argument Validator & Benchmark</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="header">
+    <div class="header-content">
+      <div class="logo-area">
+        <h1>HESchema</h1>
+        <span class="tagline">Tool Argument Validator &amp; Schema Experiment Harness</span>
+      </div>
+      <div class="header-actions">
+        <a href="/docs" target="_blank" class="link-btn">API Docs (/docs)</a>
+        <button id="auth-toggle-btn" class="btn btn-secondary btn-sm" type="button">API Token</button>
+      </div>
+    </div>
+    <div id="auth-bar" class="auth-bar hidden">
+      <label for="api-token-input">Backend Access Token (optional, kept in memory):</label>
+      <input type="password" id="api-token-input" placeholder="Enter HESCHEMA_API_TOKEN if required">
+      <button id="save-token-btn" class="btn btn-sm btn-primary" type="button">Set Token</button>
+      <span id="token-status" class="token-status">No token set</span>
+    </div>
+  </header>
+
+  <main class="main-container">
+    <!-- Common Configuration Bar -->
+    <section class="common-controls card">
+      <div class="control-row">
+        <div class="form-group">
+          <label for="domain-select">Task Domain</label>
+          <select id="domain-select">
+            <option value="flights">flights (search_flights)</option>
+            <option value="hotels">hotels (search_hotels)</option>
+            <option value="calendar">calendar (prepare_event)</option>
+            <option value="payments">payments (prepare_transfer)</option>
+            <option value="inventory">inventory (reserve_stock_draft)</option>
+            <option value="search">search (search_web)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="provider-select">Provider</label>
+          <select id="provider-select">
+            <option value="loading">Loading providers...</option>
+          </select>
+        </div>
+
+        <div class="form-group flex-grow">
+          <label for="model-input">Model ID</label>
+          <input type="text" id="model-input" placeholder="e.g. openai/gpt-oss-20b or llama-3.3-70b-versatile">
+        </div>
+      </div>
+
+      <!-- Schema Management Section -->
+      <div class="schema-control-section">
+        <div class="schema-header">
+          <div class="schema-title-wrap">
+            <label for="schema-editor">Argument JSON Schema (Draft 2020-12)</label>
+            <span id="schema-status" class="status-pill status-neutral">Reference schema active</span>
+          </div>
+          <div class="schema-btn-group">
+            <button id="load-domain-schema-btn" class="btn btn-secondary btn-sm" type="button">Load Domain Reference</button>
+            <label class="btn btn-secondary btn-sm file-upload-label">
+              Upload .json
+              <input type="file" id="upload-schema-file" accept=".json" class="hidden-file-input">
+            </label>
+            <button id="clear-schema-btn" class="btn btn-secondary btn-sm" type="button">Clear</button>
+          </div>
+        </div>
+        <textarea id="schema-editor" rows="5" spellcheck="false" placeholder='Paste a custom JSON Schema object, e.g. {"type": "object", "properties": {...}}'></textarea>
+        <div id="schema-error" class="error-msg hidden"></div>
+      </div>
+    </section>
+
+    <!-- Navigation Tabs -->
+    <nav class="tabs-nav">
+      <button id="tab-btn-prompt" class="tab-btn active" type="button">Prompt Test</button>
+      <button id="tab-btn-benchmark" class="tab-btn" type="button">Schema Benchmark</button>
+    </nav>
+
+    <!-- ==================== TAB 1: PROMPT TEST ==================== -->
+    <div id="tab-prompt" class="tab-pane active">
+      <div class="card">
+        <div class="pane-header">
+          <h2>Test Single Prompt</h2>
+          <button id="load-example-btn" class="btn btn-secondary btn-sm" type="button">Load Example for Domain</button>
+        </div>
+
+        <div class="form-group">
+          <label for="prompt-input">Prompt</label>
+          <textarea id="prompt-input" rows="3" placeholder="Enter task prompt in natural language..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Generation Context Mode</label>
+          <div class="radio-group">
+            <label class="radio-label">
+              <input type="radio" name="schema-mode" value="supplied_schema" checked>
+              With argument schema (supplied / domain reference)
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="schema-mode" value="no_schema">
+              Without argument schema (prompt-only unconstrained)
+            </label>
+          </div>
+          <p class="help-text">"Without schema" omits argument schema from model prompt; reference contract is still evaluated afterward.</p>
+        </div>
+
+        <!-- Actual State Section -->
+        <div class="actual-state-section">
+          <div class="state-header">
+            <div>
+              <label for="state-editor">Actual Confirmed State (JSON)</label>
+              <span id="state-status-badge" class="status-pill status-neutral">No state loaded</span>
+            </div>
+            <div class="state-actions">
+              <button id="extract-state-btn" class="btn btn-secondary btn-sm" type="button">Extract Proposed State</button>
+              <button id="confirm-state-btn" class="btn btn-secondary btn-sm" type="button">Confirm Actual State</button>
+            </div>
+          </div>
+          <textarea id="state-editor" rows="4" spellcheck="false" placeholder='Optional ground truth snapshot, e.g.:&#10;{"origin": "Jaipur", "destination": "Goa", "departureDate": "2027-01-20", "travellers": 2}'></textarea>
+          <p id="state-notice" class="help-text">Confirmed state enables semantic agreement checks. Editing values removes confirmation.</p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons-row">
+          <button id="run-prompt-btn" class="btn btn-primary" type="button">Run Prompt</button>
+          <button id="compare-arms-btn" class="btn btn-secondary" type="button">Compare Three Arms</button>
+          <span id="prompt-loading-indicator" class="loading-indicator hidden">Running generation &amp; validation...</span>
+        </div>
+      </div>
+
+      <!-- Single Prompt Results -->
+      <div id="prompt-results-container" class="card hidden">
+        <div class="pane-header">
+          <h3>Prompt Test Result</h3>
+          <span id="result-status-badge" class="result-badge badge-pass">PASS</span>
+        </div>
+
+        <div class="summary-grid">
+          <div class="stat-box">
+            <span class="stat-label">Action</span>
+            <span id="res-action" class="stat-val">—</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Tool</span>
+            <span id="res-tool" class="stat-val">—</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Latency</span>
+            <span id="res-latency" class="stat-val">—</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Model</span>
+            <span id="res-model" class="stat-val">—</span>
+          </div>
+        </div>
+
+        <!-- Validation Details Table -->
+        <div class="results-table-wrap">
+          <h4>Validation Gate Report</h4>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Check</th>
+                <th>Status</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody id="prompt-validation-tbody">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <div id="validation-errors-box" class="error-box hidden">
+          <h4>Validation Errors / Policy Violations</h4>
+          <ul id="validation-errors-list"></ul>
+        </div>
+
+        <!-- Output Details -->
+        <div class="output-details-grid">
+          <div>
+            <h4>Parsed Arguments</h4>
+            <pre id="res-arguments" class="code-block"></pre>
+          </div>
+          <div>
+            <h4>Reason &amp; Envelope Details</h4>
+            <pre id="res-reason" class="code-block"></pre>
+          </div>
+        </div>
+
+        <div class="raw-output-wrap">
+          <h4>Raw Model Output</h4>
+          <pre id="res-raw-output" class="code-block raw-block"></pre>
+        </div>
+      </div>
+
+      <!-- Single-Prompt 3-Arms Comparison -->
+      <div id="prompt-compare-container" class="card hidden">
+        <div class="pane-header">
+          <h3>Single-Prompt Trial (Three Arms)</h3>
+          <span class="status-pill status-neutral">Single-prompt trial</span>
+        </div>
+        <div class="caution-banner">
+          <strong>Caution:</strong> Single-prompt trial results show observed outcomes for this specific prompt and must not be interpreted as a reliable improvement percentage for the whole task domain.
+        </div>
+        <div class="table-responsive">
+          <table class="data-table" id="single-compare-table">
+            <thead>
+              <tr>
+                <th>Arm</th>
+                <th>Context</th>
+                <th>Success Rate</th>
+                <th>Mean Latency</th>
+                <th>Tool Arguments</th>
+                <th>Result</th>
+              </tr>
+            </thead>
+            <tbody id="single-compare-tbody">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TAB 2: SCHEMA BENCHMARK ==================== -->
+    <div id="tab-benchmark" class="tab-pane">
+      <div class="card">
+        <div class="pane-header">
+          <h2>Run Schema-Effect Benchmark</h2>
+          <span class="dataset-pill">480 Synthetic Cases Dataset</span>
+        </div>
+
+        <p class="description-text">
+          Run the exact same tasks through <strong>no_schema</strong>, <strong>minimal_schema</strong>, and <strong>input_schema</strong> arms to measure first-pass success, paired uplift, retries, cost, and latency.
+        </p>
+
+        <!-- Presets -->
+        <div class="benchmark-presets">
+          <label>Experiment Preset:</label>
+          <div class="preset-buttons">
+            <button id="preset-quick-btn" class="btn btn-sm btn-preset active" type="button" data-preset="quick">
+              Quick Test (14 cases, 1 rep, 42 calls)
+            </button>
+            <button id="preset-full-btn" class="btn btn-sm btn-preset" type="button" data-preset="full">
+              Full Domain (80 cases, 3 reps, 720 calls)
+            </button>
+            <button id="preset-custom-btn" class="btn btn-sm btn-preset" type="button" data-preset="custom">
+              Custom Settings
+            </button>
+          </div>
+        </div>
+
+        <!-- Custom Parameters -->
+        <div id="custom-params-grid" class="params-grid hidden">
+          <div class="form-group">
+            <label for="bench-cases">Cases (1–80)</label>
+            <input type="number" id="bench-cases" min="1" max="80" value="14">
+          </div>
+          <div class="form-group">
+            <label for="bench-repeats">Repetitions (1–5)</label>
+            <input type="number" id="bench-repeats" min="1" max="5" value="1">
+          </div>
+          <div class="form-group">
+            <label for="bench-repairs">Repair Limit (0–5)</label>
+            <input type="number" id="bench-repairs" min="0" max="5" value="0">
+          </div>
+          <div class="form-group">
+            <label for="bench-interval">Request Interval (s)</label>
+            <input type="number" id="bench-interval" min="0" step="0.5" value="2.5">
+          </div>
+          <div class="form-group">
+            <label for="bench-seed">Seed</label>
+            <input type="number" id="bench-seed" value="42">
+          </div>
+          <div class="form-group">
+            <label for="bench-in-price">Input Price ($/M tokens)</label>
+            <input type="number" id="bench-in-price" min="0" step="0.01" placeholder="Optional">
+          </div>
+          <div class="form-group">
+            <label for="bench-out-price">Output Price ($/M tokens)</label>
+            <input type="number" id="bench-out-price" min="0" step="0.01" placeholder="Optional">
+          </div>
+        </div>
+
+        <!-- Call Estimate & Notice -->
+        <div class="estimate-callout">
+          <div class="estimate-line">
+            <span>Estimated Initial Generation Calls:</span>
+            <strong id="estimated-calls-count">42</strong>
+            <span class="subtext">(cases × 3 arms × repeats)</span>
+          </div>
+          <div class="estimate-subline">
+            Provider transport retries and repairs are additional and tracked separately.
+          </div>
+        </div>
+
+        <!-- Action Row -->
+        <div class="action-buttons-row">
+          <button id="start-benchmark-btn" class="btn btn-primary" type="button">Run Benchmark</button>
+          <button id="cancel-benchmark-btn" class="btn btn-danger hidden" type="button">Cancel Job</button>
+          <span id="bench-status-indicator" class="loading-indicator hidden">Job running...</span>
+        </div>
+      </div>
+
+      <!-- Live Progress Card -->
+      <div id="job-progress-card" class="card hidden">
+        <div class="pane-header">
+          <h3>Experiment Progress</h3>
+          <span id="job-status-pill" class="status-pill status-running">Running</span>
+        </div>
+        <div class="progress-bar-container">
+          <div id="job-progress-bar" class="progress-bar-fill" style="width: 0%;"></div>
+        </div>
+        <div class="progress-stats-grid">
+          <div><strong>Completed Runs:</strong> <span id="prog-completed">0 / 0</span></div>
+          <div><strong>Generation Calls:</strong> <span id="prog-requests">0</span></div>
+          <div><strong>Provider Errors:</strong> <span id="prog-errors">0</span></div>
+          <div><strong>Current Task:</strong> <span id="prog-current">—</span></div>
+        </div>
+      </div>
+
+      <!-- Benchmark Report Container -->
+      <div id="benchmark-report-container" class="card hidden">
+        <div class="pane-header">
+          <h3>Benchmark Summary Report</h3>
+          <div class="report-actions">
+            <button id="download-report-json-btn" class="btn btn-secondary btn-sm" type="button">Download report.json</button>
+            <button id="download-report-md-btn" class="btn btn-secondary btn-sm" type="button">Download report.md</button>
+            <button id="download-runs-jsonl-btn" class="btn btn-secondary btn-sm" type="button">Download runs.jsonl</button>
+          </div>
+        </div>
+
+        <!-- Scientific Warnings / Flags -->
+        <div id="benchmark-warnings-box" class="warning-box"></div>
+
+        <!-- 3 Arms Results Table -->
+        <div class="results-table-wrap">
+          <h4>Arms Comparison Summary</h4>
+          <table class="data-table" id="benchmark-arms-table">
+            <thead>
+              <tr>
+                <th>Arm</th>
+                <th>First-Pass Success</th>
+                <th>Final Success</th>
+                <th>Call Schema Validity</th>
+                <th>Semantic Accuracy</th>
+                <th>Retry Rate</th>
+                <th>Errors</th>
+                <th>p50 Latency</th>
+                <th>p95 Latency</th>
+              </tr>
+            </thead>
+            <tbody id="benchmark-arms-tbody">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Paired Effect Measurements -->
+        <div class="results-table-wrap">
+          <h4>Paired Schema Effect &amp; Uplift</h4>
+          <table class="data-table" id="benchmark-effects-table">
+            <thead>
+              <tr>
+                <th>Comparison</th>
+                <th>Absolute Uplift</th>
+                <th>Relative Improvement</th>
+                <th>Error Reduction</th>
+                <th>95% Clustered Bootstrap CI</th>
+                <th>Interpretation</th>
+              </tr>
+            </thead>
+            <tbody id="benchmark-effects-tbody">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+          <p class="scientific-footnote">
+            These results apply to this model and this evaluated task set. A positive point estimate with a bootstrap interval crossing zero is inconclusive.
+          </p>
+        </div>
+
+        <!-- Individual Runs Browser -->
+        <div class="runs-browser-section">
+          <div class="pane-header">
+            <h4>Individual Run Inspection</h4>
+            <div class="runs-filter-group">
+              <label for="runs-arm-filter">Filter Arm:</label>
+              <select id="runs-arm-filter">
+                <option value="all">All Arms</option>
+                <option value="no_schema">no_schema</option>
+                <option value="minimal_schema">minimal_schema</option>
+                <option value="input_schema">input_schema</option>
+              </select>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table" id="runs-table">
+              <thead>
+                <tr>
+                  <th>Case ID</th>
+                  <th>Category</th>
+                  <th>Arm</th>
+                  <th>Rep</th>
+                  <th>Result</th>
+                  <th>Schema Valid</th>
+                  <th>Semantic Valid</th>
+                  <th>Latency</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="runs-tbody">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
+          </div>
+          <div id="runs-pagination" class="pagination-bar">
+            <!-- Pagination Controls -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Run Detail Modal / Drawer -->
+  <div id="run-detail-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modal-run-title">Run Details</h3>
+        <button id="modal-close-btn" class="btn btn-sm btn-secondary" type="button">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="detail-section">
+          <h4>Model-Visible Prompt &amp; Context</h4>
+          <pre id="modal-prompt-view" class="code-block"></pre>
+        </div>
+        <div class="detail-section">
+          <h4>Raw Model Output</h4>
+          <pre id="modal-raw-output" class="code-block raw-block"></pre>
+        </div>
+        <div class="detail-section">
+          <h4>Parsed Tool Arguments</h4>
+          <pre id="modal-arguments" class="code-block"></pre>
+        </div>
+        <div class="detail-section">
+          <h4>Evaluation Errors</h4>
+          <div id="modal-errors-wrap"></div>
+        </div>
+        <div class="detail-section">
+          <h4>Execution &amp; Cost Provenance</h4>
+          <div id="modal-stats-wrap" class="stat-grid-modal"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <p>HESchema — Evaluates arguments and safety gates. Never executes real bookings, payments, or state mutations.</p>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

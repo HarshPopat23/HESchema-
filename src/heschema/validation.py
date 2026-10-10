@@ -75,7 +75,7 @@ def evaluate(raw, engine, reference_schema, candidate_schema, expected, state=No
             errors.extend(reference_errors)
             if candidate_errors:
                 errors.append({"code": "CANDIDATE_SCHEMA_INVALID", "details": candidate_errors})
-            bindings = state if state is not None else expected.get("arguments", {})
+            bindings = state if state is not None else (expected.get("arguments") or {})
             mismatch = CompiledState.compile(bindings).errors(args)
             # Exact benchmark oracle also rejects extra fields. Runtime reference
             # schema controls extras; expected arguments supply its semantic oracle.

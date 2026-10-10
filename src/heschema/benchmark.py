@@ -84,7 +84,8 @@ def mutation_probes(cases, schemas, engine):
 
 async def run(cases, provider, out, candidate=None, minimal=None, repeats=3, repairs=2,
               seed=42, max_tokens=1024, temperature=None, backend="jsonschema",
-              input_price=None, output_price=None, max_requests=None):
+              input_price=None, output_price=None, max_requests=None,
+              on_progress=None, cancel_event=None):
     if repeats < 1 or repairs < 0 or repairs > 5:
         raise ValueError("Use repeats >= 1 and 0 <= repairs <= 5")
     if not cases or max_tokens < 1 or (max_requests is not None and max_requests < 1):
@@ -133,10 +134,24 @@ async def run(cases, provider, out, candidate=None, minimal=None, repeats=3, rep
     schedule = [(case, rep, arm) for case in cases for rep in range(repeats) for arm in ARMS]
     random.Random(seed).shuffle(schedule)
     requests = consecutive_errors = 0
+    was_cancelled = False
     try:
         with log_path.open("a", encoding="utf-8") as log:
             for case, rep, arm in schedule:
+                if cancel_event is not None and cancel_event.is_set():
+                    was_cancelled = True
+                    break
                 if (case["id"], rep, arm) in done:
+                    if on_progress:
+                        on_progress({
+                            "completedRuns": len(latest),
+                            "totalScheduled": len(schedule),
+                            "requestsAttempted": requests,
+                            "providerErrors": sum(1 for r in latest.values() if r["status"] != "ok"),
+                            "currentCase": case["id"],
+                            "currentArm": arm,
+                            "currentRepeat": rep
+                        })
                     continue
                 if max_requests is not None and requests + repairs + 1 > max_requests:
                     break
@@ -194,10 +209,23 @@ async def run(cases, provider, out, candidate=None, minimal=None, repeats=3, rep
                 log.flush()
                 latest[(row["caseId"], row["repeat"], row["arm"])] = row
                 consecutive_errors = consecutive_errors + 1 if generation_error else 0
+                if on_progress:
+                    on_progress({
+                        "completedRuns": len(latest),
+                        "totalScheduled": len(schedule),
+                        "requestsAttempted": requests,
+                        "providerErrors": sum(1 for r in latest.values() if r["status"] != "ok"),
+                        "currentCase": case["id"],
+                        "currentArm": arm,
+                        "currentRepeat": rep
+                    })
                 if consecutive_errors >= 3:
                     break  # Avoid exhausting an account during an outage/quota failure.
         rows = list(latest.values())
         report = make_report(rows, config, cases, schemas, engine)
+        if was_cancelled:
+            report["cancelled"] = True
+            report["warnings"].append("Experiment cancelled early by user; reporting partial completed runs.")
         write_json(out / "report.json", report)
         (out / "report.md").write_text(markdown_report(report), encoding="utf-8")
         return report
