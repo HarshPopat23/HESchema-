@@ -71,6 +71,16 @@ Open **http://127.0.0.1:8000/** in your browser. API docs remain at **http://127
    - Inspect 3-arm comparison tables, paired uplift, and 95% clustered bootstrap intervals.
    - Scientific conclusions apply: an interval crossing zero is strictly reported as **Inconclusive**.
    - **Report storage**: Results are stored in `results/jobs/<jobId>/` (`report.json`, `report.md`, and `runs.jsonl`), with direct download buttons in the UI.
+5. **CLI-integration workflow (Sourcemeta JSON Schema CLI)**:
+   - **Tab:** *CLI Integration* ("Test a local OpenAI-compatible endpoint with Sourcemeta's JSON Schema CLI.").
+   - **Local OpenAI-Compatible Completion Endpoint:** `POST /v1/chat/completions` accepting standard OpenAI structured output payloads (`response_format.type = "json_schema"`).
+   - **Generation Modes:**
+     - `native_schema` (default): sends accepted JSON Schema directly to Ollama's `format` object for constrained decoding.
+     - `prompt_only` (comparison): grounds schema constraints in message prompt and omits native Ollama format enforcement (requires `strict: false`).
+   - **Real Sourcemeta CLI Execution:** Invokes `@sourcemeta/jsonschema` (`llm` command) via asynchronous child subprocess against the loopback `/v1/chat/completions` endpoint without blocking single-worker Uvicorn.
+   - **5 Presets Included:** Required string & `additionalProperties: false`, enum & integer bounds, nested objects & bounded array, oneOf conditional, and local `$defs`/`$ref`.
+   - **Independent Diagnostics:** Evaluates HTTP transport success, strict JSON parsing (`jsonio.loads`), schema conformance, and CLI process reports separately; semantic correctness is strictly reported as **Not checked** for arbitrary schemas without ground truth.
+   - **Reproducible Command Previews:** Shows copy-pasteable Bash and PowerShell commands with `$HESCHEMA_API_TOKEN` placeholders.
 
 For a real run, add the relevant backend API key to `.env`. Do not commit keys. Start with a small request budget:
 

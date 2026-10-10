@@ -80,6 +80,7 @@
     <nav class="tabs-nav">
       <button id="tab-btn-prompt" class="tab-btn active" type="button">Prompt Test</button>
       <button id="tab-btn-benchmark" class="tab-btn" type="button">Schema Benchmark</button>
+      <button id="tab-btn-cli" class="tab-btn" type="button">CLI Integration</button>
     </nav>
 
     <!-- ==================== TAB 1: PROMPT TEST ==================== -->
@@ -422,6 +423,226 @@
           </div>
           <div id="runs-pagination" class="pagination-bar">
             <!-- Pagination Controls -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== TAB 3: CLI INTEGRATION ==================== -->
+    <div id="tab-cli" class="tab-pane">
+      <div class="card">
+        <div class="pane-header">
+          <h2>Sourcemeta JSON Schema CLI Integration</h2>
+          <span id="cli-setup-badge" class="status-pill status-neutral">Setup Unknown</span>
+        </div>
+        <p class="tab-subtitle">Test a local OpenAI-compatible endpoint with Sourcemeta's JSON Schema CLI.</p>
+        
+        <!-- Setup & Status bar -->
+        <div class="setup-status-box">
+          <div class="setup-status-item">
+            <span class="setup-label">CLI Tool:</span>
+            <span id="setup-cli-val" class="setup-val">Checking...</span>
+          </div>
+          <div class="setup-status-item">
+            <span class="setup-label">Local Ollama:</span>
+            <span id="setup-ollama-val" class="setup-val">Checking...</span>
+          </div>
+          <div class="setup-status-item">
+            <span class="setup-label">Endpoint:</span>
+            <code id="setup-endpoint-val" class="setup-code">/v1/chat/completions</code>
+          </div>
+          <button id="cli-check-setup-btn" class="btn btn-secondary btn-sm" type="button">Check Setup</button>
+        </div>
+
+        <!-- Presets Bar -->
+        <div class="cli-presets-section">
+          <label class="section-sublabel">Select a Preset Experiment (C01 – C10):</label>
+          <div class="preset-buttons-row">
+            <button class="btn btn-secondary btn-sm cli-preset-btn" data-preset="C01" type="button">C01. Support Ticket</button>
+            <button class="btn btn-secondary btn-sm cli-preset-btn" data-preset="C02" type="button">C02. Invoice (Cents)</button>
+            <button class="btn btn-secondary btn-sm cli-preset-btn" data-preset="C03" type="button">C03. Nullable Age</button>
+            <button class="btn btn-secondary btn-sm cli-preset-btn" data-preset="C04" type="button">C04. Nested Order</button>
+            <button class="btn btn-secondary btn-sm cli-preset-btn" data-preset="C05" type="button">C05. oneOf Contact</button>
+            <button class="btn btn-secondary btn-sm cli-preset-btn" data-preset="C06" type="button">C06. if/then Delivery</button>
+            <button class="btn btn-secondary btn-sm cli-preset-btn" data-preset="C07" type="button">C07. $defs Item</button>
+            <button class="btn btn-secondary btn-sm cli-preset-btn" data-preset="C08" type="button">C08. Unique Tags</button>
+            <button class="btn btn-secondary btn-sm cli-preset-btn" data-preset="C09" type="button">C09. Date &amp; Room</button>
+            <button class="btn btn-secondary btn-sm cli-preset-btn" data-preset="C10" type="button">C10. Missing Clarification</button>
+          </div>
+        </div>
+
+        <!-- CLI Integration Configuration Controls -->
+        <div class="control-row cli-controls-row">
+          <div class="form-group flex-grow">
+            <label for="cli-model-input">Ollama / Local Model ID</label>
+            <input type="text" id="cli-model-input" placeholder="e.g. llama3.2:latest or mistral:latest" value="llama3.2:latest">
+          </div>
+
+          <div class="form-group">
+            <label for="cli-mode-select">Generation Mode</label>
+            <select id="cli-mode-select">
+              <option value="native_schema">Native Schema (format: schema object) [Default]</option>
+              <option value="prompt_only">Prompt-Only (schema-in-prompt comparison, strict: false)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="cli-max-tokens">Max Tokens</label>
+            <input type="number" id="cli-max-tokens" min="1" max="8192" value="1024">
+          </div>
+
+          <div class="form-group">
+            <label for="cli-temperature">Temperature</label>
+            <input type="number" id="cli-temperature" min="0" max="2" step="0.1" placeholder="e.g. 0.0">
+          </div>
+
+          <div class="form-group">
+            <label for="cli-seed">Seed</label>
+            <input type="number" id="cli-seed" placeholder="e.g. 42" value="42">
+          </div>
+        </div>
+
+        <!-- Prompt Editor -->
+        <div class="form-group">
+          <label for="cli-prompt-input">Task Prompt</label>
+          <textarea id="cli-prompt-input" rows="2" placeholder="Enter task prompt for the model..."></textarea>
+        </div>
+
+        <!-- Arbitrary JSON Schema Editor -->
+        <div class="schema-control-section">
+          <div class="schema-header">
+            <div class="schema-title-wrap">
+              <label for="cli-schema-editor">Arbitrary JSON Schema (Draft 2020-12)</label>
+              <span id="cli-schema-status" class="status-pill status-neutral">Schema ready</span>
+            </div>
+            <div class="schema-btn-group">
+              <label class="btn btn-secondary btn-sm file-upload-label">
+                Upload .json
+                <input type="file" id="cli-upload-schema-file" accept=".json" class="hidden-file-input">
+              </label>
+              <button id="cli-download-schema-btn" class="btn btn-secondary btn-sm" type="button">Download .json</button>
+              <button id="cli-clear-schema-btn" class="btn btn-secondary btn-sm" type="button">Clear</button>
+            </div>
+          </div>
+          <textarea id="cli-schema-editor" rows="6" spellcheck="false" placeholder='{"type": "object", ...}'></textarea>
+          <div id="cli-schema-error" class="error-msg hidden"></div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons-row">
+          <button id="cli-preview-btn" class="btn btn-secondary" type="button">Preview Request &amp; Command</button>
+          <button id="cli-run-api-btn" class="btn btn-primary" type="button">Run API Test (Browser POST)</button>
+          <button id="cli-run-cmd-btn" class="btn btn-primary" type="button">Run CLI Test (Backend Subprocess)</button>
+          <button id="cli-compare-btn" class="btn btn-secondary" type="button">Run Small Comparison (Both Modes)</button>
+          <button id="cli-download-results-btn" class="btn btn-secondary hidden" type="button">Download Results (.json)</button>
+          <span id="cli-loading-indicator" class="loading-indicator hidden">Executing trial...</span>
+        </div>
+      </div>
+
+      <!-- Request & Command Previews Container -->
+      <div id="cli-preview-container" class="card hidden">
+        <div class="pane-header">
+          <h3>Request &amp; CLI Command Previews</h3>
+          <button id="cli-close-preview-btn" class="btn btn-sm btn-secondary" type="button">&times;</button>
+        </div>
+        <div class="preview-grid">
+          <div class="preview-item">
+            <h4>OpenAI-Compatible Request Body (POST /v1/chat/completions)</h4>
+            <pre id="cli-preview-json" class="code-block"></pre>
+          </div>
+          <div class="preview-item">
+            <h4>POSIX (Bash) Command</h4>
+            <pre id="cli-preview-posix" class="code-block"></pre>
+            <h4 style="margin-top: 10px;">PowerShell Command</h4>
+            <pre id="cli-preview-pwsh" class="code-block"></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results Container -->
+      <div id="cli-results-container" class="card hidden">
+        <div class="pane-header">
+          <h3>CLI Integration Results</h3>
+          <div class="badge-group">
+            <span id="cli-transport-badge" class="result-badge badge-pass">HTTP 200</span>
+            <span id="cli-conformance-badge" class="result-badge badge-pass">SCHEMA CONFORMANT</span>
+            <span id="cli-semantic-badge" class="status-pill status-neutral">Semantic: Not checked</span>
+            <span id="cli-mode-badge" class="status-pill status-running">Mode: native_schema</span>
+          </div>
+        </div>
+
+        <div id="cli-stale-notice" class="help-text alert-warning hidden" style="margin-bottom: 12px; color: #b45309; font-weight: 500;">
+          Inputs were changed since this run was completed. Results may be stale.
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="summary-grid">
+          <div class="stat-box">
+            <span class="stat-label">Model</span>
+            <span id="cli-res-model" class="stat-val">—</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Finish Reason</span>
+            <span id="cli-res-finish" class="stat-val">—</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Tokens (In / Out)</span>
+            <span id="cli-res-tokens" class="stat-val">—</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Latency / Duration</span>
+            <span id="cli-res-latency" class="stat-val">—</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-label">Engine Evaluated</span>
+            <span id="cli-res-engine" class="stat-val">—</span>
+          </div>
+        </div>
+
+        <!-- Results Panels -->
+        <div class="results-layout" style="display: flex; flex-direction: column; gap: 14px; margin-top: 14px;">
+          <div class="detail-section">
+            <h4>Raw Model Output (message.content string)</h4>
+            <pre id="cli-res-raw" class="code-block raw-block"></pre>
+          </div>
+          <div class="detail-section">
+            <h4>Parsed JSON Instance (Strict jsonio)</h4>
+            <pre id="cli-res-parsed" class="code-block"></pre>
+            <div id="cli-json-error" class="error-msg hidden"></div>
+          </div>
+          <div class="detail-section">
+            <h4>Completion Envelope (OpenAI-compatible)</h4>
+            <pre id="cli-res-envelope" class="code-block"></pre>
+          </div>
+          <div id="cli-subprocess-wrap" class="detail-section hidden">
+            <h4>Sourcemeta CLI Process Output (stdout / stderr)</h4>
+            <pre id="cli-res-cliout" class="code-block"></pre>
+          </div>
+          <div id="cli-errors-wrap" class="detail-section hidden">
+            <h4>Schema Conformance Errors</h4>
+            <div id="cli-errors-list"></div>
+          </div>
+        </div>
+
+        <!-- Comparison Table (Visible when comparison mode is run) -->
+        <div id="cli-comparison-wrap" class="detail-section hidden" style="margin-top: 16px;">
+          <h4>Paired Comparison: Native Schema vs Prompt-Only</h4>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Mode</th>
+                  <th>Transport</th>
+                  <th>JSON Valid</th>
+                  <th>Schema Conformance</th>
+                  <th>Finish Reason</th>
+                  <th>Tokens (In/Out)</th>
+                  <th>Latency</th>
+                  <th>Raw Output Snippet</th>
+                </tr>
+              </thead>
+              <tbody id="cli-comparison-tbody"></tbody>
+            </table>
           </div>
         </div>
       </div>

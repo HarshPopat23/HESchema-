@@ -26,6 +26,12 @@
   let runsPage = 0;
   const RUNS_PER_PAGE = 20;
 
+  // CLI Integration Tracking
+  let cliSetupChecked = false;
+  let cliPresetsData = {};
+  let lastCliResult = null;
+  let isCliRunning = false;
+
   // --- DOM Elements ---
   const el = {
     // Auth
@@ -128,6 +134,68 @@
     modalArguments: document.getElementById("modal-arguments"),
     modalErrorsWrap: document.getElementById("modal-errors-wrap"),
     modalStatsWrap: document.getElementById("modal-stats-wrap"),
+
+    // CLI Integration Tab
+    commonControls: document.querySelector(".common-controls"),
+    tabBtnCli: document.getElementById("tab-btn-cli"),
+    tabCli: document.getElementById("tab-cli"),
+    cliSetupBadge: document.getElementById("cli-setup-badge"),
+    setupCliVal: document.getElementById("setup-cli-val"),
+    setupOllamaVal: document.getElementById("setup-ollama-val"),
+    setupEndpointVal: document.getElementById("setup-endpoint-val"),
+    cliCheckSetupBtn: document.getElementById("cli-check-setup-btn"),
+    cliPresetBtns: document.querySelectorAll(".cli-preset-btn"),
+
+    cliModelInput: document.getElementById("cli-model-input"),
+    cliModeSelect: document.getElementById("cli-mode-select"),
+    cliMaxTokens: document.getElementById("cli-max-tokens"),
+    cliTemperature: document.getElementById("cli-temperature"),
+    cliSeed: document.getElementById("cli-seed"),
+    cliPromptInput: document.getElementById("cli-prompt-input"),
+
+    cliSchemaEditor: document.getElementById("cli-schema-editor"),
+    cliSchemaStatus: document.getElementById("cli-schema-status"),
+    cliUploadSchemaFile: document.getElementById("cli-upload-schema-file"),
+    cliDownloadSchemaBtn: document.getElementById("cli-download-schema-btn"),
+    cliClearSchemaBtn: document.getElementById("cli-clear-schema-btn"),
+    cliSchemaError: document.getElementById("cli-schema-error"),
+
+    cliPreviewBtn: document.getElementById("cli-preview-btn"),
+    cliRunApiBtn: document.getElementById("cli-run-api-btn"),
+    cliRunCmdBtn: document.getElementById("cli-run-cmd-btn"),
+    cliCompareBtn: document.getElementById("cli-compare-btn"),
+    cliDownloadResultsBtn: document.getElementById("cli-download-results-btn"),
+    cliLoadingIndicator: document.getElementById("cli-loading-indicator"),
+
+    cliPreviewContainer: document.getElementById("cli-preview-container"),
+    cliClosePreviewBtn: document.getElementById("cli-close-preview-btn"),
+    cliPreviewJson: document.getElementById("cli-preview-json"),
+    cliPreviewPosix: document.getElementById("cli-preview-posix"),
+    cliPreviewPwsh: document.getElementById("cli-preview-pwsh"),
+
+    cliResultsContainer: document.getElementById("cli-results-container"),
+    cliTransportBadge: document.getElementById("cli-transport-badge"),
+    cliConformanceBadge: document.getElementById("cli-conformance-badge"),
+    cliSemanticBadge: document.getElementById("cli-semantic-badge"),
+    cliModeBadge: document.getElementById("cli-mode-badge"),
+    cliStaleNotice: document.getElementById("cli-stale-notice"),
+
+    cliResModel: document.getElementById("cli-res-model"),
+    cliResFinish: document.getElementById("cli-res-finish"),
+    cliResTokens: document.getElementById("cli-res-tokens"),
+    cliResLatency: document.getElementById("cli-res-latency"),
+    cliResEngine: document.getElementById("cli-res-engine"),
+
+    cliResRaw: document.getElementById("cli-res-raw"),
+    cliResParsed: document.getElementById("cli-res-parsed"),
+    cliJsonError: document.getElementById("cli-json-error"),
+    cliResEnvelope: document.getElementById("cli-res-envelope"),
+    cliSubprocessWrap: document.getElementById("cli-subprocess-wrap"),
+    cliResCliout: document.getElementById("cli-res-cliout"),
+    cliErrorsWrap: document.getElementById("cli-errors-wrap"),
+    cliErrorsList: document.getElementById("cli-errors-list"),
+    cliComparisonWrap: document.getElementById("cli-comparison-wrap"),
+    cliComparisonTbody: document.getElementById("cli-comparison-tbody"),
   };
 
   // --- HTTP Helper ---
@@ -141,7 +209,9 @@
       let errDetail = "Request failed (" + response.status + ")";
       try {
         const errJson = await response.json();
-        if (errJson.detail) {
+        if (errJson.error && errJson.error.message) {
+          errDetail = errJson.error.message;
+        } else if (errJson.detail) {
           errDetail = typeof errJson.detail === "string" ? errJson.detail : JSON.stringify(errJson.detail);
         } else if (errJson.message) {
           errDetail = errJson.message;
@@ -344,22 +414,611 @@
     el.runDetailModal.addEventListener("click", (e) => {
       if (e.target === el.runDetailModal) el.runDetailModal.classList.add("hidden");
     });
+
+    // CLI Integration Listeners
+    if (el.tabBtnCli) {
+      el.tabBtnCli.addEventListener("click", () => switchTab("cli"));
+    }
+    if (el.cliCheckSetupBtn) {
+      el.cliCheckSetupBtn.addEventListener("click", checkCliSetup);
+    }
+    if (el.cliPresetBtns) {
+      el.cliPresetBtns.forEach((btn) => {
+        btn.addEventListener("click", () => loadCliPreset(btn.dataset.preset));
+      });
+    }
+    if (el.cliPromptInput) {
+      el.cliPromptInput.addEventListener("input", markCliResultsStale);
+    }
+    if (el.cliModelInput) {
+      el.cliModelInput.addEventListener("input", markCliResultsStale);
+    }
+    if (el.cliModeSelect) {
+      el.cliModeSelect.addEventListener("change", markCliResultsStale);
+    }
+    if (el.cliMaxTokens) {
+      el.cliMaxTokens.addEventListener("input", markCliResultsStale);
+    }
+    if (el.cliTemperature) {
+      el.cliTemperature.addEventListener("input", markCliResultsStale);
+    }
+    if (el.cliSeed) {
+      el.cliSeed.addEventListener("input", markCliResultsStale);
+    }
+    if (el.cliSchemaEditor) {
+      el.cliSchemaEditor.addEventListener("input", () => {
+        validateCliSchema();
+        markCliResultsStale();
+      });
+    }
+    if (el.cliUploadSchemaFile) {
+      el.cliUploadSchemaFile.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+          try {
+            const parsed = JSON.parse(evt.target.result);
+            el.cliSchemaEditor.value = JSON.stringify(parsed, null, 2);
+            validateCliSchema();
+            markCliResultsStale();
+          } catch (err) {
+            alert("Invalid JSON schema file: " + err.message);
+          }
+        };
+        reader.readAsText(file);
+      });
+    }
+    if (el.cliDownloadSchemaBtn) {
+      el.cliDownloadSchemaBtn.addEventListener("click", () => {
+        const raw = el.cliSchemaEditor.value.trim();
+        if (!raw) return;
+        const blob = new Blob([raw], { type: "application/json" });
+        const u = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = u;
+        a.download = "cli_schema.json";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(u);
+      });
+    }
+    if (el.cliClearSchemaBtn) {
+      el.cliClearSchemaBtn.addEventListener("click", () => {
+        el.cliSchemaEditor.value = "";
+        validateCliSchema();
+        markCliResultsStale();
+      });
+    }
+    if (el.cliPreviewBtn) {
+      el.cliPreviewBtn.addEventListener("click", previewCliRequest);
+    }
+    if (el.cliClosePreviewBtn) {
+      el.cliClosePreviewBtn.addEventListener("click", () => el.cliPreviewContainer.classList.add("hidden"));
+    }
+    if (el.cliRunApiBtn) {
+      el.cliRunApiBtn.addEventListener("click", runCliApiTest);
+    }
+    if (el.cliRunCmdBtn) {
+      el.cliRunCmdBtn.addEventListener("click", runCliSubprocessTest);
+    }
+    if (el.cliCompareBtn) {
+      el.cliCompareBtn.addEventListener("click", runCliComparison);
+    }
+    if (el.cliDownloadResultsBtn) {
+      el.cliDownloadResultsBtn.addEventListener("click", downloadCliResults);
+    }
   }
 
   // --- Tabs Switcher ---
   function switchTab(tab) {
     activeTab = tab;
+    [el.tabBtnPrompt, el.tabBtnBenchmark, el.tabBtnCli].forEach((b) => b && b.classList.remove("active"));
+    [el.tabPrompt, el.tabBenchmark, el.tabCli].forEach((p) => p && p.classList.remove("active"));
+
     if (tab === "prompt") {
       el.tabBtnPrompt.classList.add("active");
-      el.tabBtnBenchmark.classList.remove("active");
       el.tabPrompt.classList.add("active");
-      el.tabBenchmark.classList.remove("active");
-    } else {
+      if (el.commonControls) el.commonControls.classList.remove("hidden");
+    } else if (tab === "benchmark") {
       el.tabBtnBenchmark.classList.add("active");
-      el.tabBtnPrompt.classList.remove("active");
       el.tabBenchmark.classList.add("active");
-      el.tabPrompt.classList.remove("active");
+      if (el.commonControls) el.commonControls.classList.remove("hidden");
+    } else if (tab === "cli") {
+      el.tabBtnCli.classList.add("active");
+      el.tabCli.classList.add("active");
+      if (el.commonControls) el.commonControls.classList.add("hidden");
+      if (!cliSetupChecked) {
+        checkCliSetup();
+      }
     }
+  }
+
+  // --- CLI Integration Logic ---
+  async function checkCliSetup() {
+    try {
+      el.setupCliVal.textContent = "Checking...";
+      el.setupOllamaVal.textContent = "Checking...";
+      const status = await apiFetch("/ui/cli-integration/status");
+      cliSetupChecked = true;
+      cliPresetsData = status.presets || {};
+
+      // CLI Status
+      if (status.cli.available) {
+        if (status.cli.llm_supported) {
+          el.setupCliVal.textContent = "Available v" + status.cli.version;
+          el.cliSetupBadge.textContent = "CLI Ready";
+          el.cliSetupBadge.className = "status-pill status-neutral";
+        } else {
+          el.setupCliVal.textContent = "v" + status.cli.version + " (Needs llm support)";
+          el.cliSetupBadge.textContent = "Setup Required (CLI < 17.2)";
+          el.cliSetupBadge.className = "status-pill status-unconfirmed";
+        }
+      } else {
+        el.setupCliVal.textContent = "Not found in PATH or native/";
+        el.cliSetupBadge.textContent = "Setup Required";
+        el.cliSetupBadge.className = "status-pill status-unconfirmed";
+      }
+
+      // Ollama Status
+      if (status.ollama.reachable) {
+        const count = status.ollama.models.length;
+        el.setupOllamaVal.textContent = "Connected (" + count + " models)";
+        if (count > 0 && (!el.cliModelInput.value || el.cliModelInput.value === "llama3.2:latest")) {
+          el.cliModelInput.value = status.ollama.models[0];
+        }
+      } else {
+        el.setupOllamaVal.textContent = "Unreachable at " + status.ollama.baseUrl;
+      }
+
+      el.setupEndpointVal.textContent = status.loopbackUrl || "/v1/chat/completions";
+
+      // If prompt is empty, load first preset
+      if (!el.cliPromptInput.value.trim()) {
+        loadCliPreset("C01");
+      }
+    } catch (err) {
+      console.warn("Failed to check CLI setup:", err);
+      el.setupCliVal.textContent = "Check failed: " + err.message;
+      el.setupOllamaVal.textContent = "Check failed";
+      el.cliSetupBadge.textContent = "Status Check Failed";
+      el.cliSetupBadge.className = "status-pill status-unconfirmed";
+    }
+  }
+
+  function loadCliPreset(presetKey) {
+    const preset = cliPresetsData[presetKey] || null;
+    if (!preset) return;
+    el.cliPromptInput.value = preset.prompt;
+    el.cliSchemaEditor.value = JSON.stringify(preset.schema, null, 2);
+    validateCliSchema();
+    markCliResultsStale();
+  }
+
+  function validateCliSchema() {
+    const raw = el.cliSchemaEditor.value.trim();
+    if (!raw) {
+      el.cliSchemaError.classList.add("hidden");
+      el.cliSchemaStatus.textContent = "Empty schema";
+      el.cliSchemaStatus.className = "status-pill status-neutral";
+      return false;
+    }
+    try {
+      JSON.parse(raw);
+      el.cliSchemaError.classList.add("hidden");
+      el.cliSchemaStatus.textContent = "Valid JSON Schema";
+      el.cliSchemaStatus.className = "status-pill status-neutral";
+      return true;
+    } catch (err) {
+      el.cliSchemaError.textContent = "Malformed JSON: " + err.message;
+      el.cliSchemaError.classList.remove("hidden");
+      el.cliSchemaStatus.textContent = "Invalid JSON";
+      el.cliSchemaStatus.className = "status-pill status-unconfirmed";
+      return false;
+    }
+  }
+
+  function markCliResultsStale() {
+    if (lastCliResult && !el.cliResultsContainer.classList.contains("hidden")) {
+      el.cliStaleNotice.classList.remove("hidden");
+    }
+  }
+
+  function getCliRequestPayload() {
+    const prompt = el.cliPromptInput.value.trim();
+    if (!prompt) throw new Error("Task Prompt is required.");
+    const schemaRaw = el.cliSchemaEditor.value.trim();
+    if (!schemaRaw) throw new Error("JSON Schema is required.");
+    let schemaObj;
+    try {
+      schemaObj = JSON.parse(schemaRaw);
+    } catch (err) {
+      throw new Error("Invalid JSON Schema: " + err.message);
+    }
+    const model = el.cliModelInput.value.trim();
+    if (!model) throw new Error("Model ID is required.");
+    const mode = el.cliModeSelect.value;
+    const maxTokens = parseInt(el.cliMaxTokens.value, 10) || 1024;
+    const tempVal = el.cliTemperature.value.trim();
+    const temp = tempVal !== "" ? parseFloat(tempVal) : null;
+    const seedVal = el.cliSeed.value.trim();
+    const seed = seedVal !== "" ? parseInt(seedVal, 10) : null;
+
+    const payload = {
+      model: model,
+      messages: [{ role: "user", content: prompt }],
+      response_format: {
+        type: "json_schema",
+        json_schema: {
+          name: "schema",
+          strict: mode === "native_schema",
+          schema: schemaObj,
+        },
+      },
+      stream: false,
+      max_tokens: maxTokens,
+      heschema_mode: mode,
+    };
+    if (temp !== null && !isNaN(temp)) payload.temperature = temp;
+    if (seed !== null && !isNaN(seed)) payload.seed = seed;
+
+    return { payload, schemaObj, prompt, model, mode, maxTokens, temp, seed };
+  }
+
+  function previewCliRequest() {
+    try {
+      const { payload, prompt, model, mode, maxTokens, temp, seed } = getCliRequestPayload();
+      setSafeText(el.cliPreviewJson, JSON.stringify(payload, null, 2));
+
+      const endpoint = el.setupEndpointVal.textContent || "http://127.0.0.1:8000/v1/chat/completions";
+      const hasToken = Boolean(apiToken);
+      const authFlagPosix = hasToken ? ' --header "Authorization: Bearer $HESCHEMA_API_TOKEN"' : "";
+      const authFlagPwsh = hasToken ? ' --header "Authorization: Bearer $env:HESCHEMA_API_TOKEN"' : "";
+
+      let params = ["--param /max_tokens=" + maxTokens];
+      if (mode === "prompt_only") {
+        params.push("--param /heschema_mode=prompt_only");
+        params.push("--param /response_format/json_schema/strict=false");
+      }
+      if (temp !== null && !isNaN(temp)) params.push("--param /temperature=" + temp);
+      if (seed !== null && !isNaN(seed)) params.push("--param /seed=" + seed);
+      const paramStr = params.join(" ");
+
+      const safePromptPosix = prompt.replace(/"/g, '\\"');
+      const safePromptPwsh = prompt.replace(/"/g, '`"');
+
+      const posixCmd = 'jsonschema llm schema.json --ask "' + safePromptPosix + '" --url ' + endpoint + ' --model "' + model + '" ' + paramStr + authFlagPosix + ' --json';
+      const pwshCmd = '& jsonschema llm schema.json --ask "' + safePromptPwsh + '" --url ' + endpoint + ' --model "' + model + '" ' + paramStr + authFlagPwsh + ' --json';
+
+      setSafeText(el.cliPreviewPosix, posixCmd);
+      setSafeText(el.cliPreviewPwsh, pwshCmd);
+      el.cliPreviewContainer.classList.remove("hidden");
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  function setCliButtonsBusy(busy, msg) {
+    isCliRunning = busy;
+    [el.cliPreviewBtn, el.cliRunApiBtn, el.cliRunCmdBtn, el.cliCompareBtn].forEach((btn) => {
+      btn.disabled = busy;
+    });
+    if (busy) {
+      el.cliLoadingIndicator.textContent = msg || "Executing trial...";
+      el.cliLoadingIndicator.classList.remove("hidden");
+    } else {
+      el.cliLoadingIndicator.classList.add("hidden");
+    }
+  }
+
+  async function runCliApiTest() {
+    if (isCliRunning) return;
+    try {
+      const { payload, schemaObj, mode } = getCliRequestPayload();
+      setCliButtonsBusy(true, "Posting to /v1/chat/completions...");
+
+      const start = performance.now();
+      const completion = await apiFetch("/v1/chat/completions", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      const latencyMs = performance.now() - start;
+
+      const rawContent = completion.choices && completion.choices[0] && completion.choices[0].message
+        ? completion.choices[0].message.content
+        : "";
+
+      // Perform local diagnostics on output without generating text again
+      const diag = await apiFetch("/ui/cli-integration/validate", {
+        method: "POST",
+        body: JSON.stringify({ schema: schemaObj, output: rawContent }),
+      });
+
+      const trialResult = {
+        type: "api_test",
+        mode: mode,
+        model: completion.model || payload.model,
+        latencyMs: latencyMs,
+        finishReason: completion.choices && completion.choices[0] ? completion.choices[0].finish_reason : null,
+        usage: completion.usage || null,
+        rawContent: rawContent,
+        envelope: completion,
+        diagnostics: diag,
+        schema: schemaObj,
+        prompt: payload.messages[0].content,
+      };
+
+      lastCliResult = trialResult;
+      renderCliSingleResult(trialResult, false);
+    } catch (err) {
+      alert("API Test Failed: " + err.message);
+    } finally {
+      setCliButtonsBusy(false);
+    }
+  }
+
+  async function runCliSubprocessTest() {
+    if (isCliRunning) return;
+    try {
+      const { schemaObj, prompt, model, mode, maxTokens, temp, seed } = getCliRequestPayload();
+      setCliButtonsBusy(true, "Running Sourcemeta CLI subprocess...");
+
+      const res = await apiFetch("/ui/cli-integration/run", {
+        method: "POST",
+        body: JSON.stringify({
+          schema: schemaObj,
+          prompt: prompt,
+          model: model,
+          mode: mode,
+          maxTokens: maxTokens,
+          temperature: temp,
+          seed: seed,
+          timeout: 180.0,
+        }),
+      });
+
+      const trialResult = {
+        type: "cli_subprocess",
+        mode: mode,
+        model: model,
+        latencyMs: res.elapsedMs,
+        finishReason: res.cliRunSuccess ? "stop" : "cli_exit_" + res.exitCode,
+        usage: null,
+        rawContent: res.stdout,
+        stdout: res.stdout,
+        stderr: res.stderr,
+        exitCode: res.exitCode,
+        envelope: { exitCode: res.exitCode, stdout: res.stdout, stderr: res.stderr },
+        diagnostics: res.diagnostics,
+        schema: schemaObj,
+        prompt: prompt,
+      };
+
+      lastCliResult = trialResult;
+      renderCliSingleResult(trialResult, true);
+    } catch (err) {
+      alert("CLI Test Failed: " + err.message);
+    } finally {
+      setCliButtonsBusy(false);
+    }
+  }
+
+  async function runCliComparison() {
+    if (isCliRunning) return;
+    try {
+      const { schemaObj, prompt, model, maxTokens, temp, seed } = getCliRequestPayload();
+      setCliButtonsBusy(true, "Running Trial 1/2: Native Schema...");
+
+      // 1. Native Schema Trial
+      const payloadNative = {
+        model: model,
+        messages: [{ role: "user", content: prompt }],
+        response_format: {
+          type: "json_schema",
+          json_schema: { name: "schema", strict: true, schema: schemaObj },
+        },
+        stream: false,
+        max_tokens: maxTokens,
+        heschema_mode: "native_schema",
+        ...(temp !== null && !isNaN(temp) ? { temperature: temp } : {}),
+        ...(seed !== null && !isNaN(seed) ? { seed: seed } : {}),
+      };
+
+      const start1 = performance.now();
+      const comp1 = await apiFetch("/v1/chat/completions", { method: "POST", body: JSON.stringify(payloadNative) });
+      const lat1 = performance.now() - start1;
+      const raw1 = comp1.choices && comp1.choices[0] && comp1.choices[0].message ? comp1.choices[0].message.content : "";
+      const diag1 = await apiFetch("/ui/cli-integration/validate", { method: "POST", body: JSON.stringify({ schema: schemaObj, output: raw1 }) });
+
+      // 2. Prompt-Only Trial
+      setCliButtonsBusy(true, "Running Trial 2/2: Prompt-Only...");
+      const payloadPromptOnly = {
+        model: model,
+        messages: [{ role: "user", content: prompt }],
+        response_format: {
+          type: "json_schema",
+          json_schema: { name: "schema", strict: false, schema: schemaObj },
+        },
+        stream: false,
+        max_tokens: maxTokens,
+        heschema_mode: "prompt_only",
+        ...(temp !== null && !isNaN(temp) ? { temperature: temp } : {}),
+        ...(seed !== null && !isNaN(seed) ? { seed: seed } : {}),
+      };
+
+      const start2 = performance.now();
+      const comp2 = await apiFetch("/v1/chat/completions", { method: "POST", body: JSON.stringify(payloadPromptOnly) });
+      const lat2 = performance.now() - start2;
+      const raw2 = comp2.choices && comp2.choices[0] && comp2.choices[0].message ? comp2.choices[0].message.content : "";
+      const diag2 = await apiFetch("/ui/cli-integration/validate", { method: "POST", body: JSON.stringify({ schema: schemaObj, output: raw2 }) });
+
+      const trials = [
+        { mode: "native_schema", comp: comp1, raw: raw1, diag: diag1, lat: lat1 },
+        { mode: "prompt_only", comp: comp2, raw: raw2, diag: diag2, lat: lat2 },
+      ];
+
+      renderCliComparisonTable(trials);
+
+      // Default main viewer to native trial
+      lastCliResult = {
+        type: "comparison",
+        trials: trials,
+        schema: schemaObj,
+        prompt: prompt,
+      };
+      renderCliSingleResult({
+        type: "api_test",
+        mode: "native_schema",
+        model: comp1.model || model,
+        latencyMs: lat1,
+        finishReason: comp1.choices && comp1.choices[0] ? comp1.choices[0].finish_reason : null,
+        usage: comp1.usage || null,
+        rawContent: raw1,
+        envelope: comp1,
+        diagnostics: diag1,
+      }, false);
+
+      el.cliComparisonWrap.classList.remove("hidden");
+    } catch (err) {
+      alert("Comparison Failed: " + err.message);
+    } finally {
+      setCliButtonsBusy(false);
+    }
+  }
+
+  function renderCliSingleResult(trial, isSubprocess) {
+    el.cliResultsContainer.classList.remove("hidden");
+    el.cliDownloadResultsBtn.classList.remove("hidden");
+    el.cliStaleNotice.classList.add("hidden");
+
+    // Badges
+    el.cliTransportBadge.textContent = isSubprocess ? (trial.exitCode === 0 ? "CLI Exit 0" : "CLI Exit " + trial.exitCode) : "HTTP 200";
+    el.cliTransportBadge.className = (isSubprocess ? trial.exitCode === 0 : true) ? "result-badge badge-pass" : "result-badge badge-fail";
+
+    const isConformant = trial.diagnostics && trial.diagnostics.heschemaSchemaValid;
+    el.cliConformanceBadge.textContent = isConformant ? "SCHEMA CONFORMANT" : "SCHEMA NON-CONFORMANT";
+    el.cliConformanceBadge.className = isConformant ? "result-badge badge-pass" : "result-badge badge-fail";
+
+    el.cliModeBadge.textContent = "Mode: " + trial.mode;
+    el.cliSemanticBadge.textContent = "Semantic: Not checked";
+
+    // Stats
+    setSafeText(el.cliResModel, trial.model);
+    setSafeText(el.cliResFinish, trial.finishReason || "stop");
+
+    const inTok = trial.usage ? trial.usage.prompt_tokens : "—";
+    const outTok = trial.usage ? trial.usage.completion_tokens : "—";
+    setSafeText(el.cliResTokens, inTok !== "—" ? inTok + " / " + outTok : "Not reported");
+    setSafeText(el.cliResLatency, trial.latencyMs ? trial.latencyMs.toFixed(1) + " ms" : "—");
+    setSafeText(el.cliResEngine, trial.diagnostics ? trial.diagnostics.engineUsed : "jsonschema");
+
+    // Content Blocks
+    setSafeText(el.cliResRaw, trial.rawContent || "");
+
+    if (trial.diagnostics && trial.diagnostics.jsonParseValid) {
+      setSafeText(el.cliResParsed, JSON.stringify(trial.diagnostics.parsedInstance, null, 2));
+      el.cliJsonError.classList.add("hidden");
+    } else {
+      setSafeText(el.cliResParsed, "(Unable to parse strict JSON)");
+      setSafeText(el.cliJsonError, trial.diagnostics ? trial.diagnostics.jsonParseError : "Parse error");
+      el.cliJsonError.classList.remove("hidden");
+    }
+
+    setSafeText(el.cliResEnvelope, JSON.stringify(trial.envelope, null, 2));
+
+    if (isSubprocess) {
+      el.cliSubprocessWrap.classList.remove("hidden");
+      const subOut = "Exit Code: " + trial.exitCode + "\n\n--- STDOUT ---\n" + trial.stdout + "\n\n--- STDERR ---\n" + trial.stderr;
+      setSafeText(el.cliResCliout, subOut);
+    } else {
+      el.cliSubprocessWrap.classList.add("hidden");
+    }
+
+    // Errors
+    if (trial.diagnostics && trial.diagnostics.schemaErrors && trial.diagnostics.schemaErrors.length > 0) {
+      el.cliErrorsWrap.classList.remove("hidden");
+      el.cliErrorsList.innerHTML = "";
+      const ul = document.createElement("ul");
+      ul.className = "error-box";
+      trial.diagnostics.schemaErrors.forEach((e) => {
+        const li = document.createElement("li");
+        li.textContent = (e.path ? e.path + ": " : "") + e.message;
+        ul.appendChild(li);
+      });
+      el.cliErrorsList.appendChild(ul);
+    } else {
+      el.cliErrorsWrap.classList.add("hidden");
+    }
+  }
+
+  function renderCliComparisonTable(trials) {
+    el.cliComparisonTbody.innerHTML = "";
+    trials.forEach((t) => {
+      const tr = document.createElement("tr");
+
+      // Mode
+      const tdMode = document.createElement("td");
+      tdMode.style.fontWeight = "600";
+      tdMode.textContent = t.mode === "native_schema" ? "Native Schema (Ollama format)" : "Prompt-Only (schema-in-prompt)";
+      tr.appendChild(tdMode);
+
+      // Transport
+      const tdTrans = document.createElement("td");
+      tdTrans.textContent = "200 OK";
+      tr.appendChild(tdTrans);
+
+      // JSON Valid
+      const tdJson = document.createElement("td");
+      tdJson.textContent = t.diag.jsonParseValid ? "YES" : "NO";
+      tdJson.style.color = t.diag.jsonParseValid ? "#065f46" : "#991b1b";
+      tr.appendChild(tdJson);
+
+      // Conformance
+      const tdConf = document.createElement("td");
+      tdConf.textContent = t.diag.heschemaSchemaValid ? "CONFORMANT" : "FAIL (" + t.diag.schemaErrors.length + " err)";
+      tdConf.style.color = t.diag.heschemaSchemaValid ? "#065f46" : "#991b1b";
+      tr.appendChild(tdConf);
+
+      // Finish Reason
+      const tdFin = document.createElement("td");
+      tdFin.textContent = t.comp.choices && t.comp.choices[0] ? t.comp.choices[0].finish_reason : "—";
+      tr.appendChild(tdFin);
+
+      // Tokens
+      const tdTok = document.createElement("td");
+      const u = t.comp.usage;
+      tdTok.textContent = u ? u.prompt_tokens + " / " + u.completion_tokens : "—";
+      tr.appendChild(tdTok);
+
+      // Latency
+      const tdLat = document.createElement("td");
+      tdLat.textContent = t.lat.toFixed(1) + " ms";
+      tr.appendChild(tdLat);
+
+      // Snippet
+      const tdSnip = document.createElement("td");
+      tdSnip.style.fontFamily = "var(--font-mono)";
+      tdSnip.style.fontSize = "11px";
+      const snippet = t.raw.slice(0, 70).replace(/\n/g, " ");
+      tdSnip.textContent = snippet + (t.raw.length > 70 ? "..." : "");
+      tr.appendChild(tdSnip);
+
+      el.cliComparisonTbody.appendChild(tr);
+    });
+  }
+
+  function downloadCliResults() {
+    if (!lastCliResult) return;
+    const blob = new Blob([JSON.stringify(lastCliResult, null, 2)], { type: "application/json" });
+    const u = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = u;
+    a.download = "cli_integration_trial_" + Date.now() + ".json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(u);
   }
 
   // --- Schema Validation ---

@@ -49,13 +49,16 @@ class Provider:
             raise ProviderError(f"Set {self.config['key_env']} in the backend .env")
         if self.interval < 0:
             raise ValueError("Request interval must be nonnegative")
-        self.client = None if self.config["kind"] == "mock" else httpx.AsyncClient(timeout=60, transport=transport)
+        default_timeout = 180.0 if self.config["kind"] == "ollama" else 120.0
+        env_timeout = os.getenv("OLLAMA_TIMEOUT") if self.config["kind"] == "ollama" else os.getenv("HESCHEMA_REQUEST_TIMEOUT")
+        self.timeout = float(env_timeout) if env_timeout else default_timeout
+        self.client = None if self.config["kind"] == "mock" else httpx.AsyncClient(timeout=self.timeout, transport=transport)
 
     async def close(self):
         if self.client is not None:
             await self.client.aclose()
 
-    def request(self, messages, seed, max_tokens, temperature):
+    def request(self, messages, seed, max_tokens, temperature, format_schema=None):
         config, kind = self.config, self.config["kind"]
         base = (os.getenv("OLLAMA_BASE_URL", config.get("base_url")) if kind == "ollama" else config.get("base_url", "")).rstrip("/")
         headers = {"Content-Type": "application/json"}
@@ -74,7 +77,12 @@ class Provider:
             options = {"seed": seed, "num_predict": max_tokens}
             if temperature is not None:
                 options["temperature"] = temperature
-            return base + "/api/chat", headers, {"model": self.model, "messages": messages, "stream": False, "options": options}
+            payload = {"model": self.model, "messages": messages, "stream": False, "options": options}
+            if format_schema is not None:
+                payload["format"] = format_schema
+            if os.getenv("OLLAMA_THINK", "false").lower() in {"false", "0", "no"}:
+                payload["think"] = False
+            return base + "/api/chat", headers, payload
         payload = {"model": self.model, "messages": messages, "max_tokens": max_tokens}
         if temperature is not None:
             payload["temperature"] = temperature
@@ -82,31 +90,33 @@ class Provider:
             payload["seed"] = seed
         return base + "/chat/completions", {**headers, "Authorization": "Bearer " + self.key}, payload
 
-    async def generate(self, messages, seed=0, max_tokens=1024, temperature=None):
+    async def generate(self, messages, seed=0, max_tokens=1024, temperature=None, format_schema=None, retry=True):
         if self.config["kind"] == "mock":
             # Fixed response independent of schema and hidden gold. A pipeline smoke
             # test can never serve as empirical evidence of model improvement.
             return Generation(canonical({"action": "refuse", "tool": None, "arguments": {},
                                          "missingFields": [], "reason": "Offline stub"}),
-                              0, 0, "offline-stub", metadata={"synthetic": True})
+                              0, 0, "offline-stub", metadata={"synthetic": True, "finish_reason": "stop"})
         async with self.lock:
             delay = self.interval - (time.monotonic() - self.last_request)
             if delay > 0:
                 await asyncio.sleep(delay)
             start = time.perf_counter()
-            url, headers, payload = self.request(messages, seed, max_tokens, temperature)
+            url, headers, payload = self.request(messages, seed, max_tokens, temperature, format_schema=format_schema)
             attempts = 0
             while True:
                 self.last_request = time.monotonic()
                 try:
                     response = await self.client.post(url, headers=headers, json=payload)
+                except httpx.TimeoutException:
+                    raise ProviderError(f"{self.name}: request timed out after {int(self.timeout)}s") from None
                 except httpx.RequestError:
-                    if attempts >= 2:
+                    if not retry or attempts >= 2:
                         raise ProviderError(f"{self.name}: network request failed") from None
                     attempts += 1
                     await asyncio.sleep(min(2 ** attempts, 8))
                     continue
-                if response.status_code in {429, 500, 502, 503, 504} and attempts < 2:
+                if response.status_code in {429, 500, 502, 503, 504} and retry and attempts < 2:
                     attempts += 1
                     try:
                         retry_after = float(response.headers.get("retry-after", 2 ** attempts))
@@ -121,6 +131,7 @@ class Provider:
                 try:
                     data = response.json()
                     kind = self.config["kind"]
+                    finish_reason = None
                     if kind == "responses":
                         text = "".join(c["text"] for item in data.get("output", []) for c in item.get("content", []) if c.get("type") == "output_text")
                         usage = data.get("usage", {})
@@ -132,20 +143,28 @@ class Provider:
                         # needs user-supplied effective rates and is explicitly approximate.
                         inp = sum(usage.get(k, 0) for k in ("input_tokens", "cache_read_input_tokens", "cache_creation_input_tokens")) if "input_tokens" in usage else None
                         out = usage.get("output_tokens")
+                        finish_reason = data.get("stop_reason")
                     elif kind == "ollama":
                         text = data["message"]["content"]
+                        if not text and data["message"].get("thinking"):
+                            text = data["message"]["thinking"]
                         inp, out = data.get("prompt_eval_count"), data.get("eval_count")
+                        finish_reason = data.get("done_reason") or ("stop" if data.get("done") else None)
                     else:
                         text = data["choices"][0]["message"]["content"]
                         usage = data.get("usage", {})
                         inp, out = usage.get("prompt_tokens"), usage.get("completion_tokens")
+                        finish_reason = data["choices"][0].get("finish_reason")
                     if not isinstance(text, str):
                         raise ValueError("Missing text")
                 except (ValueError, TypeError, KeyError, IndexError, AttributeError):
                     raise ProviderError(f"{self.name}: unexpected response structure") from None
+                meta = {"resolvedModelConfirmed": bool(data.get("model"))}
+                if finish_reason is not None:
+                    meta["finish_reason"] = finish_reason
                 return Generation(text, inp, out, data.get("model", self.model), attempts,
                                   (time.perf_counter() - start) * 1000,
-                                  {"resolvedModelConfirmed": bool(data.get("model"))})
+                                  meta)
 
 
 async def tavily_search(query, max_results=5, transport=None):

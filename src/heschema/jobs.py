@@ -2,9 +2,7 @@
 
 import asyncio
 import datetime
-import os
 import secrets
-import threading
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -12,8 +10,8 @@ from typing import Any
 from .benchmark import run
 from .dataset import CATEGORIES, load_cases
 from .domains import DOMAINS, reference_schema
-from .jsonio import canonical, read_json
-from .providers import ROOT, Provider, ProviderError
+from .jsonio import read_json
+from .providers import ROOT, Provider
 from .schema import check_schema
 
 JOBS_ROOT = ROOT / "results/jobs"
@@ -275,7 +273,7 @@ class JobManager:
         sliced = lines[offset: offset + limit]
         return {
             "total": total,
-            "runs": [loads(l) for l in sliced],
+            "runs": [loads(line) for line in sliced],
             "offset": offset,
             "limit": limit
         }
