@@ -10,6 +10,7 @@ from pathlib import Path
 
 from jsonschema import Draft202012Validator, FormatChecker, SchemaError
 
+from .diagnostics import schema_error
 from .jsonio import canonical, digest, loads
 
 DIALECT = "https://json-schema.org/draft/2020-12/schema"
@@ -141,11 +142,9 @@ class SchemaEngine:
             # Python remains an independent cross-check and enforces formats: the JS
             # Blaze port does not support Format Assertion yet. IPC costs are reported.
             native = self.worker.request({"op": "validate", "id": key, "instance": instance}) if self.worker else None
-            errors = [{"code": "SCHEMA_INVALID", "path": "/" + "/".join(map(str, e.absolute_path)),
-                       "keyword": e.validator, "message": e.message}
-                      for e in self.cache[key].iter_errors(instance)]
+            errors = [schema_error(e) for e in self.cache[key].iter_errors(instance)]
             if native and not native["valid"] and not errors:
-                errors.append({"code": "ENGINE_DISAGREEMENT", "path": "/", "message": "Blaze rejected an instance accepted by the reference evaluator"})
+                errors.append({"code": "ENGINE_DISAGREEMENT", "path": "", "instanceLocation": "", "stage": "schema", "repair": "stop", "message": "Blaze rejected an instance accepted by the reference evaluator"})
             return errors
 
     def close(self):
