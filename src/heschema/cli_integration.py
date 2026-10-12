@@ -915,3 +915,33 @@ def evaluate_document_diagnostics(
         "engineUsed": engine.backend,
         "semanticCorrectness": "Not checked",  # Explicit: No ground truth available in arbitrary schema testing
     }
+
+
+async def execute_cli_recovery(*, schema, prompt, model, mode, engine, repairs=0,
+                               feedback_style='actionable', max_tokens=1024, temperature=None,
+                               seed=None, loopback_url='http://127.0.0.1:8000/v1/chat/completions',
+                               timeout=180, contract=None, snapshot=None, context_check=None):
+    """Separate CLI invocations; no invented CLI retry flag or upstream request count."""
+    from .contracts import Contract
+    from .providers import Generation, ProviderError
+    from .repair import RepairLimits, coordinate
+    from .validation import validate_contract
+    contract = contract or Contract('cli-document', '1', schema)
+    history = []
+    async def request(messages, attempt):
+        feedback = '\n'.join(m['content'] for m in messages[1:] if m['role'] == 'user')
+        result = await execute_cli_run(schema=schema, prompt=prompt + ('\n' + feedback if feedback else ''), model=model, mode=mode,
+                                       max_tokens=max_tokens, temperature=temperature, seed=seed,
+                                       loopback_url=loopback_url, timeout=timeout)
+        history.append(result)
+        content = generated_content(result)
+        if content is None:
+            raise ProviderError('CLI returned no generated document; inspect the sanitized CLI report', code='cli_error')
+        return Generation(content, model=model, latency_ms=result['elapsedMs'], metadata={'source': 'cli_report', 'resolvedModelConfirmed': False})
+    recovery = await coordinate(request, lambda g: validate_contract(g.text, engine, contract, snapshot, generation=g),
+                                [{'role': 'user', 'content': prompt}], limits=RepairLimits(repairs, max_tokens=max_tokens, deadline_seconds=timeout),
+                                feedback_style=feedback_style, context_check=context_check)
+    return {**(history[-1] if history else {}), 'cliAttempts': history, 'repair': recovery,
+            'requestUnit': 'cli_invocations', 'upstreamRequestsObserved': None,
+            'diagnostics': evaluate_document_diagnostics(schema, generated_content(history[-1]) if history else None, engine),
+            'validation': recovery['finalEvaluation']}

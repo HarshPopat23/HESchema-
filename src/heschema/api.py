@@ -16,6 +16,7 @@ from .benchmark import ARMS, messages_for
 from .cli_integration import (
     PRESETS,
     evaluate_document_diagnostics,
+    execute_cli_recovery,
     execute_cli_run,
     generate_command_previews,
     generated_content,
@@ -23,15 +24,17 @@ from .cli_integration import (
     probe_ollama_status,
 )
 from .compat import handle_chat_completion, make_error_response
+from .context_schema import ContextError
 from .domains import DOMAINS, reference_schema
 from .jobs import JobConflictError, JobManager
 from .jsonio import loads
 from .providers import ROOT, Provider, ProviderError, registry, tavily_search
 from .registry import builtin_registry
+from .repair import RepairLimits, coordinate, request_generation
 from .runtime_api import install_contract_routes
 from .schema import SchemaEngine, check_schema, typed_minimal
 from .state import StateStore
-from .validation import ENVELOPE, envelope, evaluate
+from .validation import ENVELOPE, envelope, evaluate, generation_gate
 
 
 class Body(BaseModel):
@@ -67,6 +70,8 @@ class GenerateBody(Body):
     model: str | None = None
     schema_: dict[str, Any] | bool | None = Field(default=None, alias="schema")
     schemaMode: str | None = None
+    repairs: int = Field(default=0, ge=0, le=5)
+    feedbackStyle: str = "actionable"
 
 
 class ExtractBody(Body):
@@ -121,6 +126,7 @@ class BenchmarkJobBody(Body):
     schema_: dict[str, Any] | bool | None = Field(default=None, alias="schema")
     inputPrice: float | None = None
     outputPrice: float | None = None
+    feedbackStyle: str = "actionable"
 
 
 class CliValidateBody(Body):
@@ -137,6 +143,8 @@ class CliRunBody(Body):
     temperature: float | None = Field(default=None, ge=0.0, le=2.0)
     seed: int | None = None
     timeout: float = Field(default=60.0, ge=1.0, le=300.0)
+    repairs: int = Field(default=0, ge=0, le=5)
+    feedbackStyle: str = "actionable"
 
 
 EXAMPLES = {
@@ -358,14 +366,26 @@ def create_app(db_path=None, contract_registry=None):
             try:
                 case = {"domain": body.domain, "prompt": snap["prompt"],
                         "context": {"confirmedState": snap["state"], "stateVersion": snap["version"]}}
-                generated = await provider.generate(messages_for(case, generation_schema))
+                def checkpoint():
+                    try:
+                        snapshot(body.stateId, identity, body.stateVersion)
+                    except HTTPException as exc:
+                        raise ContextError(str(exc.detail)) from None
+                async def request(messages, attempt):
+                    return await request_generation(provider, messages, 0, 1024, None)
+                def check(generated):
+                    result = evaluate(generated.text, engine, ref, candidate,
+                                      envelope("call_tool", spec["tool"], snap["state"]), snap["state"], spec.get("policy", {}))
+                    return generation_gate(runtime_gate(result), generated)
+                recovery = await coordinate(request, check, messages_for(case, generation_schema),
+                                            limits=RepairLimits(body.repairs), feedback_style=body.feedbackStyle, context_check=checkpoint)
             finally:
                 await provider.close()
-            result = evaluate(generated.text, engine, ref, candidate,
-                              envelope("call_tool", spec["tool"], snap["state"]), snap["state"], spec.get("policy", {}))
             snapshot(body.stateId, identity, body.stateVersion)
-            return {"model": generated.model, "output": generated.text, "validation": runtime_gate(result),
-                    "latencyMs": generated.latency_ms, "stateVersion": snap["version"]}
+            generated = recovery["attempts"][-1]["generation"] if recovery["attempts"] else None
+            return {"model": generated["model"] if generated else None, "output": generated["text"] if generated else None,
+                    "validation": recovery["finalEvaluation"], "repair": recovery,
+                    "latencyMs": recovery["elapsedMs"], "stateVersion": snap["version"]}
         except (ProviderError, ValueError) as exc:
             raise HTTPException(422, str(exc)) from None
 
@@ -457,6 +477,7 @@ def create_app(db_path=None, contract_registry=None):
                     val_res["result"] = "NOT_CHECKED"
                 val_res["notice"] = "Semantic correctness not checked: confirm an actual state to verify agreement."
 
+            val_res = generation_gate(val_res, generated)
             return {
                 "model": generated.model,
                 "output": raw_text,
@@ -502,7 +523,7 @@ def create_app(db_path=None, contract_registry=None):
                         gen = await provider.generate(messages)
                         eval_res = evaluate(gen.text, engine, ref, candidate, expected,
                                             state=snap["state"], policy=spec.get("policy", {}))
-                        runtime_gate(eval_res)
+                        generation_gate(runtime_gate(eval_res), gen)
                         arm_runs.append({
                             "repeat": rep,
                             "output": gen.text,
@@ -548,7 +569,8 @@ def create_app(db_path=None, contract_registry=None):
                 seed=body.seed,
                 input_price=body.inputPrice,
                 output_price=body.outputPrice,
-                operator=identity
+                operator=identity,
+                feedback_style=body.feedbackStyle,
             )
             return record.public_dict()
         except JobConflictError as exc:
@@ -644,7 +666,10 @@ def create_app(db_path=None, contract_registry=None):
             has_token=has_token,
         )
         try:
-            run_result = await execute_cli_run(
+            runner = execute_cli_recovery if body.repairs else execute_cli_run
+            repair_options = {"engine": engine, "repairs": body.repairs, "feedback_style": body.feedbackStyle} if body.repairs else {}
+            run_result = await runner(
+                **repair_options,
                 schema=body.schema_,
                 prompt=body.prompt,
                 model=body.model,

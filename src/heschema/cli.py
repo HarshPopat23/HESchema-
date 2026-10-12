@@ -33,6 +33,7 @@ def main():
     bench.add_argument("--out", default="results/run")
     bench.add_argument("--repeats", type=int, default=3)
     bench.add_argument("--repairs", type=int, default=2)
+    bench.add_argument("--feedback-style", choices=["generic", "raw", "actionable"], default="actionable")
     bench.add_argument("--seed", type=int, default=42)
     bench.add_argument("--limit", type=int)
     bench.add_argument("--max-requests", type=int)
@@ -78,7 +79,7 @@ def main():
                                  read_json(args.schema) if args.schema else None,
                                  read_json(args.minimal_schema) if args.minimal_schema else None,
                                  args.repeats, args.repairs, args.seed, args.max_tokens, args.temperature,
-                                 args.engine, args.input_price, args.output_price, args.max_requests)
+                                 args.engine, args.input_price, args.output_price, args.max_requests, feedback_style=args.feedback_style)
             finally:
                 await provider.close()
 

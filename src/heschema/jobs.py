@@ -117,6 +117,7 @@ class JobManager:
         input_price: float | None = None,
         output_price: float | None = None,
         operator: str = "local-operator",
+        feedback_style: str = "actionable",
     ) -> JobRecord:
         async with self.lock:
             self._check_single_active_job(operator)
@@ -124,6 +125,8 @@ class JobManager:
             if schema is not None:
                 check_schema(schema)
 
+            if feedback_style not in {"generic", "raw", "actionable"}:
+                raise ValueError("Unknown feedback style")
             selected_cases = self.select_cases(domain, preset, case_count)
             now = datetime.datetime.now(datetime.timezone.utc)
             job_id = f"job_{now.strftime('%Y%m%d_%H%M%S')}_{secrets.token_hex(4)}"
@@ -145,6 +148,7 @@ class JobManager:
                     "caseCount": len(selected_cases),
                     "repeats": repeats,
                     "repairs": repairs,
+                    "feedbackStyle": feedback_style,
                     "interval": interval,
                     "seed": seed,
                     "inputPrice": input_price,
@@ -201,6 +205,7 @@ class JobManager:
                 output_price=params.get("outputPrice"),
                 on_progress=on_progress,
                 cancel_event=record.cancel_event,
+                feedback_style=params["feedbackStyle"],
             )
 
             if record.cancel_event.is_set():

@@ -178,3 +178,16 @@ def validate_contract(raw, engine, contract, snapshot=None, *, generation=None):
             'generation': generation.diagnostic() if generation else None, 'errors': errors,
             'parsed': parsed, 'validationMs': (time.perf_counter_ns() - started) / 1e6,
             'validationComponents': ['python_draft202012', 'python_formats'] + (['blaze_boolean_crosscheck_ipc'] if engine.backend == 'blaze' else [])}
+
+
+def generation_gate(result, generated):
+    """Legacy evaluator adapter: absence and known truncation never become success."""
+    result['generation'] = generated.diagnostic()
+    if not generated.text or generated.completion == 'truncated':
+        result['success'] = False
+        result['result'] = 'FAIL' if generated.text else 'NOT_EVALUATED'
+        if not generated.text:
+            result['stages'] = dict.fromkeys(('json', 'originalSchema', 'context', 'relationships'), 'not_evaluated')
+        else:
+            result['errors'].append({'code': 'OUTPUT_TRUNCATED', 'stage': 'generation', 'message': 'Token limit reached', 'repair': 'stop'})
+    return result

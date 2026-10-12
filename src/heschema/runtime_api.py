@@ -5,7 +5,13 @@ from typing import Any
 from fastapi import Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
+from .capabilities import capability_profile
 from .context_schema import ContextError, check_context, effective_schema
+from .contracts import generation_envelope
+from .jsonio import canonical
+from .providers import Provider, ProviderError
+from .repair import RepairLimits, coordinate, request_generation
+from .schema_projection import project_schema
 from .validation import validate_contract
 
 
@@ -44,6 +50,25 @@ class ContractValidationBody(StrictBody):
     output: Any = None
     contextId: str | None = None
     contextVersion: int | None = Field(default=None, ge=1)
+
+
+class ContractGenerationBody(StrictBody):
+    contractId: str
+    contractVersion: str
+    contextId: str | None = None
+    contextVersion: int | None = Field(default=None, ge=1)
+    prompt: str = Field(min_length=1, max_length=20000)
+    provider: str
+    model: str | None = None
+    mode: str = 'prompt_only'
+    repairs: int = Field(default=0, ge=0, le=5)
+    maxRequests: int | None = Field(default=None, ge=1, le=6)
+    maxTokens: int = Field(default=1024, ge=1, le=128000)
+    tokenBudget: int | None = Field(default=None, ge=0)
+    deadlineSeconds: float = Field(default=180, gt=0, le=600)
+    feedbackStyle: str = 'actionable'
+    seed: int = 0
+    temperature: float | None = Field(default=None, ge=0, le=2)
 
 
 def install_contract_routes(app, store, engine, owner, registry):
@@ -135,5 +160,48 @@ def install_contract_routes(app, store, engine, owner, registry):
         except ContextError as exc:
             raise HTTPException(422, str(exc)) from None
         return {'schema': schema, 'contract': contract.identity, 'context': evidence}
+
+    @app.post('/contracts/generate')
+    async def generate(body: ContractGenerationBody, identity=Depends(owner)):
+        contract = definition(body.contractId, body.contractVersion)
+        snap = context_snapshot(contract, body.contextId, body.contextVersion, identity)
+        try:
+            effective, evidence = effective_schema(contract, snap)
+            original_envelope = generation_envelope(contract, contract.schema)
+            effective_envelope = generation_envelope(contract, effective)
+            projected, manifest = project_schema(original_envelope, effective_envelope)
+            profile = capability_profile(body.provider, body.mode, model=body.model)
+            if profile['adapterStatus'] == 'unsupported':
+                raise ValueError('Native mode is not implemented for this provider')
+            limits = RepairLimits(body.repairs, body.maxRequests, body.maxTokens, body.tokenBudget, body.deadlineSeconds)
+            messages = [{'role': 'system', 'content': 'Return only whole JSON. Never execute tools. Use clarification for missing information and preserve refusals. Authoritative output schema: ' + canonical(effective_envelope) + '\nDeclared application relationships: ' + canonical(contract.relationships) + '\nApproved bindings: ' + canonical(evidence['activeBindings'])},
+                        {'role': 'user', 'content': body.prompt}]
+            provider = Provider(body.provider, body.model)
+            generation_schema = None if body.mode == 'prompt_only' else projected if body.mode == 'native_projected' else effective_envelope
+            def checkpoint():
+                try:
+                    context_snapshot(contract, body.contextId, body.contextVersion, identity)
+                except HTTPException as exc:
+                    raise ContextError(str(exc.detail)) from None
+            async def request(messages, attempt):
+                return await request_generation(provider, messages, body.seed, body.maxTokens, body.temperature, generation_schema)
+            try:
+                run = await coordinate(request, lambda g: validate_contract(g.text, engine, contract, snap, generation=g), messages,
+                                       limits=limits, feedback_style=body.feedbackStyle, context_check=checkpoint)
+            finally:
+                await provider.close()
+        except (ValueError, ProviderError) as exc:
+            raise HTTPException(422, str(exc)) from None
+        return {'protocolVersion': 2, 'output': run['attempts'][-1]['generation']['text'] if run['attempts'] else None,
+                'validation': run['finalEvaluation'], 'repair': run,
+                'projection': manifest if body.mode == 'native_projected' else None,
+                'capability': profile, 'executionAuthorized': False}
+
+    @app.get('/capabilities/{provider}/{mode}')
+    def capabilities(provider: str, mode: str, identity=Depends(owner)):
+        try:
+            return capability_profile(provider, mode)
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from None
 
     return definition, context_snapshot

@@ -4,14 +4,15 @@ import copy
 import random
 import time
 from collections import defaultdict
-from dataclasses import asdict
 from pathlib import Path
 
+from .diagnostics import runtime_feedback
 from .domains import DOMAINS, reference_schema
 from .jsonio import canonical, digest, loads, read_json, write_json
 from .metrics import classify, custom_fitness, paired_effect, summarize
+from .repair import RepairLimits, coordinate, request_generation
 from .schema import SchemaEngine, typed_minimal
-from .validation import evaluate
+from .validation import evaluate, generation_gate
 
 ARMS = ("no_schema", "minimal_schema", "input_schema")
 
@@ -85,7 +86,7 @@ def mutation_probes(cases, schemas, engine):
 async def run(cases, provider, out, candidate=None, minimal=None, repeats=3, repairs=2,
               seed=42, max_tokens=1024, temperature=None, backend="jsonschema",
               input_price=None, output_price=None, max_requests=None,
-              on_progress=None, cancel_event=None):
+              on_progress=None, cancel_event=None, feedback_style="actionable"):
     if repeats < 1 or repairs < 0 or repairs > 5:
         raise ValueError("Use repeats >= 1 and 0 <= repairs <= 5")
     if not cases or max_tokens < 1 or (max_requests is not None and max_requests < 1):
@@ -116,6 +117,7 @@ async def run(cases, provider, out, candidate=None, minimal=None, repeats=3, rep
     config = {"datasetHash": digest(cases), "schemaHashes": {d: digest(s) for d, s in schemas.items()},
               "minimalSchemaHashes": {d: digest(s) for d, s in minimals.items()},
               "provider": provider.name, "requestedModel": provider.model,
+              "protocolVersion": 2, "repairProtocol": "bounded-v2", "feedbackStyle": feedback_style,
               "repeats": repeats, "repairs": repairs, "seed": seed, "maxTokens": max_tokens,
               "temperature": temperature, "engine": backend, "decodingMode": "prompt_only_unconstrained",
               "requestInterval": provider.interval, "inputPricePerMillion": input_price,
@@ -160,38 +162,24 @@ async def run(cases, provider, out, candidate=None, minimal=None, repeats=3, rep
                 shown = {"no_schema": None, "minimal_schema": minimals[domain], "input_schema": schemas[domain]}[arm]
                 messages = messages_for(case, shown)
                 started = time.perf_counter()
-                attempts, generation_error = [], None
-                first = final = None
-                for attempt in range(repairs + 1):
-                    try:
-                        requests += 1
-                        # Identical per-case seed across arms when the provider supports it.
-                        paired_seed = seed + int(digest(case["id"])[:8], 16) + rep
-                        generated = await provider.generate(messages, paired_seed, max_tokens, temperature)
-                        evaluation = evaluate(generated.text, engine, ref, schemas[domain], case["expected"],
-                                              state=case.get("context", {}).get("confirmedState"), policy=spec.get("policy", {}))
-                        attempts.append({"generation": asdict(generated), "evaluation": evaluation})
-                    except RuntimeError as exc:
-                        generation_error = str(exc)
-                        evaluation = evaluate("", engine, ref, schemas[domain], case["expected"])
-                        if first is None:
-                            first = evaluation
-                        final = evaluation
-                        break
-                    if first is None:
-                        first = evaluation
-                    final = evaluation
-                    if evaluation["success"]:
-                        break
-                    # Repair feedback reveals only failures available at runtime,
-                    # never benchmark ground truth or expected field values.
-                    feedback = [e for e in evaluation["errors"] if e["code"] in {"JSON_INVALID", "SCHEMA_INVALID", "CANDIDATE_SCHEMA_INVALID"}]
-                    if case.get("context", {}).get("confirmedState"):
-                        feedback += [e for e in evaluation["errors"] if e["code"] == "STATE_MISMATCH"]
-                    if not feedback:
-                        break  # Do not use an oracle to repair silent intent errors.
-                    messages.extend([{"role": "assistant", "content": generated.text},
-                                     {"role": "user", "content": "Correct these validation failures: " + canonical(feedback)}])
+                paired_seed = seed + int(digest(case["id"])[:8], 16) + rep
+                async def request(messages, attempt):
+                    return await request_generation(provider, messages, paired_seed, max_tokens, temperature)
+                def score(generated):
+                    result = evaluate(generated.text, engine, ref, schemas[domain], case["expected"],
+                                      state=case.get("context", {}).get("confirmedState"), policy=spec.get("policy", {}))
+                    return generation_gate(result, generated)
+                def feedback(result):
+                    return runtime_feedback(result["errors"], allow_state=bool(case.get("context", {}).get("confirmedState")))
+                recovery = await coordinate(request, score, messages,
+                                            limits=RepairLimits(repairs, max_requests - requests if max_requests is not None else None, max_tokens),
+                                            feedback_style=feedback_style, feedback_selector=feedback, cancel_event=cancel_event)
+                attempts = recovery["attempts"]
+                requests += recovery["requestsAttempted"]
+                first, final = recovery["firstEvaluation"], recovery["finalEvaluation"]
+                generation_error = recovery["failure"]["message"] if recovery["failure"] else None
+                if recovery["stopReason"] == "cancelled":
+                    was_cancelled = True
                 inp = sum(a["generation"]["input_tokens"] or 0 for a in attempts) if attempts and all(a["generation"]["input_tokens"] is not None for a in attempts) else None
                 otp = sum(a["generation"]["output_tokens"] or 0 for a in attempts) if attempts and all(a["generation"]["output_tokens"] is not None for a in attempts) else None
                 known = not generation_error and inp is not None and otp is not None
@@ -201,7 +189,9 @@ async def run(cases, provider, out, candidate=None, minimal=None, repeats=3, rep
                        "repeat": rep, "arm": arm, "status": "provider_error" if generation_error else "ok",
                        "providerError": generation_error, "firstPassSuccess": first["success"],
                        "finalSuccess": final["success"], "firstEvaluation": first,
-                       "attempts": attempts, "repairAttempts": attempt,
+                       "attempts": attempts, "repairAttempts": recovery["repairAttempts"],
+                       "requestLedger": recovery["requestLedger"], "requestsAttempted": recovery["requestsAttempted"],
+                       "stopReason": recovery["stopReason"], "repairLimits": recovery["limits"],
                        "transportRetries": sum(a["generation"]["transport_retries"] for a in attempts),
                        "latencyMs": (time.perf_counter() - started) * 1000,
                        "inputTokens": inp if known else None, "outputTokens": otp if known else None, "costUsd": cost}
@@ -219,7 +209,7 @@ async def run(cases, provider, out, candidate=None, minimal=None, repeats=3, rep
                         "currentArm": arm,
                         "currentRepeat": rep
                     })
-                if consecutive_errors >= 3:
+                if was_cancelled or consecutive_errors >= 3:
                     break  # Avoid exhausting an account during an outage/quota failure.
         rows = list(latest.values())
         report = make_report(rows, config, cases, schemas, engine)
