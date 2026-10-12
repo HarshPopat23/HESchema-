@@ -132,15 +132,11 @@ async def handle_chat_completion(raw_body: dict[str, Any], operator_identity: st
     messages_payload = [{"role": m.role, "content": m.content} for m in req.messages]
     format_arg = None
 
+    # Identical schema grounding in both modes; only native enforcement differs.
+    grounding_content = ("[SCHEMA CONSTRAINT]\nOutput ONLY JSON adhering to this schema:\n" + canonical(schema_dict))
+    messages_payload.append({"role": "user", "content": grounding_content})
     if mode == "native_schema":
         format_arg = schema_dict
-    else:
-        # Prompt-only mode: schema grounding message appended
-        grounding_content = (
-            f"\n\n[SCHEMA CONSTRAINT]\nYou must output ONLY valid JSON adhering strictly to this JSON Schema:\n{canonical(schema_dict)}"
-        )
-        messages_payload.append({"role": "user", "content": grounding_content})
-        format_arg = None
 
     try:
         provider = Provider(provider_name, model=req.model)
@@ -173,7 +169,7 @@ async def handle_chat_completion(raw_body: dict[str, Any], operator_identity: st
     elif raw_finish:
         finish_reason = str(raw_finish)
     else:
-        finish_reason = "stop"
+        finish_reason = None
 
     usage_data = None
     if result.input_tokens is not None and result.output_tokens is not None:
@@ -198,6 +194,9 @@ async def handle_chat_completion(raw_body: dict[str, Any], operator_identity: st
                 "finish_reason": finish_reason,
             }
         ],
+        "heschema": {"generation": result.diagnostic(), "mode": mode,
+                     "schemaEnforcement": "requested" if mode == "native_schema" else "none",
+                     "executionAuthorized": False},
     }
     if usage_data:
         envelope["usage"] = usage_data

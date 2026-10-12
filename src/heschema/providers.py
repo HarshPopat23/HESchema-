@@ -17,6 +17,14 @@ ROOT = Path(__file__).resolve().parents[2]
 class ProviderError(RuntimeError):
     """Sanitized provider failure: never include keys or HTTP response bodies."""
 
+    def __init__(self, message, *, code="provider_error", status=None, requests=1, elapsed_ms=None):
+        super().__init__(message)
+        self.code, self.status, self.requests, self.elapsed_ms = code, status, requests, elapsed_ms
+
+    def diagnostic(self):
+        return {"code": self.code, "httpStatus": self.status, "message": str(self)[:500],
+                "requests": self.requests, "elapsedMs": self.elapsed_ms}
+
 
 @dataclass
 class Generation:
@@ -27,6 +35,27 @@ class Generation:
     transport_retries: int = 0
     latency_ms: float = 0
     metadata: dict = field(default_factory=dict)
+    reasoning: str | None = None
+
+    @property
+    def completion(self):
+        reason = self.metadata.get("finish_reason")
+        if reason in {"length", "max_tokens", "max_output_tokens"}:
+            return "truncated"
+        if not self.text:
+            return "empty"
+        if reason in {"stop", "end_turn", "stop_sequence", "completed"}:
+            return "completed"
+        return "unknown"
+
+    def diagnostic(self):
+        return {"outputPresent": bool(self.text), "completion": self.completion,
+                "finishReason": self.metadata.get("finish_reason"), "model": self.model,
+                "modelConfirmed": self.metadata.get("resolvedModelConfirmed", False),
+                "usage": {"inputTokens": self.input_tokens, "outputTokens": self.output_tokens},
+                "transportRetries": self.transport_retries, "latencyMs": self.latency_ms,
+                "durationsMs": self.metadata.get("durationsMs", {}),
+                "reasoningPresent": bool(self.reasoning)}
 
 
 def registry():
@@ -60,6 +89,8 @@ class Provider:
 
     def request(self, messages, seed, max_tokens, temperature, format_schema=None):
         config, kind = self.config, self.config["kind"]
+        if format_schema is not None and kind not in {"ollama", "mock"}:
+            raise ProviderError("Native schema mode is not implemented for this adapter", code="unsupported_mode", requests=0)
         base = (os.getenv("OLLAMA_BASE_URL", config.get("base_url")) if kind == "ollama" else config.get("base_url", "")).rstrip("/")
         headers = {"Content-Type": "application/json"}
         if kind == "responses":
@@ -109,10 +140,10 @@ class Provider:
                 try:
                     response = await self.client.post(url, headers=headers, json=payload)
                 except httpx.TimeoutException:
-                    raise ProviderError(f"{self.name}: request timed out after {int(self.timeout)}s") from None
+                    raise ProviderError(f"{self.name}: request timed out after {int(self.timeout)}s", code="timeout", requests=attempts + 1, elapsed_ms=(time.perf_counter() - start) * 1000) from None
                 except httpx.RequestError:
                     if not retry or attempts >= 2:
-                        raise ProviderError(f"{self.name}: network request failed") from None
+                        raise ProviderError(f"{self.name}: network request failed", code="network_error", requests=attempts + 1) from None
                     attempts += 1
                     await asyncio.sleep(min(2 ** attempts, 8))
                     continue
@@ -127,15 +158,18 @@ class Provider:
                     await asyncio.sleep(max(self.interval, retry_after))
                     continue
                 if response.is_error:
-                    raise ProviderError(f"{self.name}: HTTP {response.status_code}; check credentials, model and account limits")
+                    code = "request_rejected" if response.status_code in {400, 422} else "authentication_error" if response.status_code in {401, 403} else "provider_error"
+                    raise ProviderError(f"{self.name}: HTTP {response.status_code}; check credentials, model and account limits", code=code, status=response.status_code, requests=attempts + 1, elapsed_ms=(time.perf_counter() - start) * 1000)
                 try:
                     data = response.json()
                     kind = self.config["kind"]
                     finish_reason = None
+                    reasoning = None
                     if kind == "responses":
                         text = "".join(c["text"] for item in data.get("output", []) for c in item.get("content", []) if c.get("type") == "output_text")
                         usage = data.get("usage", {})
                         inp, out = usage.get("input_tokens"), usage.get("output_tokens")
+                        finish_reason = "completed" if data.get("status") == "completed" else data.get("incomplete_details", {}).get("reason")
                     elif kind == "anthropic":
                         text = "".join(c["text"] for c in data["content"] if c["type"] == "text")
                         usage = data.get("usage", {})
@@ -146,10 +180,9 @@ class Provider:
                         finish_reason = data.get("stop_reason")
                     elif kind == "ollama":
                         text = data["message"]["content"]
-                        if not text and data["message"].get("thinking"):
-                            text = data["message"]["thinking"]
+                        reasoning = data["message"].get("thinking")
                         inp, out = data.get("prompt_eval_count"), data.get("eval_count")
-                        finish_reason = data.get("done_reason") or ("stop" if data.get("done") else None)
+                        finish_reason = data.get("done_reason")
                     else:
                         text = data["choices"][0]["message"]["content"]
                         usage = data.get("usage", {})
@@ -160,11 +193,16 @@ class Provider:
                 except (ValueError, TypeError, KeyError, IndexError, AttributeError):
                     raise ProviderError(f"{self.name}: unexpected response structure") from None
                 meta = {"resolvedModelConfirmed": bool(data.get("model"))}
+                if kind == "ollama":
+                    meta["durationsMs"] = {key: data[source] / 1e6 for key, source in
+                                           (("total", "total_duration"), ("load", "load_duration"),
+                                            ("promptEvaluation", "prompt_eval_duration"), ("generation", "eval_duration"))
+                                           if isinstance(data.get(source), (int, float))}
                 if finish_reason is not None:
                     meta["finish_reason"] = finish_reason
                 return Generation(text, inp, out, data.get("model", self.model), attempts,
                                   (time.perf_counter() - start) * 1000,
-                                  meta)
+                                  meta, reasoning)
 
 
 async def tavily_search(query, max_results=5, transport=None):

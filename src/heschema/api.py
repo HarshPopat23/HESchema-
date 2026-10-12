@@ -18,13 +18,14 @@ from .cli_integration import (
     evaluate_document_diagnostics,
     execute_cli_run,
     generate_command_previews,
+    generated_content,
     probe_cli_support,
     probe_ollama_status,
 )
 from .compat import handle_chat_completion, make_error_response
 from .domains import DOMAINS, reference_schema
 from .jobs import JobConflictError, JobManager
-from .jsonio import canonical, loads
+from .jsonio import loads
 from .providers import ROOT, Provider, ProviderError, registry, tavily_search
 from .schema import SchemaEngine, check_schema, typed_minimal
 from .state import StateStore
@@ -654,12 +655,9 @@ def create_app(db_path=None):
         except Exception as exc:
             raise HTTPException(422, str(exc)) from None
 
-        content_to_eval = run_result["stdout"]
-        if run_result.get("parsedJson") and isinstance(run_result["parsedJson"], dict):
-            if "document" in run_result["parsedJson"]:
-                content_to_eval = canonical(run_result["parsedJson"]["document"])
-            elif "raw" in run_result["parsedJson"]:
-                content_to_eval = str(run_result["parsedJson"]["raw"])
+        content_to_eval = generated_content(run_result)
+        run_result["generatedContent"] = content_to_eval
+        run_result["outputPresent"] = content_to_eval is not None
 
         diagnostics = evaluate_document_diagnostics(
             body.schema_,

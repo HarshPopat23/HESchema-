@@ -843,12 +843,16 @@ async def execute_cli_run(
             "elapsedMs": round(elapsed_ms, 2),
             "parsedJson": parsed_json,
             "jsonValid": json_valid,
+            "reportJsonValid": json_valid,
+            "generatedContent": generated_content({"parsedJson": parsed_json}),
+            "outputPresent": generated_content({"parsedJson": parsed_json}) is not None,
             "cliRunSuccess": proc.returncode == 0,
         }
     except asyncio.TimeoutError:
         if proc:
             try:
                 proc.kill()
+                await proc.wait()
             except Exception:
                 pass
         raise TimeoutError(f"Sourcemeta CLI timed out after {timeout} seconds.") from None
@@ -860,24 +864,37 @@ async def execute_cli_run(
             pass
 
 
+def generated_content(run_result):
+    """Only explicit CLI document/raw fields identify model output; the report is not output."""
+    report = run_result.get("parsedJson")
+    if isinstance(report, dict):
+        if "document" in report:
+            return canonical(report["document"])
+        if isinstance(report.get("raw"), str):
+            return report["raw"]
+    return None
+
+
 def evaluate_document_diagnostics(
     schema: dict[str, Any],
-    raw_content: str,
+    raw_content: str | None,
     engine: SchemaEngine,
 ) -> dict[str, Any]:
     """Independent diagnostic separation between raw output, json parsing, schema conformance, and semantic correctness."""
     parsed_instance = None
-    json_parse_valid = False
+    present = raw_content is not None and raw_content != ""
+    json_parse_valid = None if not present else False
     parse_error = None
 
-    try:
-        parsed_instance = loads(raw_content)
-        json_parse_valid = True
-    except Exception as exc:
-        parse_error = str(exc)
+    if present:
+        try:
+            parsed_instance = loads(raw_content)
+            json_parse_valid = True
+        except (ValueError, TypeError) as exc:
+            parse_error = str(exc)
 
     schema_errors = []
-    schema_valid = False
+    schema_valid = False if present else None  # Preserve the legacy malformed-output mapping.
     if json_parse_valid:
         try:
             schema_errors = engine.errors(schema, parsed_instance)
@@ -886,6 +903,10 @@ def evaluate_document_diagnostics(
             schema_errors = [{"code": "VALIDATION_FAILED", "path": "/", "message": str(exc)}]
 
     return {
+        "outputPresent": present,
+        "stages": {"json": "valid" if json_parse_valid else "invalid" if present else "not_evaluated",
+                   "originalSchema": "valid" if schema_valid else "invalid" if json_parse_valid else "not_evaluated",
+                   "context": "not_evaluated", "relationships": "not_evaluated"},
         "jsonParseValid": json_parse_valid,
         "jsonParseError": parse_error,
         "parsedInstance": parsed_instance,
