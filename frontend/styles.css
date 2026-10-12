@@ -847,3 +847,10 @@ textarea {
     grid-template-columns: 1fr;
   }
 }
+
+.contract-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
+#tab-contracts textarea { width: 100%; font-family: ui-monospace, monospace; }
+#tab-contracts .form-group .btn { margin-top: .5rem; margin-right: .25rem; }
+#contract-evidence { overflow-wrap: anywhere; }
+#contract-record { max-height: 30rem; overflow: auto; }
+@media (max-width: 800px) { .contract-grid { grid-template-columns: 1fr; } }

@@ -1,0 +1,65 @@
+name: Structured-output constraint use case
+description: Share a sanitized case to help distinguish authoring, provider, context and relationship gaps.
+title: "Use case: "
+body:
+  - type: markdown
+    attributes:
+      value: Share only sanitized examples you are allowed to publish. A passing sample does not prove provider enforcement. See docs/use-case-intake.md.
+  - type: dropdown
+    id: classification
+    attributes:
+      label: Suspected category
+      options:
+        - Unknown / please help classify
+        - Authoring gap (existing keywords may express it)
+        - Provider coverage gap
+        - Relationship requirement
+        - Runtime context requirement
+        - Source interpretation requirement
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      label: Original schema, whole output, and desired outcome
+      description: Include the smallest reproducible schema and the output that caused the problem.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context and source evidence
+      description: Which inputs were approved or independently verified? Include versions/freshness requirements and unknown facts.
+    validations:
+      required: true
+  - type: textarea
+    id: backend
+    attributes:
+      label: Provider, model, backend version, decoding mode, and workaround
+    validations:
+      required: true
+  - type: dropdown
+    id: provenance
+    attributes:
+      label: Evidence provenance
+      options:
+        - Naturally observed output
+        - Deliberately mutated output
+        - Author-created synthetic example
+        - Historical pilot
+    validations:
+      required: true
+  - type: dropdown
+    id: permission
+    attributes:
+      label: Permission to publish this sanitized example
+      options:
+        - Granted for this sanitized example
+        - Withheld (describe the constraint without private data)
+    validations:
+      required: true
+  - type: textarea
+    id: review
+    attributes:
+      label: Independent review and limitations
+      description: Leave unknowns explicit; do not identify a company as an adopter without evidence.

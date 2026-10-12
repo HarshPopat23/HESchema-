@@ -51,3 +51,41 @@ def test_upstream_rejection_is_classified_and_body_credentials_are_absent(monkey
         finally:
             await p.close()
     asyncio.run(check())
+
+
+def test_cli_preview_preserves_shell_metacharacters_as_literal_arguments():
+    import shlex
+
+    from heschema.cli_integration import generate_command_previews
+    prompt = "$(echo sensitive) `echo unsafe` 'quoted' $TOKEN"
+    previews = generate_command_previews('a b.json', prompt, 'http://localhost', 'model $(test)', 'native_schema')
+    words = shlex.split(previews['posix'])
+    assert words[words.index('--ask') + 1] == prompt
+    assert words[words.index('--model') + 1] == 'model $(test)'
+    assert "''quoted''" in previews['powershell']
+
+
+def test_cancelled_cli_process_is_terminated_and_awaited(tmp_path, monkeypatch):
+    import os
+    import sys
+
+    from heschema.cli_integration import execute_cli_run
+    if os.name != 'posix':
+        pytest.skip('POSIX process liveness check')
+    script, pidfile = tmp_path / 'blocked.py', tmp_path / 'pid.txt'
+    script.write_text('import os, time\nfrom pathlib import Path\nPath(' + repr(str(pidfile)) + ').write_text(str(os.getpid()))\ntime.sleep(1000)\n')
+    monkeypatch.setattr('heschema.cli_integration.resolve_cli_path', lambda: ([sys.executable, str(script)], None))
+    async def check():
+        task = asyncio.create_task(execute_cli_run(schema={}, prompt='test', model='test'))
+        for _ in range(200):
+            if pidfile.exists():
+                break
+            await asyncio.sleep(.01)
+        assert pidfile.exists()
+        pid = int(pidfile.read_text())
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+        with pytest.raises(ProcessLookupError):
+            os.kill(pid, 0)
+    asyncio.run(check())

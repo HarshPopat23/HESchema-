@@ -2,7 +2,9 @@
 
 import asyncio
 import os
+import shlex
 import shutil
+import signal
 import sys
 import tempfile
 import time
@@ -744,11 +746,10 @@ def generate_command_previews(
     param_str = " ".join(params)
 
     # Shell quoting for prompt
-    safe_prompt_posix = prompt.replace('"', '\\"')
-    safe_prompt_pwsh = prompt.replace('"', '`"')
-
-    posix_cmd = f'jsonschema llm {schema_path} --ask "{safe_prompt_posix}" --url {url} --model "{model}" {param_str}{header_flag_posix} --json'
-    pwsh_cmd = f'& jsonschema llm {schema_path} --ask "{safe_prompt_pwsh}" --url {url} --model "{model}" {param_str}{header_flag_pwsh} --json'
+    def powershell_quote(value):
+        return "'" + value.replace("'", "''") + "'"
+    posix_cmd = f'jsonschema llm {shlex.quote(schema_path)} --ask {shlex.quote(prompt)} --url {shlex.quote(url)} --model {shlex.quote(model)} {param_str}{header_flag_posix} --json'
+    pwsh_cmd = f'& jsonschema llm {powershell_quote(schema_path)} --ask {powershell_quote(prompt)} --url {powershell_quote(url)} --model {powershell_quote(model)} {param_str}{header_flag_pwsh} --json'
 
     return {"posix": posix_cmd, "powershell": pwsh_cmd}
 
@@ -816,6 +817,7 @@ async def execute_cli_run(
             *argv,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
+            start_new_session=os.name == 'posix',
         )
         stdout_bytes, stderr_bytes = await asyncio.wait_for(proc.communicate(), timeout=timeout)
         elapsed_ms = (time.perf_counter() - start_time) * 1000
@@ -848,13 +850,18 @@ async def execute_cli_run(
             "outputPresent": generated_content({"parsedJson": parsed_json}) is not None,
             "cliRunSuccess": proc.returncode == 0,
         }
-    except asyncio.TimeoutError:
+    except (asyncio.TimeoutError, asyncio.CancelledError) as exc:
         if proc:
             try:
-                proc.kill()
+                if os.name == 'posix':
+                    os.killpg(proc.pid, signal.SIGKILL)
+                else:
+                    proc.kill()
                 await proc.wait()
             except Exception:
                 pass
+        if isinstance(exc, asyncio.CancelledError):
+            raise
         raise TimeoutError(f"Sourcemeta CLI timed out after {timeout} seconds.") from None
     finally:
         # Clean up temporary directory and schema file

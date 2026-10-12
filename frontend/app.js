@@ -236,6 +236,7 @@
   // --- Initialization ---
   async function init() {
     setupEventListeners();
+    setupContracts();
     await loadProviders();
     await loadDomainReferenceSchema(el.domainSelect.value);
     updateCallsEstimate();
@@ -514,10 +515,14 @@
   // --- Tabs Switcher ---
   function switchTab(tab) {
     activeTab = tab;
-    [el.tabBtnPrompt, el.tabBtnBenchmark, el.tabBtnCli].forEach((b) => b && b.classList.remove("active"));
-    [el.tabPrompt, el.tabBenchmark, el.tabCli].forEach((p) => p && p.classList.remove("active"));
+    [el.tabBtnPrompt, el.tabBtnBenchmark, el.tabBtnCli, document.getElementById("tab-btn-contracts")].forEach((b) => b && b.classList.remove("active"));
+    [el.tabPrompt, el.tabBenchmark, el.tabCli, document.getElementById("tab-contracts")].forEach((p) => p && p.classList.remove("active"));
 
-    if (tab === "prompt") {
+    if (tab === "contracts") {
+      document.getElementById("tab-btn-contracts").classList.add("active");
+      document.getElementById("tab-contracts").classList.add("active");
+      if (el.commonControls) el.commonControls.classList.add("hidden");
+    } else if (tab === "prompt") {
       el.tabBtnPrompt.classList.add("active");
       el.tabPrompt.classList.add("active");
       if (el.commonControls) el.commonControls.classList.remove("hidden");
@@ -783,9 +788,9 @@
         mode: mode,
         model: model,
         latencyMs: res.elapsedMs,
-        finishReason: res.cliRunSuccess ? "stop" : "cli_exit_" + res.exitCode,
+        finishReason: null,
         usage: null,
-        rawContent: res.stdout,
+        rawContent: res.generatedContent,
         stdout: res.stdout,
         stderr: res.stderr,
         exitCode: res.exitCode,
@@ -897,15 +902,16 @@
     el.cliTransportBadge.className = (isSubprocess ? trial.exitCode === 0 : true) ? "result-badge badge-pass" : "result-badge badge-fail";
 
     const isConformant = trial.diagnostics && trial.diagnostics.heschemaSchemaValid;
-    el.cliConformanceBadge.textContent = isConformant ? "SCHEMA CONFORMANT" : "SCHEMA NON-CONFORMANT";
-    el.cliConformanceBadge.className = isConformant ? "result-badge badge-pass" : "result-badge badge-fail";
+    const schemaState = trial.diagnostics && trial.diagnostics.stages ? trial.diagnostics.stages.originalSchema : (isConformant ? "valid" : "invalid");
+    el.cliConformanceBadge.textContent = schemaState === "not_evaluated" ? "SCHEMA NOT EVALUATED" : isConformant ? "SCHEMA CONFORMANT" : "SCHEMA NON-CONFORMANT";
+    el.cliConformanceBadge.className = schemaState === "not_evaluated" ? "result-badge" : isConformant ? "result-badge badge-pass" : "result-badge badge-fail";
 
     el.cliModeBadge.textContent = "Mode: " + trial.mode;
     el.cliSemanticBadge.textContent = "Semantic: Not checked";
 
     // Stats
     setSafeText(el.cliResModel, trial.model);
-    setSafeText(el.cliResFinish, trial.finishReason || "stop");
+    setSafeText(el.cliResFinish, trial.finishReason || "Unknown");
 
     const inTok = trial.usage ? trial.usage.prompt_tokens : "—";
     const outTok = trial.usage ? trial.usage.completion_tokens : "—";
@@ -920,7 +926,7 @@
       setSafeText(el.cliResParsed, JSON.stringify(trial.diagnostics.parsedInstance, null, 2));
       el.cliJsonError.classList.add("hidden");
     } else {
-      setSafeText(el.cliResParsed, "(Unable to parse strict JSON)");
+      setSafeText(el.cliResParsed, trial.diagnostics && trial.diagnostics.outputPresent === false ? "No generated document; checks not evaluated" : "(Unable to parse strict JSON)");
       setSafeText(el.cliJsonError, trial.diagnostics ? trial.diagnostics.jsonParseError : "Parse error");
       el.cliJsonError.classList.remove("hidden");
     }
@@ -970,19 +976,19 @@
 
       // JSON Valid
       const tdJson = document.createElement("td");
-      tdJson.textContent = t.diag.jsonParseValid ? "YES" : "NO";
+      tdJson.textContent = t.diag.jsonParseValid === null ? "NOT EVALUATED" : t.diag.jsonParseValid ? "YES" : "NO";
       tdJson.style.color = t.diag.jsonParseValid ? "#065f46" : "#991b1b";
       tr.appendChild(tdJson);
 
       // Conformance
       const tdConf = document.createElement("td");
-      tdConf.textContent = t.diag.heschemaSchemaValid ? "CONFORMANT" : "FAIL (" + t.diag.schemaErrors.length + " err)";
+      tdConf.textContent = t.diag.stages && t.diag.stages.originalSchema === "not_evaluated" ? "NOT EVALUATED" : t.diag.heschemaSchemaValid ? "CONFORMANT" : "FAIL (" + t.diag.schemaErrors.length + " err)";
       tdConf.style.color = t.diag.heschemaSchemaValid ? "#065f46" : "#991b1b";
       tr.appendChild(tdConf);
 
       // Finish Reason
       const tdFin = document.createElement("td");
-      tdFin.textContent = t.comp.choices && t.comp.choices[0] ? t.comp.choices[0].finish_reason : "—";
+      tdFin.textContent = (t.comp.choices && t.comp.choices[0] ? t.comp.choices[0].finish_reason : null) || "Unknown";
       tr.appendChild(tdFin);
 
       // Tokens
@@ -1931,6 +1937,99 @@
     addStat("Cost", row.costUsd !== null ? "$" + row.costUsd.toFixed(5) : "Not available");
 
     el.runDetailModal.classList.remove("hidden");
+  }
+
+  function setupContracts() {
+    const get = (name) => document.getElementById("contract-" + name);
+    const tab = document.getElementById("tab-btn-contracts");
+    if (!tab) return;
+    let context = null, contextProposal = null, example = null, last = null;
+    const json = (name) => JSON.parse(get(name).value);
+    const definition = () => json("definition");
+    const contextFields = () => {
+      if (context && JSON.stringify(json("context")) !== contextProposal) throw new Error("Context proposal changed. Create and confirm a new context before using it.");
+      return context ? { contextId: context.id, contextVersion: context.version } : {};
+    };
+    function showContext() {
+      get("context-status").textContent = context ? "Context " + context.id + " · version " + context.version + " · " + (context.confirmed ? "Confirmed" : "Unconfirmed") : "No context";
+    }
+    function render(record) {
+      last = record;
+      const decision = record.validation || record;
+      get("results").classList.remove("hidden");
+      get("decision").textContent = decision.result + " · execution not authorized";
+      get("stages").replaceChildren();
+      const stages = { generation: decision.generation ? decision.generation.completion : "not_evaluated", ...decision.stages,
+        projection: record.projection ? record.projection.equivalence : "not_requested",
+        repairs: record.repair ? record.repair.repairAttempts + " / " + record.repair.limits.repairs + " · " + record.repair.stopReason : "not_requested",
+        providerEnforcement: record.capability ? record.capability.keywordEnforcement : "not_evaluated" };
+      Object.entries(stages).forEach(([key, value]) => {
+        const row = document.createElement("tr");
+        [key, value].forEach((text) => { const cell = document.createElement("td"); cell.textContent = String(text); row.appendChild(cell); });
+        get("stages").appendChild(row);
+      });
+      get("evidence").textContent = "Contract " + decision.contract.id + " v" + decision.contract.version + " · " + decision.contract.hash + " · intent scope: " + decision.intentScope;
+      get("diagnostics").textContent = JSON.stringify(decision.errors, null, 2);
+      get("record").textContent = JSON.stringify(record, null, 2);
+    }
+    async function action(button, operation) {
+      button.disabled = true;
+      get("error").classList.add("hidden");
+      try { await operation(); }
+      catch (error) { get("error").textContent = error.message; get("error").classList.remove("hidden"); }
+      finally { button.disabled = false; }
+    }
+    function bind(name, operation) { const button = get(name); button.addEventListener("click", () => action(button, operation)); }
+    async function load() {
+      example = await apiFetch("/ui/contracts/examples/" + get("example").value);
+      get("definition").value = JSON.stringify(example.contract, null, 2);
+      get("context").value = JSON.stringify(example.context, null, 2);
+      get("output").value = JSON.stringify(example.invalidOutput, null, 2);
+      get("prompt").value = example.prompt;
+      get("notice").textContent = "Provenance: " + example.provenance + ". Verify context values before confirming.";
+      context = null; contextProposal = null; showContext();
+      get("results").classList.add("hidden");
+    }
+    tab.addEventListener("click", () => { switchTab("contracts"); if (!example) action(get("load"), load); });
+    bind("load", load);
+    bind("good", async () => { if (example) get("output").value = JSON.stringify(example.validOutput, null, 2); });
+    bind("bad", async () => { if (example) get("output").value = JSON.stringify(example.invalidOutput, null, 2); });
+    bind("register", async () => { await apiFetch("/contracts", { method: "POST", body: JSON.stringify(definition()) }); get("notice").textContent = "Contract registered. This version is immutable."; });
+    bind("create-context", async () => {
+      const c = definition();
+      context = await apiFetch("/contexts", { method: "POST", body: JSON.stringify({ contractId: c.id, contractVersion: c.version, ...json("context") }) });
+      contextProposal = JSON.stringify(json("context"));
+      showContext();
+    });
+    bind("confirm", async () => {
+      if (!context) throw new Error("Create a context proposal first");
+      contextFields();
+      context = await apiFetch("/contexts/" + encodeURIComponent(context.id) + "/confirm", { method: "POST", body: JSON.stringify({ version: context.version }) });
+      showContext();
+    });
+    bind("invalidate", async () => {
+      if (!context) throw new Error("Create a context proposal first");
+      context = await apiFetch("/contexts/" + encodeURIComponent(context.id) + "/invalidate", { method: "POST", body: JSON.stringify({ version: context.version }) });
+      showContext();
+      if (last) {
+        last = { ...last, currentContextStatus: { version: context.version, confirmed: false, priorDecisionStale: true } };
+        get("record").textContent = JSON.stringify(last, null, 2);
+        get("decision").textContent = "Approval invalidated · prior decision is stale";
+      }
+    });
+    bind("validate", async () => { const c = definition(); render(await apiFetch("/contracts/validate", { method: "POST", body: JSON.stringify({ contractId: c.id, contractVersion: c.version, ...contextFields(), output: json("output") }) })); });
+    bind("generate", async () => {
+      const c = definition();
+      const record = await apiFetch("/contracts/generate", { method: "POST", body: JSON.stringify({ contractId: c.id, contractVersion: c.version, ...contextFields(), prompt: get("prompt").value,
+        provider: get("provider").value, model: get("model").value || null, mode: get("mode").value, repairs: Number(get("repairs").value), feedbackStyle: get("feedback").value }) });
+      if (record.output !== null) get("output").value = record.output;
+      render(record);
+    });
+    bind("download", async () => {
+      if (!last) return;
+      const url = URL.createObjectURL(new Blob([JSON.stringify(last, null, 2)], { type: "application/json" }));
+      const link = document.createElement("a"); link.href = url; link.download = "heschema-evidence.json"; link.click(); URL.revokeObjectURL(url);
+    });
   }
 
   // --- Run on Load ---

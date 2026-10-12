@@ -96,6 +96,8 @@ def main():
         else:
             source = read_json(Path(args.first_out) / "config.json")
             estimate = dry_run(cases, source["repeats"], source["modes"], repair_budgets=args.budgets, feedback_styles=args.styles)
+            estimate["alreadyRecordedFirstPassRequests"] = estimate["firstPassRequests"]
+            estimate["maximumRequests"] = estimate["maximumRepairRequests"]
         if not args.execute:
             print(json.dumps(estimate, indent=2))
             return

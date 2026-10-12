@@ -2,6 +2,7 @@
 
 import time
 from dataclasses import dataclass
+from datetime import datetime, timezone
 
 from .jsonio import canonical, loads
 
@@ -170,8 +171,8 @@ def validate_contract(raw, engine, contract, snapshot=None, *, generation=None):
                     (effective_valid and not context['missingBindings'] and relationships['status'] in {'valid', 'not_evaluated'})))
     intent_checked = bool(context['activeBindings']) and not context['missingBindings'] and not controls
     success = accepted and intent_checked
-    result = 'REFUSED' if controls and action == 'refuse' else 'NEEDS_CONTEXT' if controls or 'needs_context' in stages.values() else 'PASS' if success else 'NOT_CHECKED' if accepted else 'FAIL' if output_present else 'NOT_EVALUATED'
-    return {'protocolVersion': 2, 'result': result, 'success': bool(success), 'accepted': accepted,
+    result = 'FAIL' if output_present and not acceptable_completion else 'REFUSED' if controls and action == 'refuse' else 'NEEDS_CONTEXT' if controls or 'needs_context' in stages.values() else 'PASS' if success else 'NOT_CHECKED' if accepted else 'FAIL' if output_present else 'NOT_EVALUATED'
+    return {'protocolVersion': 2, 'evaluatedAt': datetime.now(timezone.utc).isoformat(), 'result': result, 'success': bool(success), 'accepted': accepted,
             'executionAuthorized': False, 'outputPresent': output_present, 'stages': stages,
             'jsonValid': True if stages['json'] == 'valid' else False if stages['json'] == 'invalid' else None,
             'referenceSchemaValid': original_valid, 'effectiveSchemaValid': effective_valid,

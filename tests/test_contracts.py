@@ -82,3 +82,13 @@ def test_api_register_validate_existing_output_and_stale_context(tmp_path, monke
         client.post(f"/contexts/{s['id']}/invalidate", json={'version': 1})
         assert client.post('/contracts/validate', json=body).status_code == 409
         assert '/contracts/validate' in client.get('/openapi.json').json()['paths']
+
+
+def test_partial_context_validation_does_not_rewrite_const_data():
+    c = Contract('context-data', '1', {'type': 'object', 'properties': {'payload': True}},
+                 contextSchema={'type': 'object', 'properties': {'payload': {'const': {'required': ['x']}}}},
+                 bindings=[{'instanceLocation': '/payload', 'contextLocation': '/payload'}])
+    with pytest.raises(ContextError, match='Context data violates'):
+        effective_schema(c, approved(c, {'payload': {}}, ['/payload']))
+    schema, _ = effective_schema(c, approved(c, {'payload': {'required': ['x']}}, ['/payload']))
+    assert not SchemaEngine().errors(schema, {'payload': {'required': ['x']}})

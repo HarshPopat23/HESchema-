@@ -48,6 +48,7 @@ def test_missing_reference_unapproved_evidence_and_pointer_locations():
     r = [{'id': 'member', 'kind': 'reference_member', 'target': '/id', 'contextLocation': '/ids'}]
     assert evaluate_rules({'id': 1}, r)['status'] == 'needs_context'
     assert evaluate_rules({'id': True}, r, {'ids': [1]})['status'] == 'invalid'
+    assert evaluate_rules({'id': 1.0}, r, {'ids': [1]})['status'] == 'valid'
     assert evaluate_rules({'id': 1}, r, {'ids': [1]}, set())['status'] == 'needs_context'
     assert pointer(['a/b~c', 0]) == '/a~1b~0c/0'
     assert parts('/a~1b~0c/0') == ['a/b~c', '0']

@@ -27,7 +27,7 @@ from .compat import handle_chat_completion, make_error_response
 from .context_schema import ContextError
 from .domains import DOMAINS, reference_schema
 from .jobs import JobConflictError, JobManager
-from .jsonio import loads
+from .jsonio import loads, read_json
 from .providers import ROOT, Provider, ProviderError, registry, tavily_search
 from .registry import builtin_registry
 from .repair import RepairLimits, coordinate, request_generation
@@ -237,6 +237,12 @@ def create_app(db_path=None, contract_registry=None):
 
     contracts = contract_registry or builtin_registry(store.path)
     install_contract_routes(app, store, engine, owner, contracts)
+
+    @app.get('/ui/contracts/examples/{name}')
+    def contract_example(name: str, identity=Depends(owner)):
+        if name not in {'invoice', 'trip'}:
+            raise HTTPException(404, 'Example not found')
+        return read_json(ROOT / 'examples/contracts' / (name + '.json'))
 
     def snapshot(state_id, identity, version):
         try:

@@ -1,0 +1,88 @@
+{
+  "contract": {
+    "id": "invoice-demo",
+    "version": "1",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "quantity": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "unitPriceMinor": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "totalMinor": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "quantity",
+        "unitPriceMinor",
+        "totalMinor"
+      ],
+      "additionalProperties": false
+    },
+    "outputKind": "document",
+    "description": "Synthetic invoice with approved integer minor-unit inputs",
+    "contextSchema": {
+      "type": "object",
+      "properties": {
+        "quantity": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "unitPriceMinor": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "bindings": [
+      {
+        "instanceLocation": "/quantity",
+        "contextLocation": "/quantity"
+      },
+      {
+        "instanceLocation": "/unitPriceMinor",
+        "contextLocation": "/unitPriceMinor"
+      }
+    ],
+    "relationships": [
+      {
+        "id": "invoice-total",
+        "kind": "product_equals",
+        "operands": [
+          "/quantity",
+          "/unitPriceMinor"
+        ],
+        "target": "/totalMinor"
+      }
+    ]
+  },
+  "context": {
+    "data": {
+      "quantity": 2,
+      "unitPriceMinor": 1250
+    },
+    "approvedPointers": [
+      "/quantity",
+      "/unitPriceMinor"
+    ]
+  },
+  "invalidOutput": {
+    "quantity": 2,
+    "unitPriceMinor": 1250,
+    "totalMinor": 25
+  },
+  "validOutput": {
+    "quantity": 2,
+    "unitPriceMinor": 1250,
+    "totalMinor": 2500
+  },
+  "prompt": "Prepare the approved invoice. Compute totalMinor from quantity and unitPriceMinor.",
+  "provenance": "synthetic_demo_reproducing_pilot_arithmetic_failure"
+}

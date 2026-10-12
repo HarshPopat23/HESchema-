@@ -5,9 +5,23 @@ from datetime import date
 from math import isfinite, prod
 
 from .diagnostics import diagnostic, parts, resolve
-from .jsonio import canonical
 
 KINDS = {'product_equals', 'sum_equals', 'date_before', 'equals', 'reference_member'}
+
+
+def json_equal(left, right):
+    """JSON value equality: numeric aliases match; booleans remain distinct."""
+    if type(left) is bool or type(right) is bool:
+        return type(left) is type(right) and left == right
+    if type(left) in {int, float} and type(right) in {int, float}:
+        return left == right
+    if type(left) is not type(right):
+        return False
+    if isinstance(left, dict):
+        return left.keys() == right.keys() and all(json_equal(left[k], right[k]) for k in left)
+    if isinstance(left, list):
+        return len(left) == len(right) and all(json_equal(a, b) for a, b in zip(left, right))
+    return left == right
 
 
 def check_rules(rules):
@@ -66,7 +80,7 @@ def evaluate_rules(document, rules, context=None, trusted_locations=None):
                 valid = _date(actual) < _date(expected)
             elif kind == 'equals':
                 actual, expected = resolve(document, rule['left']), resolve(document, rule['right'])
-                valid = canonical(actual) == canonical(expected)
+                valid = json_equal(actual, expected)
             else:
                 actual = resolve(document, rule['target'])
                 if context is None or (trusted_locations is not None and rule['contextLocation'] not in trusted_locations):
@@ -74,7 +88,7 @@ def evaluate_rules(document, rules, context=None, trusted_locations=None):
                 expected = resolve(context, rule['contextLocation'])
                 if not isinstance(expected, list):
                     raise ValueError('Reference membership requires a trusted array')
-                valid = any(canonical(actual) == canonical(item) for item in expected)
+                valid = any(json_equal(actual, item) for item in expected)
             records.append({'ruleId': rule_id, 'status': 'valid' if valid else 'invalid'})
             if not valid:
                 errors.append(diagnostic('RELATION_MISMATCH', 'relationships', location,

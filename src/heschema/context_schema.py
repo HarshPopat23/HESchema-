@@ -7,6 +7,7 @@ from jsonschema import Draft202012Validator, FormatChecker
 
 from .diagnostics import parts, resolve
 from .jsonio import digest
+from .schema import schema_children
 
 
 class ContextError(ValueError):
@@ -85,11 +86,11 @@ def effective_schema(contract, snapshot=None):
         def omit_required(node):
             if isinstance(node, dict):
                 node.pop('required', None)
-                for value in node.values():
-                    omit_required(value)
-            elif isinstance(node, list):
-                for value in node:
-                    omit_required(value)
+                for tokens, child in schema_children(node):
+                    # Predicates/unions retain their own required discriminators;
+                    # const/enum/default values are data, not subschemas.
+                    if tokens[0] not in {'if', 'not', 'anyOf', 'oneOf', 'contains'}:
+                        omit_required(child)
         omit_required(partial)
         errors = list(Draft202012Validator(partial, format_checker=FormatChecker()).iter_errors(data))
         if errors:

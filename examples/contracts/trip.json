@@ -1,0 +1,74 @@
+{
+  "contract": {
+    "id": "trip-demo",
+    "version": "1",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "destination": {
+          "type": "string",
+          "minLength": 1
+        },
+        "travellers": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8
+        }
+      },
+      "required": [
+        "destination",
+        "travellers"
+      ],
+      "additionalProperties": false
+    },
+    "outputKind": "tool_envelope",
+    "tool": "prepare_custom_trip",
+    "description": "Custom tool registered without a DOMAINS source edit",
+    "contextSchema": {
+      "type": "object",
+      "properties": {
+        "destination": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "bindings": [
+      {
+        "instanceLocation": "/destination",
+        "contextLocation": "/destination"
+      }
+    ],
+    "relationships": []
+  },
+  "context": {
+    "data": {
+      "destination": "Goa"
+    },
+    "approvedPointers": [
+      "/destination"
+    ]
+  },
+  "invalidOutput": {
+    "action": "call_tool",
+    "tool": "prepare_custom_trip",
+    "arguments": {
+      "destination": "Pune",
+      "travellers": 2
+    },
+    "missingFields": [],
+    "reason": ""
+  },
+  "validOutput": {
+    "action": "call_tool",
+    "tool": "prepare_custom_trip",
+    "arguments": {
+      "destination": "Goa",
+      "travellers": 2
+    },
+    "missingFields": [],
+    "reason": ""
+  },
+  "prompt": "Prepare a trip for 2 travellers to the approved destination.",
+  "provenance": "author_created_synthetic_demo"
+}

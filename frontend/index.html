@@ -80,8 +80,50 @@
     <nav class="tabs-nav">
       <button id="tab-btn-prompt" class="tab-btn active" type="button">Prompt Test</button>
       <button id="tab-btn-benchmark" class="tab-btn" type="button">Schema Benchmark</button>
+      <button id="tab-btn-contracts" class="tab-btn" type="button">Contracts &amp; Context</button>
       <button id="tab-btn-cli" class="tab-btn" type="button">CLI Integration</button>
     </nav>
+
+    <div id="tab-contracts" class="tab-pane">
+      <section class="card">
+        <h2>Validate a declared contract</h2>
+        <p>Check the original schema, approved context, and relationships separately. A decision covers declared checks and never grants execution permission.</p>
+        <div class="control-row">
+          <div class="form-group"><label for="contract-example">Walkthrough</label><select id="contract-example"><option value="invoice">Invoice arithmetic</option><option value="trip">Confirmed destination / custom tool</option></select></div>
+          <button id="contract-load" class="btn btn-secondary" type="button">Load example</button>
+          <button id="contract-good" class="btn btn-secondary" type="button">Use valid output</button>
+          <button id="contract-bad" class="btn btn-secondary" type="button">Use invalid output</button>
+        </div>
+        <div class="contract-grid">
+          <div class="form-group"><label for="contract-definition">Versioned contract (edit ID/version for your tool)</label><textarea id="contract-definition" rows="14" spellcheck="false"></textarea><button id="contract-register" class="btn btn-secondary" type="button">Register contract</button></div>
+          <div class="form-group"><label for="contract-context">Context proposal: data and explicitly approved pointers</label><textarea id="contract-context" rows="9" spellcheck="false"></textarea><button id="contract-create-context" class="btn btn-secondary" type="button">Create unconfirmed context</button><button id="contract-confirm" class="btn btn-primary" type="button">Confirm these fields</button><button id="contract-invalidate" class="btn btn-secondary" type="button">Invalidate approval</button><p id="contract-context-status" aria-live="polite">No context</p></div>
+        </div>
+        <div class="form-group"><label for="contract-output">Existing whole JSON output</label><textarea id="contract-output" rows="7" spellcheck="false"></textarea><button id="contract-validate" class="btn btn-primary" type="button">Validate existing output</button></div>
+        <details>
+          <summary>Optional generation and bounded repair</summary>
+          <p>Runtime repairs default to zero. Selecting a real provider makes inference requests using your backend configuration. Schema acceptance does not establish enforcement.</p>
+          <div class="form-group"><label for="contract-prompt">Prompt</label><textarea id="contract-prompt" rows="3"></textarea></div>
+          <div class="control-row">
+            <div class="form-group"><label for="contract-provider">Provider</label><select id="contract-provider"><option value="mock">mock (offline, nonempirical)</option><option value="ollama">ollama</option></select></div>
+            <div class="form-group"><label for="contract-model">Model (optional)</label><input id="contract-model" type="text"></div>
+            <div class="form-group"><label for="contract-mode">Decoding</label><select id="contract-mode"><option value="prompt_only">Prompt only</option><option value="native_original">Native original</option><option value="native_projected">Native projected</option></select></div>
+            <div class="form-group"><label for="contract-repairs">Extra attempts</label><input id="contract-repairs" type="number" min="0" max="5" value="0"></div>
+            <div class="form-group"><label for="contract-feedback">Feedback</label><select id="contract-feedback"><option value="actionable">Actionable</option><option value="raw">Normalized raw errors</option><option value="generic">Generic</option></select></div>
+          </div>
+          <button id="contract-generate" class="btn btn-primary" type="button">Generate and validate</button>
+        </details>
+        <p id="contract-notice" class="muted" aria-live="polite">Examples are synthetic, not evidence of company adoption.</p>
+        <div id="contract-error" class="error-msg hidden" role="alert"></div>
+      </section>
+      <section id="contract-results" class="card hidden" aria-live="polite">
+        <h3 id="contract-decision">Decision</h3>
+        <div class="table-container"><table><thead><tr><th>Check</th><th>Status</th></tr></thead><tbody id="contract-stages"></tbody></table></div>
+        <p id="contract-evidence"></p>
+        <h4>Diagnostics</h4><pre id="contract-diagnostics" class="code-block"></pre>
+        <details><summary>Projection, repair and evidence record</summary><pre id="contract-record" class="code-block"></pre></details>
+        <button id="contract-download" class="btn btn-secondary" type="button">Download evidence JSON</button>
+      </section>
+    </div>
 
     <!-- ==================== TAB 1: PROMPT TEST ==================== -->
     <div id="tab-prompt" class="tab-pane active">

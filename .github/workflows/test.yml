@@ -16,6 +16,15 @@ jobs:
       - run: pytest -q
       - run: heschema dataset
       - run: heschema benchmark --provider mock --limit 8 --repeats 1 --out results/ci
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check frontend/app.js
+      - run: npm ci --prefix frontend
+      - run: npm test --prefix frontend
+      - run: heschema decoding-study
+      - run: heschema decoding-study --execute --provider mock --max-requests 24 --out results/ci-decoding
+      - run: heschema repair-study --execute --provider mock --first-out results/ci-decoding --max-requests 216 --out results/ci-repair
   blaze:
     runs-on: ubuntu-latest
     steps:
