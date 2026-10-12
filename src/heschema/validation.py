@@ -56,6 +56,7 @@ def policy_errors(arguments, policy):
 def evaluate(raw, engine, reference_schema, candidate_schema, expected, state=None, policy=None):
     """Ground truth is passed only to this evaluator, never a model/provider."""
     started = time.perf_counter_ns()
+    timing_before = engine.timing_snapshot()
     errors, parsed, json_valid = [], None, False
     try:
         parsed = loads(raw) if isinstance(raw, str) else loads(canonical(raw))
@@ -108,6 +109,7 @@ def evaluate(raw, engine, reference_schema, candidate_schema, expected, state=No
             "policyValid": policy_valid, "success": success,
             "executionAuthorized": False, "errors": errors,
             "validationMs": (time.perf_counter_ns() - started) / 1e6,
+            "validationTimingsMs": engine.timing_delta(timing_before),
             "parsed": parsed}
 
 
@@ -118,6 +120,7 @@ def validate_contract(raw, engine, contract, snapshot=None, *, generation=None):
     from .diagnostics import diagnostic
     from .rules import evaluate_rules
     started = time.perf_counter_ns()
+    timing_before = engine.timing_snapshot()
     effective, context = effective_schema(contract, snapshot)
     stages = dict.fromkeys(('json', 'originalSchema', 'effectiveSchema', 'context', 'relationships'), 'not_evaluated')
     errors, parsed, action = [], None, None
@@ -177,6 +180,7 @@ def validate_contract(raw, engine, contract, snapshot=None, *, generation=None):
             'contract': contract.identity, 'context': context, 'relationships': relationships,
             'generation': generation.diagnostic() if generation else None, 'errors': errors,
             'parsed': parsed, 'validationMs': (time.perf_counter_ns() - started) / 1e6,
+            'validationTimingsMs': engine.timing_delta(timing_before),
             'validationComponents': ['python_draft202012', 'python_formats'] + (['blaze_boolean_crosscheck_ipc'] if engine.backend == 'blaze' else [])}
 
 

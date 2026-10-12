@@ -6,7 +6,7 @@ from fastapi import Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
 from .capabilities import capability_profile
-from .context_schema import ContextError, check_context, effective_schema
+from .context_schema import ContextError, check_context, effective_schema, trusted_information
 from .contracts import generation_envelope
 from .jsonio import canonical
 from .providers import Provider, ProviderError
@@ -145,7 +145,8 @@ def install_contract_routes(app, store, engine, owner, registry):
         contract = definition(body.contractId, body.contractVersion)
         snap = context_snapshot(contract, body.contextId, body.contextVersion, identity)
         try:
-            result = validate_contract(body.output, engine, contract, snap)
+            raw = 'null' if body.output is None and 'output' in body.model_fields_set else body.output
+            result = validate_contract(raw, engine, contract, snap)
         except ContextError as exc:
             raise HTTPException(422, str(exc)) from None
         context_snapshot(contract, body.contextId, body.contextVersion, identity)
@@ -174,7 +175,7 @@ def install_contract_routes(app, store, engine, owner, registry):
             if profile['adapterStatus'] == 'unsupported':
                 raise ValueError('Native mode is not implemented for this provider')
             limits = RepairLimits(body.repairs, body.maxRequests, body.maxTokens, body.tokenBudget, body.deadlineSeconds)
-            messages = [{'role': 'system', 'content': 'Return only whole JSON. Never execute tools. Use clarification for missing information and preserve refusals. Authoritative output schema: ' + canonical(effective_envelope) + '\nDeclared application relationships: ' + canonical(contract.relationships) + '\nApproved bindings: ' + canonical(evidence['activeBindings'])},
+            messages = [{'role': 'system', 'content': 'Return only whole JSON. Never execute tools. Use clarification for missing information and preserve refusals. Authoritative output schema: ' + canonical(effective_envelope) + '\nDeclared application relationships: ' + canonical(contract.relationships) + '\nApproved bindings: ' + canonical(evidence['activeBindings']) + '\nTrusted facts: ' + canonical(trusted_information(snap))},
                         {'role': 'user', 'content': body.prompt}]
             provider = Provider(body.provider, body.model)
             generation_schema = None if body.mode == 'prompt_only' else projected if body.mode == 'native_projected' else effective_envelope
@@ -192,6 +193,9 @@ def install_contract_routes(app, store, engine, owner, registry):
                 await provider.close()
         except (ValueError, ProviderError) as exc:
             raise HTTPException(422, str(exc)) from None
+        for evaluation in (run['firstEvaluation'], run['finalEvaluation']):
+            evaluation.setdefault('contract', contract.identity)
+            evaluation.setdefault('context', evidence)
         return {'protocolVersion': 2, 'output': run['attempts'][-1]['generation']['text'] if run['attempts'] else None,
                 'validation': run['finalEvaluation'], 'repair': run,
                 'projection': manifest if body.mode == 'native_projected' else None,

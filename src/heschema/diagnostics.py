@@ -40,13 +40,16 @@ def diagnostic(code, stage, location='', message='', *, repair='correct_output',
             'message': message, 'repair': repair, **details}
 
 
-def schema_error(error):
+def schema_error(error, locations=None):
     location = pointer(error.absolute_path)
+    evaluated = pointer(error.absolute_schema_path)
+    source = (locations or {}).get(id(error.schema))
+    keyword_location = source + pointer([error.validator]) if source is not None and error.validator is not None else evaluated
     result = diagnostic('SCHEMA_INVALID', 'schema', location, error.message,
-                        schemaLocation=pointer(error.absolute_schema_path), keyword=error.validator)
+                        schemaLocation=keyword_location, evaluationLocation=evaluated, keyword=error.validator)
     result['path'] = location  # Legacy alias; root is the empty pointer.
     if error.context:
-        result['details'] = [schema_error(child) for child in error.context]
+        result['details'] = [schema_error(child, locations) for child in error.context]
     return result
 
 

@@ -11,6 +11,7 @@ from .domains import DOMAINS, reference_schema
 from .jsonio import canonical, digest, loads, read_json, write_json
 from .metrics import classify, custom_fitness, paired_effect, summarize
 from .repair import RepairLimits, coordinate, request_generation
+from .reports import provenance
 from .schema import SchemaEngine, typed_minimal
 from .validation import evaluate, generation_gate
 
@@ -120,7 +121,7 @@ async def run(cases, provider, out, candidate=None, minimal=None, repeats=3, rep
               "protocolVersion": 2, "repairProtocol": "bounded-v2", "feedbackStyle": feedback_style,
               "repeats": repeats, "repairs": repairs, "seed": seed, "maxTokens": max_tokens,
               "temperature": temperature, "engine": backend, "decodingMode": "prompt_only_unconstrained",
-              "requestInterval": provider.interval, "inputPricePerMillion": input_price,
+              "provenance": provenance(), "requestInterval": provider.interval, "inputPricePerMillion": input_price,
               "outputPricePerMillion": output_price}
     out = Path(out)
     out.mkdir(parents=True, exist_ok=True)

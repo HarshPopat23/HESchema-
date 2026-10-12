@@ -76,7 +76,14 @@ def summarize(rows):
     cost_known = bool(rows) and all(c is not None for c in costs)
     input_known = bool(rows) and all(r["inputTokens"] is not None for r in rows)
     output_known = bool(rows) and all(r["outputTokens"] is not None for r in rows)
+    durations = {status: {"count": sum(r["status"] == status for r in rows),
+                          "totalMs": sum(r["latencyMs"] for r in rows if r["status"] == status)}
+                 for status in sorted({r["status"] for r in rows})}
     return {"runs": n, "providerErrors": n - len(available),
+            "durationsByOutcome": durations,
+            "requestsAttempted": sum(r.get("requestsAttempted", len(r["attempts"]) + int(r["status"] != "ok")) for r in rows),
+            "firstPassSuccessDenominator": n,
+            "schemaValidityDenominator": len(calls),
             "firstPassSuccessPercent": rate(first * 100, n), "finalSuccessPercent": rate(final * 100, n),
             "firstPassWilson95": wilson(first, n),
             "semanticAccuracyPercent": rate(sum(r["firstEvaluation"]["semanticValid"] for r in rows) * 100, n),
@@ -136,7 +143,7 @@ def compare_models(reports):
     if any(not r["complete"] for r in reports):
         raise ValueError("Complete both model experiments before comparison")
     if any(not r.get("comparisonValid") for r in reports):
-        raise ValueError("Model comparison requires real, error-free, fixed-model experiments")
+        raise ValueError("Model comparison requires complete, compatible fixed-model evidence")
     for key in ("datasetHash", "schemaHashes", "minimalSchemaHashes", "repeats", "repairs", "seed", "maxTokens", "temperature", "decodingMode"):
         if a["config"][key] != b["config"][key]:
             raise ValueError(f"Reports have different {key}")

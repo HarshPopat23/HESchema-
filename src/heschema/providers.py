@@ -87,6 +87,26 @@ class Provider:
         if self.client is not None:
             await self.client.aclose()
 
+    async def runtime_metadata(self):
+        """Read-only backend identity; missing metadata remains unknown, never guessed."""
+        result = {"backendVersion": None, "modelDigest": None}
+        if self.config['kind'] != 'ollama':
+            return result
+        base = os.getenv('OLLAMA_BASE_URL', self.config.get('base_url', '')).rstrip('/')
+        try:
+            response = await self.client.get(base + '/api/version', timeout=3)
+            if response.is_success:
+                version = response.json().get('version')
+                result['backendVersion'] = version if isinstance(version, str) else None
+            response = await self.client.get(base + '/api/tags', timeout=3)
+            if response.is_success:
+                for model in response.json().get('models', []):
+                    if model.get('name') == self.model or model.get('model') == self.model:
+                        result['modelDigest'] = model.get('digest')
+        except (httpx.RequestError, ValueError, AttributeError, TypeError):
+            pass
+        return result
+
     def request(self, messages, seed, max_tokens, temperature, format_schema=None):
         config, kind = self.config, self.config["kind"]
         if format_schema is not None and kind not in {"ollama", "mock"}:
@@ -169,7 +189,7 @@ class Provider:
                         text = "".join(c["text"] for item in data.get("output", []) for c in item.get("content", []) if c.get("type") == "output_text")
                         usage = data.get("usage", {})
                         inp, out = usage.get("input_tokens"), usage.get("output_tokens")
-                        finish_reason = "completed" if data.get("status") == "completed" else data.get("incomplete_details", {}).get("reason")
+                        finish_reason = "completed" if data.get("status") == "completed" else (data.get("incomplete_details") or {}).get("reason")
                     elif kind == "anthropic":
                         text = "".join(c["text"] for c in data["content"] if c["type"] == "text")
                         usage = data.get("usage", {})
@@ -193,6 +213,8 @@ class Provider:
                 except (ValueError, TypeError, KeyError, IndexError, AttributeError):
                     raise ProviderError(f"{self.name}: unexpected response structure") from None
                 meta = {"resolvedModelConfirmed": bool(data.get("model"))}
+                inp = inp if type(inp) is int and inp >= 0 else None
+                out = out if type(out) is int and out >= 0 else None
                 if kind == "ollama":
                     meta["durationsMs"] = {key: data[source] / 1e6 for key, source in
                                            (("total", "total_duration"), ("load", "load_duration"),

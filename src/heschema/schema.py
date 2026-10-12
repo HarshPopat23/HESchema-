@@ -5,12 +5,13 @@ import os
 import subprocess
 import tempfile
 import threading
+import time
 from collections import OrderedDict
 from pathlib import Path
 
 from jsonschema import Draft202012Validator, FormatChecker, SchemaError
 
-from .diagnostics import schema_error
+from .diagnostics import pointer, schema_error
 from .jsonio import canonical, digest, loads
 
 DIALECT = "https://json-schema.org/draft/2020-12/schema"
@@ -43,6 +44,10 @@ def check_schema(schema):
         raise ValueError(f"Invalid JSON Schema: {exc.message}") from None
     if isinstance(schema, dict) and schema.get("$schema", DIALECT) != DIALECT:
         raise ValueError("This release accepts Draft 2020-12 only; convert other dialects explicitly")
+    known_vocabularies = {'https://json-schema.org/draft/2020-12/vocab/' + name for name in
+                          ('core', 'applicator', 'validation', 'unevaluated', 'meta-data', 'format-annotation', 'format-assertion', 'content')}
+    if isinstance(schema, dict) and any(required and uri not in known_vocabularies for uri, required in schema.get('$vocabulary', {}).items()):
+        raise ValueError('Required custom vocabulary is not implemented; use declared application rules')
 
     def walk(node):
         if isinstance(node, dict):
@@ -117,8 +122,16 @@ class SchemaEngine:
             raise ValueError("Unknown validation backend")
         self.backend, self.capacity = backend, capacity
         self.cache = OrderedDict()
+        self.schema_locations = {}
         self.lock = threading.RLock()
         self.worker = None
+        self.timings = threading.local()
+
+    def timing_snapshot(self):
+        return getattr(self.timings, 'values', {}).copy()
+
+    def timing_delta(self, before):
+        return {k: v - before.get(k, 0) for k, v in self.timing_snapshot().items()}
 
     def register(self, schema):
         key = digest(schema)
@@ -128,6 +141,13 @@ class SchemaEngine:
                 return key
             check_schema(schema)
             validator = Draft202012Validator(copy.deepcopy(schema), format_checker=FormatChecker())
+            locations = {}
+            def collect(node, path=()):
+                if isinstance(node, dict):
+                    locations[id(node)] = pointer(path)
+                    for tokens, child in schema_children(node):
+                        collect(child, (*path, *tokens))
+            collect(validator.schema)
             if self.backend == "blaze":
                 # This CLI compiles using native Blaze. No homemade replacement or 10x claim.
                 with tempfile.TemporaryDirectory(prefix="heschema-schema-") as folder:
@@ -142,21 +162,32 @@ class SchemaEngine:
                     self.worker = BlazeWorker()
                 self.worker.request({"op": "compile", "id": key, "template": template})
             self.cache[key] = validator
+            self.schema_locations[key] = locations
             if len(self.cache) > self.capacity:
                 old, _ = self.cache.popitem(last=False)
+                self.schema_locations.pop(old, None)
                 if self.worker:
                     self.worker.request({"op": "drop", "id": old})
             return key
 
     def errors(self, schema, instance):
         with self.lock:
+            started = time.perf_counter()
             key = self.register(schema)
+            registered = time.perf_counter()
             # Python remains an independent cross-check and enforces formats: the JS
             # Blaze port does not support Format Assertion yet. IPC costs are reported.
             native = self.worker.request({"op": "validate", "id": key, "instance": instance}) if self.worker else None
-            errors = [schema_error(e) for e in self.cache[key].iter_errors(instance)]
+            native_done = time.perf_counter()
+            errors = [schema_error(e, self.schema_locations[key]) for e in self.cache[key].iter_errors(instance)]
             if native and not native["valid"] and not errors:
                 errors.append({"code": "ENGINE_DISAGREEMENT", "path": "", "instanceLocation": "", "stage": "schema", "repair": "stop", "message": "Blaze rejected an instance accepted by the reference evaluator"})
+            cumulative = self.timing_snapshot()
+            for name, duration in {'registrationMs': registered - started,
+                                   'nativeIpcMs': native_done - registered if native is not None else 0,
+                                   'pythonReferenceMs': time.perf_counter() - native_done}.items():
+                cumulative[name] = cumulative.get(name, 0) + duration * 1000
+            self.timings.values = cumulative
             return errors
 
     def close(self):

@@ -7,9 +7,11 @@ from typing import Any
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
+from .contracts import Contract
 from .jsonio import canonical
 from .providers import Provider, ProviderError
-from .schema import check_schema
+from .schema import SchemaEngine, check_schema
+from .validation import validate_contract
 
 
 class OpenAISchemaObject(BaseModel):
@@ -44,7 +46,7 @@ class ChatCompletionRequest(BaseModel):
     n: int | None = None
 
 
-def make_error_response(status_code: int, message: str, error_type: str = "invalid_request_error", param: str | None = None, code: str | None = None) -> JSONResponse:
+def make_error_response(status_code: int, message: str, error_type: str = "invalid_request_error", param: str | None = None, code: str | None = None, failure=None) -> JSONResponse:
     return JSONResponse(
         status_code=status_code,
         content={
@@ -53,7 +55,9 @@ def make_error_response(status_code: int, message: str, error_type: str = "inval
                 "type": error_type,
                 "param": param,
                 "code": code,
-            }
+            },
+            "heschema": {"outputPresent": False, "stages": dict.fromkeys(("json", "originalSchema", "context", "relationships"), "not_evaluated"),
+                         "failure": failure, "executionAuthorized": False},
         },
     )
 
@@ -72,8 +76,8 @@ async def handle_chat_completion(raw_body: dict[str, Any], operator_identity: st
 
     try:
         req = ChatCompletionRequest.model_validate(raw_body)
-    except Exception as exc:
-        return make_error_response(400, f"Malformed chat completion request: {exc}", code="bad_request")
+    except Exception:
+        return make_error_response(400, "Malformed chat completion request: invalid parameters", code="bad_request")
 
     if not req.model.strip():
         return make_error_response(400, "Field 'model' must be a non-empty string.", param="model", code="missing_model")
@@ -155,10 +159,10 @@ async def handle_chat_completion(raw_body: dict[str, Any], operator_identity: st
     except ProviderError as exc:
         err_msg = str(exc)
         if "rate limit" in err_msg.lower() or "timeout" in err_msg.lower() or "timed out" in err_msg.lower():
-            return make_error_response(504, f"Upstream provider timed out or rate limited: {err_msg}", error_type="timeout_error", code="gateway_timeout")
-        return make_error_response(502, f"Upstream generation failed: {err_msg}", error_type="api_error", code="bad_gateway")
-    except Exception as exc:
-        return make_error_response(500, f"Internal completion error: {exc}", error_type="api_error", code="internal_error")
+            return make_error_response(504, f"Upstream provider timed out or rate limited: {err_msg}", error_type="timeout_error", code="gateway_timeout", failure=exc.diagnostic())
+        return make_error_response(502, f"Upstream generation failed: {err_msg}", error_type="api_error", code="bad_gateway", failure=exc.diagnostic())
+    except Exception:
+        return make_error_response(500, "Internal completion error", error_type="api_error", code="internal_error")
     finally:
         await provider.close()
 
@@ -179,6 +183,11 @@ async def handle_chat_completion(raw_body: dict[str, Any], operator_identity: st
             "total_tokens": result.input_tokens + result.output_tokens,
         }
 
+    validation_engine = SchemaEngine()
+    try:
+        validation = validate_contract(result.text, validation_engine, Contract('compat-document', '1', schema_dict), generation=result)
+    finally:
+        validation_engine.close()
     envelope = {
         "id": f"chatcmpl-{secrets.token_hex(12)}",
         "object": "chat.completion",
@@ -195,6 +204,7 @@ async def handle_chat_completion(raw_body: dict[str, Any], operator_identity: st
             }
         ],
         "heschema": {"generation": result.diagnostic(), "mode": mode,
+                     "validation": validation,
                      "schemaEnforcement": "requested" if mode == "native_schema" else "none",
                      "executionAuthorized": False},
     }

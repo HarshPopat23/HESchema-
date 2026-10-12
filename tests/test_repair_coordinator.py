@@ -95,3 +95,23 @@ def test_rejected_request_is_not_retried_and_replayed_first_output_is_free():
     assert not r['requestLedger'][0]['requestMade']
     with pytest.raises(ValueError):
         RepairLimits(6)
+
+
+def test_expired_context_after_request_keeps_ledger_when_empty_evaluation_cannot_run():
+    expired = False
+    def checkpoint():
+        if expired:
+            raise ContextError('Approval expired')
+    def evaluator(g):
+        if expired:
+            raise ContextError('Approval expired')
+        return check(g)
+    async def request(messages, index):
+        nonlocal expired
+        expired = True
+        return Generation(canonical(GOOD))
+    r = asyncio.run(coordinate(request, evaluator, [], context_check=checkpoint))
+    assert r['requestsAttempted'] == 1
+    assert len(r['requestLedger']) == 1
+    assert r['finalEvaluation']['result'] == 'STALE_CONTEXT'
+    assert not r['finalEvaluation']['success']

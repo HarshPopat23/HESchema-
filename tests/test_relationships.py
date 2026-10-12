@@ -33,7 +33,9 @@ def test_exact_arithmetic_large_values_booleans_and_sum():
     assert evaluate_rules({'quantity': True, 'unitPriceMinor': 7, 'totalMinor': 7}, rule)['status'] == 'invalid'
     summation = [{'id': 'sum', 'kind': 'sum_equals', 'operands': ['/a', '/b'], 'target': '/sum'}]
     assert evaluate_rules({'a': 10, 'b': 20, 'sum': 30}, summation)['status'] == 'valid'
-    assert evaluate_rules({'a': 10, 'b': 20.0, 'sum': 30}, summation)['status'] == 'invalid'
+    assert evaluate_rules({'a': 10, 'b': 20.0, 'sum': 30}, summation)['status'] == 'valid'
+    assert evaluate_rules({'a': 10, 'b': 20.5, 'sum': 30}, summation)['status'] == 'invalid'
+    assert evaluate_rules({'a': 10, 'b': 1e25, 'sum': 1e25}, summation)['status'] == 'invalid'
 
 
 @pytest.mark.parametrize('first,second,status', [('2026-01-01', '2026-01-02', 'valid'), ('2026-01-02', '2026-01-01', 'invalid'), ('2026-01-01', '2026-01-01', 'invalid'), ('2026-02-30', '2026-03-01', 'invalid'), ('20260101', '2026-01-02', 'invalid')])
@@ -56,3 +58,12 @@ def test_missing_reference_unapproved_evidence_and_pointer_locations():
     assert engine.errors({'type': 'integer'}, 'wrong')[0]['instanceLocation'] == ''
     disjunction = engine.errors({'oneOf': [{'type': 'integer'}, {'type': 'boolean'}]}, 'wrong')[0]
     assert len(disjunction['details']) == 2 and 'schemaLocation' in disjunction['details'][0]
+
+
+def test_reference_errors_identify_original_definition_and_preserve_evaluation_path():
+    schema = {'$defs': {'n': {'type': 'integer'}}, 'properties': {'x': {'$ref': '#/$defs/n'}}}
+    engine = SchemaEngine()
+    error = engine.errors(schema, {'x': 'wrong'})[0]
+    assert error['schemaLocation'] == '/$defs/n/type'
+    assert error['evaluationLocation'] == '/properties/x/type'
+    assert engine.timing_snapshot()['pythonReferenceMs'] >= 0

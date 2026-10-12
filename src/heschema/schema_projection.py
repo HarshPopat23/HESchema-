@@ -147,6 +147,7 @@ def project_schema(original, effective=None):
                 'generatedHash': digest(generated), 'transforms': applied, 'notApplied': rejected,
                 'equivalence': 'equivalent_for_declared_subset' if applied else 'identity',
                 'unsupportedResiduals': residuals, 'locationMap': locations,
+                'equivalenceScope': 'validation outcomes; annotation collections are not guaranteed equivalent',
                 'notice': 'Residual keywords have unknown provider enforcement. Differential tests are not a general equivalence proof.'}
     # Canonical serialization is used for identity only, not to infer semantic equivalence.
     assert canonical(original)  # Accept both true and false schemas.

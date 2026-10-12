@@ -2,7 +2,7 @@
 
 import re
 from datetime import date
-from math import prod
+from math import isfinite, prod
 
 from .diagnostics import diagnostic, parts, resolve
 from .jsonio import canonical
@@ -38,6 +38,16 @@ def _date(value):
     return date.fromisoformat(value)
 
 
+def _integer(value):
+    if type(value) is int:
+        return value
+    # JSON Schema integers are semantic numbers. Integral reals are safe only
+    # within the exact IEEE-754 integer range used by this parser.
+    if type(value) is float and isfinite(value) and value.is_integer() and abs(value) <= 2**53 - 1:
+        return int(value)
+    raise ValueError('Expected exact integer minor units; booleans, fractions and unsafe reals are not operands')
+
+
 def evaluate_rules(document, rules, context=None, trusted_locations=None):
     errors, records = [], []
     for rule in rules:
@@ -47,8 +57,8 @@ def evaluate_rules(document, rules, context=None, trusted_locations=None):
             if kind in {'product_equals', 'sum_equals'}:
                 operands = [resolve(document, p) for p in rule['operands']]
                 actual = resolve(document, rule['target'])
-                if any(type(v) is not int for v in [*operands, actual]):
-                    raise ValueError('Use integer minor units; booleans and real numbers are not operands')
+                operands = [_integer(v) for v in operands]
+                actual = _integer(actual)
                 expected = prod(operands) if kind == 'product_equals' else sum(operands)
                 valid = actual == expected
             elif kind == 'date_before':

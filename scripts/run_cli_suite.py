@@ -9,6 +9,7 @@ Executes across all 4 operational modes:
 Saves individual JSON logs and a consolidated summary report in results/cli_integration/.
 """
 
+import argparse
 import asyncio
 import json
 import os
@@ -174,7 +175,7 @@ async def run_pair(pair_id: str, pair_data: dict, client: httpx.AsyncClient, eng
     lat_nat = (time.perf_counter() - t0) * 1000
     nat_data = resp_nat.json() if resp_nat.status_code == 200 else {}
     nat_content = nat_data.get("choices", [{}])[0].get("message", {}).get("content", "")
-    nat_diag = evaluate_document_diagnostics(schema, nat_content, engine) if nat_content else {"heschemaSchemaValid": False}
+    nat_diag = evaluate_document_diagnostics(schema, nat_content or None, engine)
 
     # Trial 2: Prompt-Only Grounding
     payload_prompt = {
@@ -195,7 +196,7 @@ async def run_pair(pair_id: str, pair_data: dict, client: httpx.AsyncClient, eng
     lat_prompt = (time.perf_counter() - t0) * 1000
     prompt_data = resp_prompt.json() if resp_prompt.status_code == 200 else {}
     prompt_content = prompt_data.get("choices", [{}])[0].get("message", {}).get("content", "")
-    prompt_diag = evaluate_document_diagnostics(schema, prompt_content, engine) if prompt_content else {"heschemaSchemaValid": False}
+    prompt_diag = evaluate_document_diagnostics(schema, prompt_content or None, engine)
 
     comparison_result = {
         "native_schema": {
@@ -245,6 +246,16 @@ async def run_pair(pair_id: str, pair_data: dict, client: httpx.AsyncClient, eng
 
 
 async def main():
+    parser = argparse.ArgumentParser(description="Historical C01-C10 pilot harness; separate from controlled decoding study")
+    parser.add_argument("--execute", action="store_true")
+    parser.add_argument("--max-requests", type=int)
+    args = parser.parse_args()
+    if not args.execute:
+        print(json.dumps({"cases": 10, "maximumRequests": 40, "executed": False,
+                          "notice": "Use heschema decoding-study for controlled measurements. Explicit execution budget required."}, indent=2))
+        return
+    if args.max_requests is None or args.max_requests < 4:
+        parser.error("Execution requires --max-requests >= 4 (four requests per pair)")
     print(f"Connecting to HESchema backend at {BASE_URL}...")
     async with httpx.AsyncClient() as client:
         # Check health
@@ -260,7 +271,7 @@ async def main():
         engine = SchemaEngine("jsonschema")
         records = []
         try:
-            pair_keys = [f"C{i:02d}" for i in range(1, 11)]
+            pair_keys = [f"C{i:02d}" for i in range(1, min(10, args.max_requests // 4) + 1)]
             for p_id in pair_keys:
                 if p_id in CLI_PAIRS:
                     rec = await run_pair(p_id, CLI_PAIRS[p_id], client, engine)
@@ -270,7 +281,7 @@ async def main():
 
     # Generate summary JSON
     summary_path = RESULTS_DIR / "summary.json"
-    summary_path.write_text(json.dumps({"model": MODEL, "pairs": records}, indent=2), encoding="utf-8")
+    summary_path.write_text(json.dumps({"model": MODEL, "study": "historical_cli_pilot", "protocolVersion": 2, "requestBudget": args.max_requests, "pairs": records}, indent=2), encoding="utf-8")
     print(f"\nConsolidated JSON written to {summary_path}")
 
     # Generate summary Markdown Table

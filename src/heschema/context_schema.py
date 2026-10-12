@@ -13,6 +13,13 @@ class ContextError(ValueError):
     pass
 
 
+def trusted_information(snapshot):
+    if not snapshot:
+        return {}
+    locations = set(snapshot.get('approvedPointers', [])) | {f['contextLocation'] for f in snapshot.get('facts', [])}
+    return {location: copy.deepcopy(resolve(snapshot['data'], location)) for location in sorted(locations)}
+
+
 def check_context(snapshot, *, version=None):
     if not snapshot or not snapshot.get('confirmed'):
         raise ContextError('Unconfirmed context')
@@ -71,6 +78,8 @@ def effective_schema(contract, snapshot=None):
     approved |= {fact['contextLocation'] for fact in snapshot.get('facts', [])} if snapshot else set()
     if snapshot:
         check_context(snapshot)
+        if snapshot.get('contractHash') and snapshot['contractHash'] != contract.identity['hash']:
+            raise ContextError('Context belongs to a different contract/version')
         # Partial approval: validate only supplied values; required context fields can be absent.
         partial = copy.deepcopy(contract.contextSchema)
         def omit_required(node):

@@ -128,15 +128,15 @@ async def coordinate(generate, evaluate, messages, *, limits=None, feedback_styl
             if inspect.isawaitable(evaluation):
                 evaluation = await evaluation
             checkpoint()
-            attempts.append({'generation': asdict(generated), 'evaluation': evaluation})
+            attempts.append({'generation': asdict(generated), 'evaluation': evaluation, 'requestMade': request_record['requestMade']})
             first = evaluation if first is None else first
             final = evaluation
             action = (evaluation.get('parsed') or {}).get('action') if isinstance(evaluation.get('parsed'), dict) else None
-            if action in {'refuse', 'ask_clarification'} and evaluation.get('referenceSchemaValid'):
-                stop = action
-                break
             if generated.completion == 'truncated':
                 stop = 'truncated'
+                break
+            if action in {'refuse', 'ask_clarification'} and evaluation.get('referenceSchemaValid'):
+                stop = action
                 break
             if evaluation.get('accepted', evaluation.get('success', False)):
                 stop = 'valid'
@@ -184,13 +184,20 @@ async def coordinate(generate, evaluate, messages, *, limits=None, feedback_styl
         stop = 'context_changed' if isinstance(exc, ContextError) else 'cancelled'
         failure = {'code': stop, 'message': str(exc)[:500]}
     if first is None:
-        first = evaluate(Generation(''))
-        if inspect.isawaitable(first):
-            first = await first
+        try:
+            first = evaluate(Generation(''))
+            if inspect.isawaitable(first):
+                first = await first
+        except ContextError:
+            first = {'result': 'NOT_EVALUATED', 'success': False, 'accepted': False,
+                     'outputPresent': False, 'stages': dict.fromkeys(('json', 'originalSchema', 'effectiveSchema', 'context', 'relationships'), 'not_evaluated'),
+                     'referenceSchemaValid': None, 'semanticValid': None, 'intentScope': 'not_checked',
+                     'errors': [], 'parsed': None, 'validationMs': 0, 'executionAuthorized': False}
     final = final or first
     if stop in {'context_changed', 'cancelled', 'deadline', 'request_budget', 'token_budget'}:
-        final = {**final, 'success': False, 'accepted': False, 'result': 'NOT_EVALUATED', 'stopReason': stop}
+        final = {**final, 'success': False, 'accepted': False, 'result': 'FAIL' if attempts else 'NOT_EVALUATED', 'stopReason': stop}
         if stop == 'context_changed':
+            final['result'] = 'STALE_CONTEXT'
             final['semanticValid'] = None
             final['stages'] = {**final.get('stages', {}), 'context': 'unknown'}
     return {'firstEvaluation': first, 'finalEvaluation': final, 'attempts': attempts,
