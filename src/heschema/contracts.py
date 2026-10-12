@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 
 from .diagnostics import parts
 from .jsonio import digest
-from .schema import check_schema
+from .schema import check_schema, schema_children
 from .validation import ENVELOPE
 
 
@@ -66,11 +66,8 @@ def generation_envelope(contract, arguments_schema):
                     if node['$ref'] != '#' and not node['$ref'].startswith('#/'):
                         raise ValueError('Tool envelopes require JSON Pointer references')
                     node['$ref'] = '#/oneOf/0/properties/arguments' + node['$ref'][1:]
-                for value in node.values():
-                    rebase(value)
-            elif isinstance(node, list):
-                for value in node:
-                    rebase(value)
+                for _, child in schema_children(node):
+                    rebase(child)
         if action == 'call_tool':
             rebase(embedded)
         branch['properties']['arguments'] = embedded if action == 'call_tool' else {'const': {}}

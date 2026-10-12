@@ -16,6 +16,20 @@ from .jsonio import canonical, digest, loads
 DIALECT = "https://json-schema.org/draft/2020-12/schema"
 
 
+def schema_children(node):
+    """Visit schema-valued keywords, never JSON data inside const/enum/default/examples."""
+    for keyword in ('properties', 'patternProperties', '$defs', 'dependentSchemas'):
+        for name, child in node.get(keyword, {}).items():
+            yield (keyword, name), child
+    for keyword in ('allOf', 'anyOf', 'oneOf', 'prefixItems'):
+        for index, child in enumerate(node.get(keyword, [])):
+            yield (keyword, index), child
+    for keyword in ('items', 'contains', 'not', 'if', 'then', 'else', 'additionalProperties',
+                    'unevaluatedProperties', 'unevaluatedItems', 'propertyNames', 'contentSchema'):
+        if keyword in node:
+            yield (keyword,), node[keyword]
+
+
 def child_environment():
     """Compiler/evaluator subprocesses do not need provider keys or API tokens."""
     allowed = {"PATH", "HOME", "TMPDIR", "TMP", "TEMP", "SystemRoot", "COMSPEC", "LANG", "LC_ALL", "LD_LIBRARY_PATH"}
@@ -32,13 +46,11 @@ def check_schema(schema):
 
     def walk(node):
         if isinstance(node, dict):
-            for key, value in node.items():
-                if key in {"$ref", "$dynamicRef"} and not value.startswith("#"):
+            for key in ("$ref", "$dynamicRef"):
+                if key in node and not node[key].startswith("#"):
                     raise ValueError("External schema references must be bundled before registration")
-                walk(value)
-        elif isinstance(node, list):
-            for value in node:
-                walk(value)
+            for _, child in schema_children(node):
+                walk(child)
 
     walk(schema)
 
