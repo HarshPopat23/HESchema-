@@ -109,3 +109,72 @@ def evaluate(raw, engine, reference_schema, candidate_schema, expected, state=No
             "executionAuthorized": False, "errors": errors,
             "validationMs": (time.perf_counter_ns() - started) / 1e6,
             "parsed": parsed}
+
+
+def validate_contract(raw, engine, contract, snapshot=None, *, generation=None):
+    """Runtime checks with no scoring oracle. Success covers only declared approved intent."""
+    from .context_schema import effective_schema
+    from .contracts import generation_envelope
+    from .diagnostics import diagnostic
+    from .rules import evaluate_rules
+    started = time.perf_counter_ns()
+    effective, context = effective_schema(contract, snapshot)
+    stages = dict.fromkeys(('json', 'originalSchema', 'effectiveSchema', 'context', 'relationships'), 'not_evaluated')
+    errors, parsed, action = [], None, None
+    output_present = raw is not None and raw != ''
+    if output_present:
+        try:
+            parsed = loads(raw) if isinstance(raw, str) else loads(canonical(raw))
+            stages['json'] = 'valid'
+        except (ValueError, TypeError) as exc:
+            stages['json'] = 'invalid'
+            errors.append(diagnostic('JSON_INVALID', 'json', message=str(exc)))
+    original_valid = effective_valid = None
+    relationships = {'status': 'not_evaluated', 'rules': [], 'errors': [], 'implementation': 'application_rules'}
+    if stages['json'] == 'valid':
+        shape_errors = engine.errors(generation_envelope(contract, contract.schema), parsed)
+        original_valid = not shape_errors
+        stages['originalSchema'] = 'valid' if original_valid else 'invalid'
+        errors.extend(shape_errors)
+        doc = parsed
+        if contract.outputKind == 'tool_envelope' and isinstance(parsed, dict):
+            action = parsed.get('action')
+            doc = parsed.get('arguments')
+        if original_valid and action in {'refuse', 'ask_clarification'}:
+            stages['context'] = 'not_evaluated'
+        elif original_valid:
+            effective_errors = engine.errors(effective, doc)
+            effective_valid = not effective_errors
+            stages['effectiveSchema'] = 'valid' if effective_valid else 'invalid'
+            for e in effective_errors:
+                errors.append({**e, 'code': 'CONTEXT_MISMATCH', 'stage': 'context'})
+            stages['context'] = 'invalid' if effective_errors else 'needs_context' if context['missingBindings'] else 'valid' if context['activeBindings'] else 'not_evaluated'
+            # Source constraints precede relations. Arithmetic cannot validate wrong source inputs.
+            if effective_valid and not context['missingBindings']:
+                trusted = snapshot['data'] if snapshot else None
+                trusted_locations = set(snapshot.get('approvedPointers', [])) | {f['contextLocation'] for f in snapshot.get('facts', [])} if snapshot else set()
+                relationships = evaluate_rules(doc, contract.relationships, trusted, trusted_locations)
+                stages['relationships'] = relationships['status']
+                errors.extend(relationships['errors'])
+            for missing in context['missingBindings']:
+                errors.append(diagnostic('CONTEXT_REQUIRED', 'context', missing, 'Confirm the declared input before generation or repair', repair='needs_context'))
+    completed = generation.completion if generation else None
+    acceptable_completion = completed not in {'truncated', 'empty'}
+    if completed == 'truncated':
+        errors.append(diagnostic('OUTPUT_TRUNCATED', 'generation', message='Output reached its token limit', repair='stop'))
+    controls = original_valid and action in {'refuse', 'ask_clarification'}
+    accepted = bool(original_valid and acceptable_completion and (controls or
+                    (effective_valid and not context['missingBindings'] and relationships['status'] in {'valid', 'not_evaluated'})))
+    intent_checked = bool(context['activeBindings']) and not context['missingBindings'] and not controls
+    success = accepted and intent_checked
+    result = 'REFUSED' if controls and action == 'refuse' else 'NEEDS_CONTEXT' if controls or 'needs_context' in stages.values() else 'PASS' if success else 'NOT_CHECKED' if accepted else 'FAIL' if output_present else 'NOT_EVALUATED'
+    return {'protocolVersion': 2, 'result': result, 'success': bool(success), 'accepted': accepted,
+            'executionAuthorized': False, 'outputPresent': output_present, 'stages': stages,
+            'jsonValid': True if stages['json'] == 'valid' else False if stages['json'] == 'invalid' else None,
+            'referenceSchemaValid': original_valid, 'effectiveSchemaValid': effective_valid,
+            'semanticValid': bool(success) if intent_checked else None,
+            'intentScope': 'declared_approved_bindings' if intent_checked else 'not_checked',
+            'contract': contract.identity, 'context': context, 'relationships': relationships,
+            'generation': generation.diagnostic() if generation else None, 'errors': errors,
+            'parsed': parsed, 'validationMs': (time.perf_counter_ns() - started) / 1e6,
+            'validationComponents': ['python_draft202012', 'python_formats'] + (['blaze_boolean_crosscheck_ipc'] if engine.backend == 'blaze' else [])}

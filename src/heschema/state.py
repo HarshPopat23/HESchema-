@@ -61,3 +61,56 @@ class StateStore:
             if cursor.rowcount != 1:
                 raise ValueError("Stale state or unknown owner")
         return self.get(state_id, owner)
+
+    def create_context(self, owner, contract, data, approved_pointers, facts=None, expires_at=None):
+        from datetime import datetime, timezone
+
+        from .context_schema import ContextError, check_context, effective_schema
+        from .diagnostics import resolve
+        for location in approved_pointers:
+            resolve(data, location)
+        if expires_at and datetime.fromisoformat(expires_at).tzinfo is None:
+            raise ContextError('Approval expiry requires a timezone')
+        facts = facts or []
+        for fact in facts:
+            if set(fact) != {'contextLocation', 'source', 'version', 'verified', 'expiresAt'}:
+                raise ContextError('Fact requires contextLocation, source, version, verified and expiresAt')
+            resolve(data, fact['contextLocation'])
+            if fact['verified'] is not True or datetime.fromisoformat(fact['expiresAt']).tzinfo is None:
+                raise ContextError('Fact verification and timezone-aware expiry required')
+        context_id = secrets.token_urlsafe(24)
+        payload = {'contractId': contract.id, 'contractVersion': contract.version,
+                   'contractHash': contract.identity['hash'], 'data': data,
+                   'approvedPointers': list(dict.fromkeys(approved_pointers)), 'facts': facts,
+                   'expiresAt': expires_at, 'createdAt': datetime.now(timezone.utc).isoformat()}
+        check_context({'id': context_id, 'version': 1, 'confirmed': True, **payload})
+        effective_schema(contract, {'id': context_id, 'version': 1, 'confirmed': True, **payload})
+        with self.connect() as db:
+            db.execute('CREATE TABLE IF NOT EXISTS contexts (id TEXT PRIMARY KEY, owner TEXT NOT NULL, version INTEGER NOT NULL, confirmed INTEGER NOT NULL, payload TEXT NOT NULL)')
+            db.execute('INSERT INTO contexts VALUES (?, ?, 1, 0, ?)', (context_id, owner, canonical(payload)))
+        return self.get_context(context_id, owner)
+
+    def get_context(self, context_id, owner):
+        with self.connect() as db:
+            db.execute('CREATE TABLE IF NOT EXISTS contexts (id TEXT PRIMARY KEY, owner TEXT NOT NULL, version INTEGER NOT NULL, confirmed INTEGER NOT NULL, payload TEXT NOT NULL)')
+            row = db.execute('SELECT * FROM contexts WHERE id=? AND owner=?', (context_id, owner)).fetchone()
+        if row is None:
+            raise KeyError('Context not found')
+        return {'id': row['id'], 'version': row['version'], 'confirmed': bool(row['confirmed']), **loads(row['payload'])}
+
+    def confirm_context(self, context_id, owner, version):
+        from .context_schema import check_context
+        proposed = self.get_context(context_id, owner)
+        check_context({**proposed, 'confirmed': True}, version=version)
+        with self.connect() as db:
+            cursor = db.execute('UPDATE contexts SET confirmed=1 WHERE id=? AND owner=? AND version=?', (context_id, owner, version))
+            if cursor.rowcount != 1:
+                raise ValueError('Stale context version')
+        return self.get_context(context_id, owner)
+
+    def invalidate_context(self, context_id, owner, version):
+        with self.connect() as db:
+            cursor = db.execute('UPDATE contexts SET confirmed=0, version=version+1 WHERE id=? AND owner=? AND version=?', (context_id, owner, version))
+            if cursor.rowcount != 1:
+                raise ValueError('Stale context version')
+        return self.get_context(context_id, owner)

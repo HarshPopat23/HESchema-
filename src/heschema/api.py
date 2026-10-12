@@ -27,6 +27,8 @@ from .domains import DOMAINS, reference_schema
 from .jobs import JobConflictError, JobManager
 from .jsonio import loads
 from .providers import ROOT, Provider, ProviderError, registry, tavily_search
+from .registry import builtin_registry
+from .runtime_api import install_contract_routes
 from .schema import SchemaEngine, check_schema, typed_minimal
 from .state import StateStore
 from .validation import ENVELOPE, envelope, evaluate
@@ -202,7 +204,7 @@ EXAMPLES = {
 }
 
 
-def create_app(db_path=None):
+def create_app(db_path=None, contract_registry=None):
     load_dotenv(ROOT / ".env", override=False)
     store = StateStore(db_path or os.getenv("HESCHEMA_DB", str(ROOT / "data/state.sqlite3")))
     engine = SchemaEngine(os.getenv("HESCHEMA_ENGINE", "jsonschema"))
@@ -224,6 +226,9 @@ def create_app(db_path=None):
                 raise HTTPException(401, "Invalid API token")
             return "operator"
         return "local-operator"
+
+    contracts = contract_registry or builtin_registry(store.path)
+    install_contract_routes(app, store, engine, owner, contracts)
 
     def snapshot(state_id, identity, version):
         try:
