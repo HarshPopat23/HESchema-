@@ -66,11 +66,21 @@ Open **http://127.0.0.1:8000/** in your browser. API docs remain at **http://127
    - Click **Compare Three Arms** on a confirmed state to evaluate `no_schema`, `minimal_schema`, and `input_schema` on that prompt.
    - **Limits of single-prompt percentages**: Labeled *Single-prompt trial*. It reflects only that specific prompt and cannot claim a domain-wide schema effect.
 4. **Schema-benchmark workflow**:
-   - Select Quick Test (14 cases across all 7 categories = 42 calls) or Full Domain (80 cases = 720 calls), or configure custom cases, repeats, repairs, interval, and token prices.
+   - Select Quick Test (14 cases across all 7 categories = 42 calls) or Full Domain (80 cases = 240 first-attempt calls per repeat), or configure custom cases, repeats, repairs, interval, and token prices.
    - Run in the background with live progress tracking (completed runs, requests attempted, provider errors) and graceful cancellation.
    - Inspect 3-arm comparison tables, paired uplift, and 95% clustered bootstrap intervals.
    - Scientific conclusions apply: an interval crossing zero is strictly reported as **Inconclusive**.
    - **Report storage**: Results are stored in `results/jobs/<jobId>/` (`report.json`, `report.md`, and `runs.jsonl`), with direct download buttons in the UI.
+5. **CLI-integration workflow (Sourcemeta JSON Schema CLI)**:
+   - **Tab:** *CLI Integration* ("Test a local OpenAI-compatible endpoint with Sourcemeta's JSON Schema CLI.").
+   - **Local OpenAI-Compatible Completion Endpoint:** `POST /v1/chat/completions` accepting standard OpenAI structured output payloads (`response_format.type = "json_schema"`).
+   - **Generation Modes:**
+     - `native_schema` (default): sends accepted JSON Schema directly to Ollama's `format` object for constrained decoding.
+     - `prompt_only` (comparison): grounds schema constraints in message prompt and omits native Ollama format enforcement (requires `strict: false`).
+   - **Real Sourcemeta CLI Execution:** Invokes `@sourcemeta/jsonschema` (`llm` command) via asynchronous child subprocess against the loopback `/v1/chat/completions` endpoint without blocking single-worker Uvicorn.
+   - **5 Presets Included:** Required string & `additionalProperties: false`, enum & integer bounds, nested objects & bounded array, oneOf conditional, and local `$defs`/`$ref`.
+   - **Independent Diagnostics:** Evaluates HTTP transport success, strict JSON parsing (`jsonio.loads`), schema conformance, and CLI process reports separately; semantic correctness is strictly reported as **Not checked** for arbitrary schemas without ground truth.
+   - **Reproducible Command Previews:** Shows copy-pasteable Bash and PowerShell commands with `$HESCHEMA_API_TOKEN` placeholders.
 
 For a real run, add the relevant backend API key to `.env`. Do not commit keys. Start with a small request budget:
 
@@ -82,7 +92,7 @@ heschema benchmark --provider groq --domain flights \
   --max-requests 60 --out results/groq-flights-rich
 ```
 
-Repeat the **same command/output directory** to resume. Completed task/arm/repetition rows with a usable provider response are not rerun; provider-error rows can be retried on resume. The append-only log retains history, while reports use the latest row per logical run. Three consecutive provider errors stop the invocation to avoid hammering an unavailable service. Configuration changes require a new directory. A cap reserves the worst-case remaining repair calls before starting each row, so it can stop below the cap. Provider-internal HTTP retries are additional and tracked separately. This is a request cap, not a monetary guarantee.
+Repeat the **same command/output directory** to resume. Completed task/arm/repetition rows with a usable provider response are not rerun; provider-error rows can be retried on resume. The append-only log retains history, while reports use the latest row per logical run. Three consecutive provider errors stop the invocation to avoid hammering an unavailable service. Configuration changes require a new directory. A cap reserves the worst-case remaining repair calls before starting each row, so it can stop below the cap. The shared coordinator disables provider-internal transport retries; direct provider callers can still opt into separately tracked retries. This is a request cap, not a monetary guarantee.
 
 When ready, omit `--max-requests` to finish all pairs. Partial reports are explicitly flagged and should not be interpreted as complete comparisons. `--limit` selects the first N cases, which can be category-skewed; use it for smoke tests, not representative conclusions.
 
@@ -169,7 +179,7 @@ Unknown domain/schema errors return 422; missing state returns 404; stale/unconf
 - **LLM APIs** transport messages to providers and return generations. The provider adapters implement their different wire protocols; API secrets stay in the backend.
 - **MCP** could expose a tool that calls this validator, or invoke an executor only after its own checks. This repository does **not** implement an MCP server/client or claim that MCP automatically validates semantic intent. Its HTTP/Python interfaces are the integration boundary.
 
-The experiment intentionally uses **schema-in-prompt generation**, not native tool calling or schema-constrained decoding. Those change the generation mechanism and should be tested as a separate experiment with consistent provider settings.
+The existing schema-richness experiment uses **schema-in-prompt generation**, not native tool calling or schema-constrained decoding. Those change the generation mechanism and should be tested as a separate experiment with consistent provider settings.
 
 ## Workflow 2: measure schema improvement or harm
 
@@ -324,7 +334,7 @@ Thresholds are provisional and configurable by editing `metrics.py`, not univers
 
 ## Time, cost, and request budgets
 
-With 480 tasks × 3 arms × 3 repeats, a full experiment has **4,320 first-attempt calls**. With up to 2 repairs per call, the upper bound is **12,960 model generation calls**, before provider-internal transport retries. Free quotas may require many resumptions. Start small and estimate your own cost before running everything.
+With 480 tasks × 3 arms × 3 repeats, a full experiment has **4,320 first-attempt calls**. With up to 2 repairs per call, the upper bound is **12,960 model generation calls**, with transport retries disabled in the shared coordinator. Free quotas may require many resumptions. Start small and estimate your own cost before running everything.
 
 Supply your current/effective rates explicitly:
 
@@ -429,3 +439,61 @@ examples/        explicitly labeled offline reports
 - [Tavily search API](https://docs.tavily.com/documentation/api-reference/endpoint/search)
 
 **Bottom line:** a report can say “this schema raised first-pass success by X percentage points, with this uncertainty, for this model and domain.” It cannot honestly say “this schema makes every LLM X% better” or “this validator guarantees safe payments.”
+
+## Versioned contracts, context and repair
+
+The **Contracts & Context** tab supports custom tools and arbitrary JSON documents
+without changing the six built-in domains. Load the invoice or destination example,
+register its contract, create a context proposal, verify and confirm it, then validate
+an existing output. The invoice with total `25` is structurally valid but fails the
+product rule; total `2500` passes only with the approved quantity/price. Goa/Pune
+illustrates source agreement. Invalidate approval to exercise stale context.
+Optional generation uses the same contract and defaults to zero repairs. Run `python examples/contracts/walkthrough.py` for an offline, explicitly synthetic allowed/rejected/missing/stale/repaired walkthrough.
+
+- [Contract/API and approval semantics](docs/contracts-and-repair.md)
+- [Controlled decoding and saved-output repair experiments](docs/experiments.md)
+- [Protocol 2 migration and baseline](docs/migration.md)
+- [Use-case intake and honest evidence taxonomy](docs/use-case-intake.md)
+- [Invoice contract/context/output example](examples/contracts/invoice.json)
+- [Custom trip tool example](examples/contracts/trip.json)
+
+```python
+from heschema.contracts import Contract
+from heschema.registry import ContractRegistry
+from heschema.schema import SchemaEngine
+from heschema.validation import validate_contract
+
+registry = ContractRegistry()
+contract = registry.register(Contract(
+    id="my-document", version="1",
+    schema={"type": "object", "properties": {"n": {"type": "integer"}}, "required": ["n"]},
+))
+result = validate_contract('{"n": 1}', SchemaEngine(), contract)
+assert result["referenceSchemaValid"]
+assert result["result"] == "NOT_CHECKED"  # Intent was not approved or independently checked.
+assert result["executionAuthorized"] is False
+```
+
+`/docs` and `/openapi.json` describe registration, context confirmation/invalidation,
+existing-output validation, and bounded generation. Schema validity, approved
+agreement, relationships, generation completion, provider enforcement evidence and
+repair outcomes stay separate. A provider error with no output is not a document
+validation failure. Missing finish metadata remains unknown; reasoning is not output.
+Provider capability profiles do not infer full keyword support from passing examples.
+The limited projection pipeline never drops uniqueness or weakens arbitrary unions.
+
+Ordinary CI uses mocks and deterministic examples. No live inference, company
+adoption claim, custom vocabulary implementation, or production execution is included
+in this MVP. Existing historical results remain readable and unchanged. Jobs are
+process-local; library consumers and deployments must enforce their own identity and
+execution boundaries. Required unknown vocabularies are rejected.
+
+```sh
+pip install -e '.[dev]'
+ruff check src tests
+pytest -q
+npm ci --prefix frontend
+npm test --prefix frontend              # DOM events against the real local API
+heschema decoding-study                 # request-count dry run
+heschema decoding-study --execute --provider mock --max-requests 24 --out results/mock-decoding
+```

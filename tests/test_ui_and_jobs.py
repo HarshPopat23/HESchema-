@@ -1,5 +1,3 @@
-import asyncio
-import pytest
 from fastapi.testclient import TestClient
 
 from heschema.api import create_app

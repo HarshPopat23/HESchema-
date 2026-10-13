@@ -6,20 +6,35 @@ from contextlib import asynccontextmanager
 from typing import Any
 
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
 
 from .benchmark import ARMS, messages_for
+from .cli_integration import (
+    PRESETS,
+    evaluate_document_diagnostics,
+    execute_cli_recovery,
+    execute_cli_run,
+    generate_command_previews,
+    generated_content,
+    probe_cli_support,
+    probe_ollama_status,
+)
+from .compat import handle_chat_completion, make_error_response
+from .context_schema import ContextError
 from .domains import DOMAINS, reference_schema
 from .jobs import JobConflictError, JobManager
-from .jsonio import canonical, loads
+from .jsonio import loads, read_json
 from .providers import ROOT, Provider, ProviderError, registry, tavily_search
+from .registry import builtin_registry
+from .repair import RepairLimits, coordinate, request_generation
+from .runtime_api import install_contract_routes
 from .schema import SchemaEngine, check_schema, typed_minimal
 from .state import StateStore
-from .validation import ENVELOPE, envelope, evaluate
+from .validation import ENVELOPE, envelope, evaluate, generation_gate
 
 
 class Body(BaseModel):
@@ -55,6 +70,8 @@ class GenerateBody(Body):
     model: str | None = None
     schema_: dict[str, Any] | bool | None = Field(default=None, alias="schema")
     schemaMode: str | None = None
+    repairs: int = Field(default=0, ge=0, le=5)
+    feedbackStyle: str = "actionable"
 
 
 class ExtractBody(Body):
@@ -109,6 +126,25 @@ class BenchmarkJobBody(Body):
     schema_: dict[str, Any] | bool | None = Field(default=None, alias="schema")
     inputPrice: float | None = None
     outputPrice: float | None = None
+    feedbackStyle: str = "actionable"
+
+
+class CliValidateBody(Body):
+    schema_: dict[str, Any] = Field(alias="schema")
+    output: str
+
+
+class CliRunBody(Body):
+    schema_: dict[str, Any] = Field(alias="schema")
+    prompt: str = Field(min_length=1, max_length=20000)
+    model: str = Field(min_length=1)
+    mode: str = Field(default="native_schema")
+    maxTokens: int = Field(default=1024, ge=1, le=128000)
+    temperature: float | None = Field(default=None, ge=0.0, le=2.0)
+    seed: int | None = None
+    timeout: float = Field(default=60.0, ge=1.0, le=300.0)
+    repairs: int = Field(default=0, ge=0, le=5)
+    feedbackStyle: str = "actionable"
 
 
 EXAMPLES = {
@@ -176,7 +212,7 @@ EXAMPLES = {
 }
 
 
-def create_app(db_path=None):
+def create_app(db_path=None, contract_registry=None):
     load_dotenv(ROOT / ".env", override=False)
     store = StateStore(db_path or os.getenv("HESCHEMA_DB", str(ROOT / "data/state.sqlite3")))
     engine = SchemaEngine(os.getenv("HESCHEMA_ENGINE", "jsonschema"))
@@ -198,6 +234,15 @@ def create_app(db_path=None):
                 raise HTTPException(401, "Invalid API token")
             return "operator"
         return "local-operator"
+
+    contracts = contract_registry or builtin_registry(store.path)
+    install_contract_routes(app, store, engine, owner, contracts)
+
+    @app.get('/ui/contracts/examples/{name}')
+    def contract_example(name: str, identity=Depends(owner)):
+        if name not in {'invoice', 'trip'}:
+            raise HTTPException(404, 'Example not found')
+        return read_json(ROOT / 'examples/contracts' / (name + '.json'))
 
     def snapshot(state_id, identity, version):
         try:
@@ -327,14 +372,26 @@ def create_app(db_path=None):
             try:
                 case = {"domain": body.domain, "prompt": snap["prompt"],
                         "context": {"confirmedState": snap["state"], "stateVersion": snap["version"]}}
-                generated = await provider.generate(messages_for(case, generation_schema))
+                def checkpoint():
+                    try:
+                        snapshot(body.stateId, identity, body.stateVersion)
+                    except HTTPException as exc:
+                        raise ContextError(str(exc.detail)) from None
+                async def request(messages, attempt):
+                    return await request_generation(provider, messages, 0, 1024, None)
+                def check(generated):
+                    result = evaluate(generated.text, engine, ref, candidate,
+                                      envelope("call_tool", spec["tool"], snap["state"]), snap["state"], spec.get("policy", {}))
+                    return generation_gate(runtime_gate(result), generated)
+                recovery = await coordinate(request, check, messages_for(case, generation_schema),
+                                            limits=RepairLimits(body.repairs), feedback_style=body.feedbackStyle, context_check=checkpoint)
             finally:
                 await provider.close()
-            result = evaluate(generated.text, engine, ref, candidate,
-                              envelope("call_tool", spec["tool"], snap["state"]), snap["state"], spec.get("policy", {}))
             snapshot(body.stateId, identity, body.stateVersion)
-            return {"model": generated.model, "output": generated.text, "validation": runtime_gate(result),
-                    "latencyMs": generated.latency_ms, "stateVersion": snap["version"]}
+            generated = recovery["attempts"][-1]["generation"] if recovery["attempts"] else None
+            return {"model": generated["model"] if generated else None, "output": generated["text"] if generated else None,
+                    "validation": recovery["finalEvaluation"], "repair": recovery,
+                    "latencyMs": recovery["elapsedMs"], "stateVersion": snap["version"]}
         except (ProviderError, ValueError) as exc:
             raise HTTPException(422, str(exc)) from None
 
@@ -426,6 +483,7 @@ def create_app(db_path=None):
                     val_res["result"] = "NOT_CHECKED"
                 val_res["notice"] = "Semantic correctness not checked: confirm an actual state to verify agreement."
 
+            val_res = generation_gate(val_res, generated)
             return {
                 "model": generated.model,
                 "output": raw_text,
@@ -471,7 +529,7 @@ def create_app(db_path=None):
                         gen = await provider.generate(messages)
                         eval_res = evaluate(gen.text, engine, ref, candidate, expected,
                                             state=snap["state"], policy=spec.get("policy", {}))
-                        runtime_gate(eval_res)
+                        generation_gate(runtime_gate(eval_res), gen)
                         arm_runs.append({
                             "repeat": rep,
                             "output": gen.text,
@@ -517,7 +575,8 @@ def create_app(db_path=None):
                 seed=body.seed,
                 input_price=body.inputPrice,
                 output_price=body.outputPrice,
-                operator=identity
+                operator=identity,
+                feedback_style=body.feedbackStyle,
             )
             return record.public_dict()
         except JobConflictError as exc:
@@ -564,6 +623,86 @@ def create_app(db_path=None):
             return job_manager.get_runs(job_id, identity, offset=offset, limit=limit)
         except KeyError:
             raise HTTPException(404, "Job not found") from None
+
+    # --- Sourcemeta CLI & OpenAI Compat Integration ---
+    def get_loopback_url():
+        port = os.getenv("HESCHEMA_PORT", "8000")
+        return os.getenv("HESCHEMA_LOOPBACK_URL", f"http://127.0.0.1:{port}/v1/chat/completions")
+
+    @app.post("/v1/chat/completions")
+    async def openai_chat_completions(request: Request, credentials: HTTPAuthorizationCredentials | None = Depends(bearer)):
+        token = os.getenv("HESCHEMA_API_TOKEN", "")
+        if token:
+            if not credentials or not secrets.compare_digest(credentials.credentials, token):
+                return make_error_response(401, "Invalid API token", error_type="invalid_request_error", code="invalid_api_key")
+        try:
+            raw = await request.json()
+        except Exception:
+            return make_error_response(400, "Invalid JSON body in completion request", code="parse_error")
+        return await handle_chat_completion(raw, "operator" if token else "local-operator")
+
+    @app.get("/ui/cli-integration/status")
+    async def cli_integration_status(identity=Depends(owner)):
+        cli_info = await probe_cli_support()
+        ollama_info = await probe_ollama_status()
+        return {
+            "cli": cli_info,
+            "ollama": ollama_info,
+            "loopbackUrl": get_loopback_url(),
+            "presets": PRESETS,
+        }
+
+    @app.post("/ui/cli-integration/validate")
+    def cli_integration_validate(body: CliValidateBody, identity=Depends(owner)):
+        return evaluate_document_diagnostics(body.schema_, body.output, engine)
+
+    @app.post("/ui/cli-integration/run")
+    async def cli_integration_run(body: CliRunBody, identity=Depends(owner)):
+        loopback = get_loopback_url()
+        has_token = bool(os.getenv("HESCHEMA_API_TOKEN", ""))
+        previews = generate_command_previews(
+            schema_path="schema.json",
+            prompt=body.prompt,
+            url=loopback,
+            model=body.model,
+            mode=body.mode,
+            max_tokens=body.maxTokens,
+            temperature=body.temperature,
+            seed=body.seed,
+            has_token=has_token,
+        )
+        try:
+            runner = execute_cli_recovery if body.repairs else execute_cli_run
+            repair_options = {"engine": engine, "repairs": body.repairs, "feedback_style": body.feedbackStyle} if body.repairs else {}
+            run_result = await runner(
+                **repair_options,
+                schema=body.schema_,
+                prompt=body.prompt,
+                model=body.model,
+                mode=body.mode,
+                max_tokens=body.maxTokens,
+                temperature=body.temperature,
+                seed=body.seed,
+                loopback_url=loopback,
+                timeout=body.timeout,
+            )
+        except TimeoutError as exc:
+            raise HTTPException(504, str(exc)) from None
+        except Exception as exc:
+            raise HTTPException(422, str(exc)) from None
+
+        content_to_eval = generated_content(run_result)
+        run_result["generatedContent"] = content_to_eval
+        run_result["outputPresent"] = content_to_eval is not None
+
+        diagnostics = evaluate_document_diagnostics(
+            body.schema_,
+            content_to_eval,
+            engine,
+        )
+        run_result["diagnostics"] = diagnostics
+        run_result["previews"] = previews
+        return run_result
 
     # --- Static UI Mount ---
     frontend_dir = ROOT / "frontend"

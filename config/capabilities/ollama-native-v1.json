@@ -1,0 +1,12 @@
+{
+  "profileVersion": "1",
+  "provider": "ollama",
+  "apiMode": "native_schema",
+  "backendVersion": null,
+  "model": null,
+  "evidenceDate": null,
+  "documented": {"schemaRequest": "available", "source": "https://docs.ollama.com/capabilities/structured-outputs"},
+  "keywordEnforcement": "unknown",
+  "observations": [],
+  "notice": "No live capability probe was performed for this implementation. Historical C01-C10 results remain a separate pilot."
+}

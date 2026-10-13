@@ -1,0 +1,60 @@
+{
+  "recordVersion": "1",
+  "id": "synthetic-invoice-minor-units",
+  "classification": "relationship_requirement",
+  "originalSchema": {
+    "type": "object",
+    "properties": {
+      "quantity": {
+        "type": "integer",
+        "minimum": 1
+      },
+      "unitPriceMinor": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "totalMinor": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "required": [
+      "quantity",
+      "unitPriceMinor",
+      "totalMinor"
+    ],
+    "additionalProperties": false
+  },
+  "output": {
+    "quantity": 2,
+    "unitPriceMinor": 1250,
+    "totalMinor": 25
+  },
+  "desiredConstraint": "totalMinor equals approved quantity times approved unitPriceMinor; operand source agreement must be checked separately.",
+  "context": {
+    "source": "Author-created demo values reproducing the pilot arithmetic pattern",
+    "version": "1",
+    "approvedFields": [
+      "/quantity",
+      "/unitPriceMinor"
+    ],
+    "data": {
+      "quantity": 2,
+      "unitPriceMinor": 1250
+    }
+  },
+  "backend": {
+    "provider": null,
+    "model": null,
+    "version": null,
+    "mode": null
+  },
+  "workaround": "Compute the total deterministically or validate product_equals after structural/source checks.",
+  "provenance": "author_created_synthetic",
+  "reviewStatus": "unreviewed",
+  "publicationPermission": "synthetic_example_only",
+  "limitations": [
+    "Not a company use case or new model observation.",
+    "Does not establish a need for a new JSON Schema keyword."
+  ]
+}

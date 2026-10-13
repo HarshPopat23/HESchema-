@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Structured-output use-case record v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["recordVersion", "id", "classification", "originalSchema", "output", "desiredConstraint", "context", "backend", "workaround", "provenance", "reviewStatus", "publicationPermission"],
+  "properties": {
+    "recordVersion": {"const": "1"},
+    "id": {"type": "string", "minLength": 1},
+    "classification": {"enum": ["authoring_gap", "provider_coverage_gap", "relationship_requirement", "runtime_context_requirement", "source_interpretation_requirement"]},
+    "originalSchema": {"type": ["object", "boolean"]},
+    "output": true,
+    "desiredConstraint": {"type": "string", "minLength": 1},
+    "context": {"type": "object", "required": ["source", "version", "approvedFields"], "properties": {"source": {"type": "string"}, "version": {"type": ["string", "null"]}, "approvedFields": {"type": "array", "items": {"type": "string"}}, "data": true}},
+    "backend": {"type": "object", "required": ["provider", "model", "version", "mode"], "properties": {"provider": {"type": ["string", "null"]}, "model": {"type": ["string", "null"]}, "version": {"type": ["string", "null"]}, "mode": {"type": ["string", "null"]}}},
+    "workaround": {"type": "string"},
+    "provenance": {"enum": ["observed", "historical_pilot", "author_created_synthetic", "synthetic_mutation"]},
+    "reviewStatus": {"enum": ["unreviewed", "independently_reviewed"]},
+    "publicationPermission": {"enum": ["granted_for_sanitized_example", "withheld", "synthetic_example_only"]},
+    "limitations": {"type": "array", "items": {"type": "string"}}
+  }
+}

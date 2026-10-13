@@ -10,9 +10,11 @@ from pathlib import Path
 from .benchmark import run
 from .dataset import audit, build, load_cases
 from .domains import DOMAINS, reference_schema
-from .jsonio import read_json, write_json
+from .experiments import dry_run, run_decoding, run_repair_study
+from .jsonio import loads, read_json, write_json
 from .metrics import compare_models
 from .providers import ROOT, Provider, registry
+from .reports import adapt_report
 from .schema import SchemaEngine
 
 
@@ -33,6 +35,7 @@ def main():
     bench.add_argument("--out", default="results/run")
     bench.add_argument("--repeats", type=int, default=3)
     bench.add_argument("--repairs", type=int, default=2)
+    bench.add_argument("--feedback-style", choices=["generic", "raw", "actionable"], default="actionable")
     bench.add_argument("--seed", type=int, default=42)
     bench.add_argument("--limit", type=int)
     bench.add_argument("--max-requests", type=int)
@@ -42,6 +45,30 @@ def main():
     bench.add_argument("--engine", choices=["jsonschema", "blaze"], default="jsonschema")
     bench.add_argument("--input-price", type=float, help="USD per million input tokens")
     bench.add_argument("--output-price", type=float, help="USD per million output tokens")
+    decoding = commands.add_parser("decoding-study")
+    decoding.add_argument("--dataset", default=str(ROOT / "benchmarks/heldout.jsonl"))
+    decoding.add_argument("--provider", default="mock", choices=list(registry()))
+    decoding.add_argument("--model")
+    decoding.add_argument("--out", default="results/decoding")
+    decoding.add_argument("--execute", action="store_true", help="Default is a request-count dry run")
+    decoding.add_argument("--repeats", type=int, default=1)
+    decoding.add_argument("--max-requests", type=int)
+    decoding.add_argument("--max-tokens", type=int, default=1024)
+    decoding.add_argument("--seed", type=int, default=42)
+    decoding.add_argument("--warmup", type=int, default=0)
+    decoding.add_argument("--modes", nargs="+", choices=["prompt_only", "native_original", "native_projected"], default=["prompt_only", "native_original", "native_projected"])
+    recovery = commands.add_parser("repair-study")
+    recovery.add_argument("--dataset", default=str(ROOT / "benchmarks/heldout.jsonl"))
+    recovery.add_argument("--first-out", required=True)
+    recovery.add_argument("--out", default="results/repair-feedback")
+    recovery.add_argument("--provider", default="mock", choices=list(registry()))
+    recovery.add_argument("--model")
+    recovery.add_argument("--execute", action="store_true")
+    recovery.add_argument("--budgets", type=int, nargs="+", default=[1, 2])
+    recovery.add_argument("--styles", nargs="+", choices=["generic", "raw", "actionable"], default=["generic", "raw", "actionable"])
+    recovery.add_argument("--max-requests", type=int)
+    adapter = commands.add_parser("report")
+    adapter.add_argument("path")
     compare = commands.add_parser("compare-models")
     compare.add_argument("reports", nargs=2, help="Small model report, then large model report")
     speed = commands.add_parser("speed")
@@ -60,6 +87,34 @@ def main():
         print(json.dumps(audit(load_cases(args.path)), indent=2))
     elif args.command == "compare-models":
         print(json.dumps(compare_models([read_json(p) for p in args.reports]), indent=2))
+    elif args.command == "report":
+        print(json.dumps(adapt_report(read_json(args.path)), indent=2))
+    elif args.command in {"decoding-study", "repair-study"}:
+        cases = [loads(line) for line in Path(args.dataset).read_text(encoding="utf-8").splitlines() if line.strip()]
+        if args.command == "decoding-study":
+            estimate = dry_run(cases, args.repeats, args.modes, args.warmup)
+        else:
+            source = read_json(Path(args.first_out) / "config.json")
+            estimate = dry_run(cases, source["repeats"], source["modes"], repair_budgets=args.budgets, feedback_styles=args.styles)
+            estimate["alreadyRecordedFirstPassRequests"] = estimate["firstPassRequests"]
+            estimate["maximumRequests"] = estimate["maximumRepairRequests"]
+        if not args.execute:
+            print(json.dumps(estimate, indent=2))
+            return
+        if args.provider != "mock" and args.max_requests is None:
+            parser.error("Live execution requires --max-requests")
+        async def controlled():
+            provider = Provider(args.provider, args.model, interval=0 if args.provider == "mock" else None)
+            try:
+                if args.command == "decoding-study":
+                    return await run_decoding(cases, provider, args.out, repeats=args.repeats, modes=args.modes,
+                                              seed=args.seed, max_tokens=args.max_tokens, max_requests=args.max_requests, warmup=args.warmup)
+                return await run_repair_study(cases, provider, args.first_out, args.out, budgets=args.budgets, styles=args.styles,
+                                              max_tokens=source["maxTokens"], seed=source["seed"], temperature=source["temperature"], backend=source["engine"], max_requests=args.max_requests)
+            finally:
+                await provider.close()
+        report = asyncio.run(controlled())
+        print(json.dumps({"report": str(Path(args.out) / "report.json"), "complete": report["complete"], "empiricalLLMEvidence": report["empiricalLLMEvidence"]}, indent=2))
     elif args.command == "benchmark":
         cases = load_cases(args.dataset)
         if args.domain:
@@ -78,7 +133,7 @@ def main():
                                  read_json(args.schema) if args.schema else None,
                                  read_json(args.minimal_schema) if args.minimal_schema else None,
                                  args.repeats, args.repairs, args.seed, args.max_tokens, args.temperature,
-                                 args.engine, args.input_price, args.output_price, args.max_requests)
+                                 args.engine, args.input_price, args.output_price, args.max_requests, feedback_style=args.feedback_style)
             finally:
                 await provider.close()
 
