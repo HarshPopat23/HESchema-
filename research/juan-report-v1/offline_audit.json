@@ -1,0 +1,952 @@
+{
+  "auditType": "offline_fixture_audit",
+  "empiricalLLMEvidence": false,
+  "cases": 65,
+  "probes": 77,
+  "families": {
+    "source_interpretation": 5,
+    "product_relationship": 5,
+    "sum_relationship": 5,
+    "date_relationship": 5,
+    "identifier_relationship": 5,
+    "approved_const": 5,
+    "trusted_enum": 5,
+    "trusted_numeric_bounds": 5,
+    "finite_conditional": 5,
+    "unique_items": 5,
+    "overlapping_oneof": 5,
+    "local_reference": 5,
+    "runtime_reference_membership": 5
+  },
+  "projectionExampleChecks": 130,
+  "projectionClaim": "Two-example smoke checks only; no equivalence proof or backend enforcement claim.",
+  "requestUpperBoundPerModel": {
+    "protocolVersion": 2,
+    "cases": 65,
+    "repeats": 3,
+    "modes": [
+      "prompt_only",
+      "native_original",
+      "native_projected"
+    ],
+    "firstPassRequests": 585,
+    "warmupRequests": 3,
+    "maximumRepairRequests": 5265,
+    "maximumRequests": 5853,
+    "notice": "Upper bound only. No inference or provider initialization occurs in a dry run."
+  },
+  "failures": [],
+  "passed": true,
+  "positiveCases": [
+    {
+      "id": "J001",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "NOT_CHECKED",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "not_evaluated",
+        "relationships": "not_evaluated"
+      },
+      "scope": "not_checked"
+    },
+    {
+      "id": "J002",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "NOT_CHECKED",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "not_evaluated",
+        "relationships": "not_evaluated"
+      },
+      "scope": "not_checked"
+    },
+    {
+      "id": "J003",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "NOT_CHECKED",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "not_evaluated",
+        "relationships": "not_evaluated"
+      },
+      "scope": "not_checked"
+    },
+    {
+      "id": "J004",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "NOT_CHECKED",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "not_evaluated",
+        "relationships": "not_evaluated"
+      },
+      "scope": "not_checked"
+    },
+    {
+      "id": "J005",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "NOT_CHECKED",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "not_evaluated",
+        "relationships": "not_evaluated"
+      },
+      "scope": "not_checked"
+    },
+    {
+      "id": "J006",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "PASS",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "valid",
+        "relationships": "valid"
+      },
+      "scope": "declared_approved_bindings"
+    },
+    {
+      "id": "J007",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "PASS",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "valid",
+        "relationships": "valid"
+      },
+      "scope": "declared_approved_bindings"
+    },
+    {
+      "id": "J008",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "PASS",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "valid",
+        "relationships": "valid"
+      },
+      "scope": "declared_approved_bindings"
+    },
+    {
+      "id": "J009",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "PASS",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "valid",
+        "relationships": "valid"
+      },
+      "scope": "declared_approved_bindings"
+    },
+    {
+      "id": "J010",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "PASS",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "valid",
+        "relationships": "valid"
+      },
+      "scope": "declared_approved_bindings"
+    },
+    {
+      "id": "J011",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "PASS",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "valid",
+        "relationships": "valid"
+      },
+      "scope": "declared_approved_bindings"
+    },
+    {
+      "id": "J012",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "PASS",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "valid",
+        "relationships": "valid"
+      },
+      "scope": "declared_approved_bindings"
+    },
+    {
+      "id": "J013",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "PASS",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "valid",
+        "relationships": "valid"
+      },
+      "scope": "declared_approved_bindings"
+    },
+    {
+      "id": "J014",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "PASS",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "valid",
+        "relationships": "valid"
+      },
+      "scope": "declared_approved_bindings"
+    },
+    {
+      "id": "J015",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "PASS",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "valid",
+        "relationships": "valid"
+      },
+      "scope": "declared_approved_bindings"
+    },
+    {
+      "id": "J016",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "PASS",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "valid",
+        "relationships": "valid"
+      },
+      "scope": "declared_approved_bindings"
+    },
+    {
+      "id": "J017",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "PASS",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "valid",
+        "relationships": "valid"
+      },
+      "scope": "declared_approved_bindings"
+    },
+    {
+      "id": "J018",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "PASS",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "valid",
+        "relationships": "valid"
+      },
+      "scope": "declared_approved_bindings"
+    },
+    {
+      "id": "J019",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "PASS",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "valid",
+        "relationships": "valid"
+      },
+      "scope": "declared_approved_bindings"
+    },
+    {
+      "id": "J020",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "PASS",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "valid",
+        "relationships": "valid"
+      },
+      "scope": "declared_approved_bindings"
+    },
+    {
+      "id": "J021",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "PASS",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "valid",
+        "relationships": "valid"
+      },
+      "scope": "declared_approved_bindings"
+    },
+    {
+      "id": "J022",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "PASS",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "valid",
+        "relationships": "valid"
+      },
+      "scope": "declared_approved_bindings"
+    },
+    {
+      "id": "J023",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "PASS",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "valid",
+        "relationships": "valid"
+      },
+      "scope": "declared_approved_bindings"
+    },
+    {
+      "id": "J024",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "PASS",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "valid",
+        "relationships": "valid"
+      },
+      "scope": "declared_approved_bindings"
+    },
+    {
+      "id": "J025",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "PASS",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "valid",
+        "relationships": "valid"
+      },
+      "scope": "declared_approved_bindings"
+    },
+    {
+      "id": "J026",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "PASS",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "valid",
+        "relationships": "not_evaluated"
+      },
+      "scope": "declared_approved_bindings"
+    },
+    {
+      "id": "J027",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "PASS",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "valid",
+        "relationships": "not_evaluated"
+      },
+      "scope": "declared_approved_bindings"
+    },
+    {
+      "id": "J028",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "PASS",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "valid",
+        "relationships": "not_evaluated"
+      },
+      "scope": "declared_approved_bindings"
+    },
+    {
+      "id": "J029",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "PASS",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "valid",
+        "relationships": "not_evaluated"
+      },
+      "scope": "declared_approved_bindings"
+    },
+    {
+      "id": "J030",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "PASS",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "valid",
+        "relationships": "not_evaluated"
+      },
+      "scope": "declared_approved_bindings"
+    },
+    {
+      "id": "J031",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "PASS",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "valid",
+        "relationships": "not_evaluated"
+      },
+      "scope": "declared_approved_bindings"
+    },
+    {
+      "id": "J032",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "PASS",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "valid",
+        "relationships": "not_evaluated"
+      },
+      "scope": "declared_approved_bindings"
+    },
+    {
+      "id": "J033",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "PASS",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "valid",
+        "relationships": "not_evaluated"
+      },
+      "scope": "declared_approved_bindings"
+    },
+    {
+      "id": "J034",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "PASS",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "valid",
+        "relationships": "not_evaluated"
+      },
+      "scope": "declared_approved_bindings"
+    },
+    {
+      "id": "J035",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "PASS",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "valid",
+        "relationships": "not_evaluated"
+      },
+      "scope": "declared_approved_bindings"
+    },
+    {
+      "id": "J036",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "PASS",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "valid",
+        "relationships": "not_evaluated"
+      },
+      "scope": "declared_approved_bindings"
+    },
+    {
+      "id": "J037",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "PASS",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "valid",
+        "relationships": "not_evaluated"
+      },
+      "scope": "declared_approved_bindings"
+    },
+    {
+      "id": "J038",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "PASS",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "valid",
+        "relationships": "not_evaluated"
+      },
+      "scope": "declared_approved_bindings"
+    },
+    {
+      "id": "J039",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "PASS",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "valid",
+        "relationships": "not_evaluated"
+      },
+      "scope": "declared_approved_bindings"
+    },
+    {
+      "id": "J040",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "PASS",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "valid",
+        "relationships": "not_evaluated"
+      },
+      "scope": "declared_approved_bindings"
+    },
+    {
+      "id": "J041",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "NOT_CHECKED",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "not_evaluated",
+        "relationships": "not_evaluated"
+      },
+      "scope": "not_checked"
+    },
+    {
+      "id": "J042",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "NOT_CHECKED",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "not_evaluated",
+        "relationships": "not_evaluated"
+      },
+      "scope": "not_checked"
+    },
+    {
+      "id": "J043",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "NOT_CHECKED",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "not_evaluated",
+        "relationships": "not_evaluated"
+      },
+      "scope": "not_checked"
+    },
+    {
+      "id": "J044",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "NOT_CHECKED",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "not_evaluated",
+        "relationships": "not_evaluated"
+      },
+      "scope": "not_checked"
+    },
+    {
+      "id": "J045",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "NOT_CHECKED",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "not_evaluated",
+        "relationships": "not_evaluated"
+      },
+      "scope": "not_checked"
+    },
+    {
+      "id": "J046",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "NOT_CHECKED",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "not_evaluated",
+        "relationships": "not_evaluated"
+      },
+      "scope": "not_checked"
+    },
+    {
+      "id": "J047",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "NOT_CHECKED",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "not_evaluated",
+        "relationships": "not_evaluated"
+      },
+      "scope": "not_checked"
+    },
+    {
+      "id": "J048",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "NOT_CHECKED",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "not_evaluated",
+        "relationships": "not_evaluated"
+      },
+      "scope": "not_checked"
+    },
+    {
+      "id": "J049",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "NOT_CHECKED",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "not_evaluated",
+        "relationships": "not_evaluated"
+      },
+      "scope": "not_checked"
+    },
+    {
+      "id": "J050",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "NOT_CHECKED",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "not_evaluated",
+        "relationships": "not_evaluated"
+      },
+      "scope": "not_checked"
+    },
+    {
+      "id": "J051",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "NOT_CHECKED",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "not_evaluated",
+        "relationships": "not_evaluated"
+      },
+      "scope": "not_checked"
+    },
+    {
+      "id": "J052",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "NOT_CHECKED",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "not_evaluated",
+        "relationships": "not_evaluated"
+      },
+      "scope": "not_checked"
+    },
+    {
+      "id": "J053",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "NOT_CHECKED",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "not_evaluated",
+        "relationships": "not_evaluated"
+      },
+      "scope": "not_checked"
+    },
+    {
+      "id": "J054",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "NOT_CHECKED",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "not_evaluated",
+        "relationships": "not_evaluated"
+      },
+      "scope": "not_checked"
+    },
+    {
+      "id": "J055",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "NOT_CHECKED",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "not_evaluated",
+        "relationships": "not_evaluated"
+      },
+      "scope": "not_checked"
+    },
+    {
+      "id": "J056",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "NOT_CHECKED",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "not_evaluated",
+        "relationships": "not_evaluated"
+      },
+      "scope": "not_checked"
+    },
+    {
+      "id": "J057",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "NOT_CHECKED",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "not_evaluated",
+        "relationships": "not_evaluated"
+      },
+      "scope": "not_checked"
+    },
+    {
+      "id": "J058",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "NOT_CHECKED",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "not_evaluated",
+        "relationships": "not_evaluated"
+      },
+      "scope": "not_checked"
+    },
+    {
+      "id": "J059",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "NOT_CHECKED",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "not_evaluated",
+        "relationships": "not_evaluated"
+      },
+      "scope": "not_checked"
+    },
+    {
+      "id": "J060",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "NOT_CHECKED",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "not_evaluated",
+        "relationships": "not_evaluated"
+      },
+      "scope": "not_checked"
+    },
+    {
+      "id": "J061",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "NOT_CHECKED",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "not_evaluated",
+        "relationships": "valid"
+      },
+      "scope": "not_checked"
+    },
+    {
+      "id": "J062",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "NOT_CHECKED",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "not_evaluated",
+        "relationships": "valid"
+      },
+      "scope": "not_checked"
+    },
+    {
+      "id": "J063",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "NOT_CHECKED",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "not_evaluated",
+        "relationships": "valid"
+      },
+      "scope": "not_checked"
+    },
+    {
+      "id": "J064",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "NOT_CHECKED",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "not_evaluated",
+        "relationships": "valid"
+      },
+      "scope": "not_checked"
+    },
+    {
+      "id": "J065",
+      "positiveAccepted": true,
+      "oracleAgreement": true,
+      "decision": "NOT_CHECKED",
+      "stages": {
+        "json": "valid",
+        "originalSchema": "valid",
+        "effectiveSchema": "valid",
+        "context": "not_evaluated",
+        "relationships": "valid"
+      },
+      "scope": "not_checked"
+    }
+  ]
+}

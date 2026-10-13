@@ -1,0 +1,49 @@
+{
+  "datasetVersion": "1.0.0",
+  "implementationReference": "a044e3911fc84c0a4b2684797566b7c370fce40c",
+  "dataset": {
+    "file": "juan_report_cases_65.jsonl",
+    "records": 65,
+    "sha256": "565ff46aa05e75ae583ef9e2431ca930e03bde540db4d40bf406a4f7037e8c08"
+  },
+  "probes": {
+    "file": "juan_validator_probes_77.jsonl",
+    "records": 77,
+    "sha256": "70a65d5b2762a604c1f7309546f247987d7360b0a9f772133e377ab696f98f9f"
+  },
+  "families": {
+    "source_interpretation": 5,
+    "product_relationship": 5,
+    "sum_relationship": 5,
+    "date_relationship": 5,
+    "identifier_relationship": 5,
+    "approved_const": 5,
+    "trusted_enum": 5,
+    "trusted_numeric_bounds": 5,
+    "finite_conditional": 5,
+    "unique_items": 5,
+    "overlapping_oneof": 5,
+    "local_reference": 5,
+    "runtime_reference_membership": 5
+  },
+  "provenance": "Assistant-created synthetic cases; not company reports or independently human-reviewed evidence.",
+  "oraclePolicy": "expected fields are scoring-only, never included in messages, validation feedback, trusted context or provider request.",
+  "primaryDesign": {
+    "repeats": 3,
+    "modes": [
+      "prompt_only",
+      "native_original",
+      "native_projected"
+    ],
+    "firstRequestsPerModel": 585,
+    "warmupRequestsPerModel": 3,
+    "maximumRepairRequestsPerModel": 5265,
+    "maximumRequestsPerModel": 5853,
+    "models": 2,
+    "maximumTotalRequests": 11706
+  },
+  "humanReview": {
+    "completed": false,
+    "instructions": "Freeze after independent review; record reviewed IDs and changed labels. Never tune after inspecting main outputs."
+  }
+}
