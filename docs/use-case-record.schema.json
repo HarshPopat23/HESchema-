@@ -17,6 +17,20 @@
     "provenance": {"enum": ["observed", "historical_pilot", "author_created_synthetic", "synthetic_mutation"]},
     "reviewStatus": {"enum": ["unreviewed", "independently_reviewed"]},
     "publicationPermission": {"enum": ["granted_for_sanitized_example", "withheld", "synthetic_example_only"]},
+    "taskDescription": {"type": "string", "minLength": 1},
+    "taskOrigin": {"enum": ["naturally_observed", "author_created_synthetic", "unknown"]},
+    "expectedOutput": true,
+    "relationshipCategory": {"type": "string", "minLength": 1},
+    "sourceReferences": {"type": "array", "items": {
+      "type": "object", "additionalProperties": false,
+      "required": ["url", "revision", "constraintOrigin"],
+      "properties": {
+        "url": {"type": "string", "format": "uri"},
+        "revision": {"type": "string", "minLength": 1},
+        "constraintOrigin": {"enum": ["source_schema", "source_implementation", "author_inference"]},
+        "adaptation": {"type": "string"}
+      }
+    }},
     "limitations": {"type": "array", "items": {"type": "string"}}
   }
 }

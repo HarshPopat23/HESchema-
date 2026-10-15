@@ -1,18 +1,21 @@
 """Controlled first-pass decoding and replayed repair studies, separate from schema richness."""
 
 import copy
-import os
 import random
 from pathlib import Path
 
 from .capabilities import capability_profile
 from .context_schema import effective_schema, trusted_information
 from .contracts import Contract, generation_envelope
+from .failure_categories import VERSION as CATEGORY_VERSION
+from .failure_categories import classify, relationship_checks
+from .failure_categories import summary as category_summary
 from .jsonio import canonical, digest, loads, read_json, write_json
 from .metrics import paired_effect
-from .providers import Generation
+from .providers import Generation, content_has_reasoning_markers
 from .repair import RepairLimits, coordinate, request_generation
 from .reports import provenance
+from .rules import json_equal
 from .schema import SchemaEngine
 from .schema_projection import project_schema
 from .validation import validate_contract
@@ -41,7 +44,7 @@ def _score(evaluation, case):
         if case['contract'].get('outputKind') == 'tool_envelope' and isinstance(actual, dict):
             actual = {k: v for k, v in actual.items() if k != 'reason'}
             expected = {k: v for k, v in expected.items() if k != 'reason'}
-        intent = canonical(actual) == canonical(expected)
+        intent = json_equal(actual, expected)
     scored['intentAgreement'] = intent
     scored['success'] = bool(scored['accepted'] and intent is True)
     scored['intentEvidence'] = 'held_out_oracle' if 'expected' in case else scored['intentScope']
@@ -106,8 +109,21 @@ def stage_summary(rows):
         generation = r['firstEvaluation'].get('generation') or {}
         status = generation.get('completion', 'not_evaluated') if r['attempts'] else 'not_evaluated'
         completions[status] = completions.get(status, 0) + 1
+    final_stages = {}
+    for key in ('json', 'originalSchema', 'context', 'relationships'):
+        evaluations = [r.get('finalEvaluation') for r in rows]
+        available = [e for e in evaluations if e is not None]
+        evaluated = [e for e in available if e['stages'][key] in {'valid', 'invalid'}]
+        valid = sum(e['stages'][key] == 'valid' for e in available)
+        final_stages[key] = {'amongAttempts': measure(valid, n), 'amongEvaluated': measure(valid, len(evaluated)),
+                             'notEvaluated': n - len(evaluated), 'missingFinalEvaluation': n - len(available)}
     return {'runs': n, 'requestAcceptance': measure(len(accepted), n), 'returnedFinalContent': measure(len(returned), n),
             'completionOutcomes': completions, 'stages': stages,
+            'finalStages': final_stages,
+            'firstFailureCategories': category_summary(rows), 'finalFailureCategories': category_summary(rows, final=True),
+            'firstRelationshipChecks': relationship_checks(rows), 'finalRelationshipChecks': relationship_checks(rows, final=True),
+            'schemaValidRelationshipRejected': measure(sum(r['firstEvaluation'].get('referenceSchemaValid') is True
+                                                           and r['firstEvaluation']['stages']['relationships'] == 'invalid' for r in rows), n),
             'intentAgreement': measure(sum(r['firstEvaluation'].get('intentAgreement') is True for r in rows), sum(r['firstEvaluation'].get('intentAgreement') is not None for r in rows)),
             'firstPassSuccess': measure(sum(r['firstPassSuccess'] for r in rows), n),
             'finalSuccess': measure(sum(r['finalSuccess'] for r in rows), n),
@@ -125,6 +141,14 @@ def _report(rows, config, scheduled, *, warmup_rows=None):
     complete = len(rows) == scheduled
     empirical = config['provider'] != 'mock' and bool(models) and not any(a['generation']['metadata'].get('synthetic') for r in rows for a in r['attempts'])
     unexpected = any(r['status'] not in {'ok', 'native_request_rejected'} for r in rows)
+    control_mismatches = []
+    if config.get('thinkingRequested') is False:
+        control_mismatches = [{'caseId': r['caseId'], 'repeat': r['repeat'], 'arm': r['arm']}
+                              for r in rows if any(a['generation'].get('reasoning') or content_has_reasoning_markers(a['generation']['text'])
+                                                   for a in r['attempts'])]
+        control_mismatches += [{'warmupIndex': i} for i, recovery in enumerate(warmup_rows or [])
+                               if any(a['generation'].get('reasoning') or content_has_reasoning_markers(a['generation']['text'])
+                                      for a in recovery['attempts'])]
     warnings = ['Held-out fixtures are author-created synthetic cases, not evidence of company adoption.',
                 'Request acceptance and passing outputs do not prove keyword enforcement.',
                 'Timing includes the entire validation/IPC/repair path; no general latency or throughput claim.']
@@ -136,6 +160,10 @@ def _report(rows, config, scheduled, *, warmup_rows=None):
         warnings.append('Resolved model identity is missing or changed.')
     if any(r['status'] == 'native_request_rejected' for r in rows):
         warnings.append('Native request rejection is a measured outcome; its exact cause and rejected-request model identity remain unknown.')
+    if control_mismatches:
+        warnings.append('Requested thinking=false conflicts with observed reasoning; fix the control before comparing decoding modes. Raw content was not stripped.')
+    if config['study'] == 'repair_feedback':
+        warnings.append('Pooled repair arms mix source decoding modes. Use bySourceMode to inspect recovery; failure categories overlap.')
     arms = sorted({r['arm'] for r in rows})
     effects = {}
     for arm in arms:
@@ -145,9 +173,18 @@ def _report(rows, config, scheduled, *, warmup_rows=None):
             effects[arm] = paired_effect(comparison, baseline, arm)
     return {'protocolVersion': 2, 'study': config['study'], 'config': config, 'complete': complete,
             'completedRuns': len(rows), 'empiricalLLMEvidence': empirical,
-            'designValid': bool(complete and not unexpected and confirmed and len(models) == 1),
-            'comparisonValid': bool(empirical and complete and not unexpected and confirmed and len(models) == 1),
+            'designValid': bool(complete and not unexpected and confirmed and len(models) == 1 and not control_mismatches),
+            'comparisonValid': bool(empirical and complete and not unexpected and confirmed and len(models) == 1 and not control_mismatches),
+            'controlChecks': {'thinkingMismatchRows': control_mismatches,
+                              'requestControlsRecorded': sum('requestControls' in a['generation'].get('metadata', {}) for r in rows for a in r['attempts']),
+                              'contentExtraction': 'none; whole final content only'},
             'observedModels': models, 'arms': {arm: stage_summary([r for r in rows if r['arm'] == arm]) for arm in arms},
+            'byFamily': {family: {arm: stage_summary([r for r in rows if r['arm'] == arm and r['cluster'] == family]) for arm in arms}
+                         for family in sorted({r['cluster'] for r in rows})},
+            'byCategory': {category: {arm: stage_summary([r for r in rows if r['arm'] == arm and r.get('caseMetadata', {}).get('category') == category]) for arm in arms}
+                           for category in sorted({r['caseMetadata']['category'] for r in rows if r.get('caseMetadata', {}).get('category')})},
+            'bySourceMode': {mode: {arm: stage_summary([r for r in rows if r['arm'] == arm and r['caseId'].endswith(':' + mode)]) for arm in arms}
+                             for mode in MODES} if config['study'] == 'repair_feedback' else {},
             'effects': effects, 'warmup': warmup_rows or [], 'warnings': warnings}
 
 
@@ -165,7 +202,10 @@ async def run_decoding(cases, provider, out, *, repeats=1, modes=MODES, seed=42,
               'provider': provider.name, 'requestedModel': provider.model, 'repeats': repeats, 'modes': list(modes),
               'seed': seed, 'maxTokens': max_tokens, 'temperature': temperature, 'warmup': warmup, 'engine': backend,
               'repairs': 0, 'projectionVersion': '1', 'provenance': provenance(),
-              'thinkingRequested': False if provider.name == 'ollama' and os.getenv('OLLAMA_THINK', 'false').lower() in {'false', '0', 'no'} else None,
+              'thinkingRequested': getattr(provider, 'thinking', None),
+              'requestControls': provider.control_config() if hasattr(provider, 'control_config') else {},
+              'failureCategoryVersion': CATEGORY_VERSION,
+              'scoringVersion': 'semantic_json_equality_v1',
               'requestInterval': provider.interval, 'caseIdentities': {c['id']: {'contract': prepared[c['id']][0].identity, 'contextHash': digest(c.get('context')), 'promptHash': digest(prepared[c['id']][2])} for c in cases}}
     if hasattr(provider, 'runtime_metadata'):
         config['provenance'].update(await provider.runtime_metadata())
@@ -210,7 +250,10 @@ async def run_decoding(cases, provider, out, *, repeats=1, modes=MODES, seed=42,
                 status = 'ok' if recovery['attempts'] else 'native_request_rejected' if mode != 'prompt_only' and recovery['stopReason'] == 'request_rejected' else 'unsupported_adapter' if recovery['stopReason'] == 'unsupported_mode' else recovery['stopReason']
                 row = {'caseId': case['id'], 'cluster': case.get('family', case['id']), 'repeat': repeat, 'arm': mode,
                        'status': status, 'modeOrder': order, 'promptHash': digest(messages), 'messages': messages,
-                       'firstPassSuccess': first['success'], 'finalSuccess': final['success'], 'firstEvaluation': first,
+                       'firstPassSuccess': first['success'], 'finalSuccess': final['success'], 'firstEvaluation': first, 'finalEvaluation': final,
+                       'caseMetadata': {k: copy.deepcopy(case[k]) for k in ('category', 'classification', 'reviewStatus', 'sourceRefs') if k in case},
+                       'firstObservations': classify(first, generation=recovery['attempts'][0]['generation'] if recovery['attempts'] else None, failure=recovery['failure']),
+                       'finalObservations': classify(final, generation=recovery['attempts'][-1]['generation'] if recovery['attempts'] else None, failure=recovery['failure']),
                        'attempts': recovery['attempts'], 'requestLedger': recovery['requestLedger'], 'requestsAttempted': recovery['requestsAttempted'],
                        'repairAttempts': 0, 'latencyMs': recovery['elapsedMs'], 'projection': manifest if mode == 'native_projected' else None,
                        'capability': profile, 'failure': recovery['failure'], 'provenance': case.get('provenance', 'author_created_synthetic')}
@@ -239,6 +282,9 @@ async def run_repair_study(cases, provider, first_out, out, *, budgets=(1, 2), s
         raise ValueError('Repair code/dependencies must match saved first-pass evidence')
     if provider.name != source_config['provider'] or provider.model != source_config['requestedModel']:
         raise ValueError('Repair model/provider must match the saved first-pass experiment')
+    controls = provider.control_config() if hasattr(provider, 'control_config') else {}
+    if controls != source_config.get('requestControls', {}):
+        raise ValueError('Repair request controls must match the saved first-pass experiment')
     if provider.name != 'mock' and max_requests is None:
         raise ValueError('Live inference requires an explicit request budget')
     if any(not 0 <= b <= 5 for b in budgets) or any(s not in {'generic', 'raw', 'actionable'} for s in styles) or not budgets or not styles:
@@ -249,7 +295,9 @@ async def run_repair_study(cases, provider, first_out, out, *, budgets=(1, 2), s
     config = {'protocolVersion': 2, 'study': 'repair_feedback', 'sourceHash': digest(saved), 'sourceConfigHash': digest(source_config),
               'datasetHash': digest(cases), 'provider': provider.name, 'requestedModel': provider.model,
               'budgets': list(budgets), 'styles': list(styles), 'maxTokens': max_tokens, 'seed': seed,
-              'temperature': temperature, 'engine': backend, 'provenance': provenance()}
+              'temperature': temperature, 'engine': backend, 'provenance': provenance(),
+              'thinkingRequested': source_config.get('thinkingRequested'), 'requestControls': controls,
+              'failureCategoryVersion': CATEGORY_VERSION, 'scoringVersion': source_config.get('scoringVersion')}
     out = _config(out, config)
     latest = _read_rows(out)
     engine = SchemaEngine(backend)
@@ -282,7 +330,10 @@ async def run_repair_study(cases, provider, first_out, out, *, budgets=(1, 2), s
                         first, final = _score(recovery['firstEvaluation'], case), _score(recovery['finalEvaluation'], case)
                         row = {'caseId': source_id, 'cluster': case.get('family', case['id']), 'repeat': source_row['repeat'], 'arm': arm,
                                'status': 'ok' if not recovery['failure'] else recovery['stopReason'], 'firstOutputHash': digest(replay.text),
-                               'firstPassSuccess': first['success'], 'finalSuccess': final['success'], 'firstEvaluation': first,
+                               'firstPassSuccess': first['success'], 'finalSuccess': final['success'], 'firstEvaluation': first, 'finalEvaluation': final,
+                               'caseMetadata': source_row.get('caseMetadata', {}),
+                               'firstObservations': classify(first, generation=recovery['attempts'][0]['generation'] if recovery['attempts'] else None, failure=recovery['failure'] if not recovery['attempts'] else None),
+                               'finalObservations': classify(final, generation=recovery['attempts'][-1]['generation'] if recovery['attempts'] else None, failure=recovery['failure']),
                                'attempts': recovery['attempts'], 'requestLedger': recovery['requestLedger'], 'requestsAttempted': recovery['requestsAttempted'],
                                'repairAttempts': recovery['repairAttempts'], 'latencyMs': recovery['elapsedMs'],
                                'stopReason': recovery['stopReason'], 'failure': recovery['failure'], 'provenance': source_row['provenance']}

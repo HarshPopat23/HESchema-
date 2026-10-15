@@ -1,5 +1,11 @@
 # Controlled measurements
 
+For category-labelled cases, relationship-check outcomes, explicit reasoning
+controls and compatible cross-model category tables, see
+[relationship research](relationship-research.md). Use fresh result directories:
+the current code records additional control/taxonomy fields and semantic numeric
+scoring. Historical reports retain their original meanings.
+
 The existing `benchmark` command studies schema richness in prompts. Its CLI repair
 default remains two (UI jobs default to zero). It now uses the shared coordinator
 and fingerprints protocol/feedback/code/dependency settings. Use a new output

@@ -21,6 +21,14 @@ from .schema import SchemaEngine
 def main():
     parser = argparse.ArgumentParser(prog="heschema")
     commands = parser.add_subparsers(dest="command", required=True)
+    research = commands.add_parser('research-audit', help='Audit prospective category cases without initializing providers')
+    research.add_argument('--dataset', default=str(ROOT / 'research/relationship-categories-v1/cases.jsonl'))
+    research.add_argument('--sources', default=str(ROOT / 'research/relationship-categories-v1/sources.json'))
+    research.add_argument('--out')
+    research.add_argument('--engine', choices=['jsonschema', 'blaze'], default='jsonschema')
+    categories = commands.add_parser('category-report', help='Describe category outcomes across compatible saved reports')
+    categories.add_argument('reports', nargs='+')
+    categories.add_argument('--out')
     commands.add_parser("providers")
     dataset = commands.add_parser("dataset")
     dataset.add_argument("--build", action="store_true")
@@ -56,6 +64,7 @@ def main():
     decoding.add_argument("--max-tokens", type=int, default=1024)
     decoding.add_argument("--seed", type=int, default=42)
     decoding.add_argument("--warmup", type=int, default=0)
+    decoding.add_argument('--engine', choices=['jsonschema', 'blaze'], default='jsonschema')
     decoding.add_argument("--modes", nargs="+", choices=["prompt_only", "native_original", "native_projected"], default=["prompt_only", "native_original", "native_projected"])
     recovery = commands.add_parser("repair-study")
     recovery.add_argument("--dataset", default=str(ROOT / "benchmarks/heldout.jsonl"))
@@ -79,7 +88,23 @@ def main():
     serve.add_argument("--host", default="127.0.0.1")
     serve.add_argument("--port", default=8000, type=int)
     args = parser.parse_args()
-    if args.command == "providers":
+    if args.command == 'research-audit':
+        from .research_cases import audit_cases
+        report = audit_cases(args.dataset, args.sources, backend=args.engine)
+        if args.out:
+            Path(args.out).parent.mkdir(parents=True, exist_ok=True)
+            Path(args.out).write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
+        print(json.dumps({k: v for k, v in report.items() if k != 'probes'}, indent=2))
+        if not report['passed']:
+            raise SystemExit(1)
+    elif args.command == 'category-report':
+        from .category_reports import category_report
+        report = category_report(args.reports)
+        if args.out:
+            Path(args.out).parent.mkdir(parents=True, exist_ok=True)
+            Path(args.out).write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
+        print(json.dumps(report, indent=2))
+    elif args.command == "providers":
         print(json.dumps(registry(), indent=2))
     elif args.command == "dataset":
         if args.build:
@@ -108,7 +133,7 @@ def main():
             try:
                 if args.command == "decoding-study":
                     return await run_decoding(cases, provider, args.out, repeats=args.repeats, modes=args.modes,
-                                              seed=args.seed, max_tokens=args.max_tokens, max_requests=args.max_requests, warmup=args.warmup)
+                                              seed=args.seed, max_tokens=args.max_tokens, max_requests=args.max_requests, warmup=args.warmup, backend=args.engine)
                 return await run_repair_study(cases, provider, args.first_out, args.out, budgets=args.budgets, styles=args.styles,
                                               max_tokens=source["maxTokens"], seed=source["seed"], temperature=source["temperature"], backend=source["engine"], max_requests=args.max_requests)
             finally:

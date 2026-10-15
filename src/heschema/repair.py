@@ -54,7 +54,7 @@ def feedback_message(errors, style='actionable', max_chars=4000):
         if style == 'raw':
             entry = error
         else:
-            entry = {k: error[k] for k in ('code', 'stage', 'instanceLocation', 'schemaLocation', 'ruleId', 'message', 'actual', 'expected', 'repair') if k in error}
+            entry = {k: error[k] for k in ('code', 'stage', 'instanceLocation', 'schemaLocation', 'ruleId', 'kind', 'message', 'actual', 'expected', 'inputLocations', 'protectedInputs', 'repair') if k in error}
             if error.get('details'):
                 entry['branches'] = [{k: e[k] for k in ('instanceLocation', 'schemaLocation', 'message') if k in e} for e in error['details'][:6]]
         candidate = [*entries, entry]

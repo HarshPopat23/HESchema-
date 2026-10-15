@@ -15,6 +15,7 @@ jobs:
       - run: ruff check src tests
       - run: pytest -q
       - run: heschema dataset
+      - run: heschema research-audit
       - run: heschema benchmark --provider mock --limit 8 --repeats 1 --out results/ci
       - uses: actions/setup-node@v4
         with:
@@ -38,3 +39,4 @@ jobs:
       - run: pip install -e '.[dev]'
       - run: npm ci --prefix native
       - run: HESCHEMA_TEST_BLAZE=1 JSONSCHEMA_CLI="$PWD/native/node_modules/.bin/jsonschema" pytest -q tests/test_blaze.py
+      - run: JSONSCHEMA_CLI="$PWD/native/node_modules/.bin/jsonschema" heschema research-audit --engine blaze

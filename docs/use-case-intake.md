@@ -1,5 +1,14 @@
 # Collecting actual constraint needs
 
+Include the intended task and expected result, not just the schema. Use pinned
+public source URLs/revisions when adapting a published tool; label those tasks
+as authored rather than observed user traffic. The optional `taskDescription`,
+`taskOrigin`, `expectedOutput`, `relationshipCategory` and `sourceReferences`
+fields capture this evidence. Do not infer the need for a new vocabulary from
+a requirement already expressible with standard schema keywords. See the
+[category research protocol](relationship-research.md) for examples and the
+distinction between public implementation evidence and real application failures.
+
 Use [the record schema](use-case-record.schema.json) or the GitHub issue form. Keep
 whole outputs, the original schema, the desired constraint, source/context,
 backend/model/version/mode, workaround, provenance, independent review status,

@@ -1,0 +1,61 @@
+{
+  "sourceVersion": "1",
+  "sources": [
+    {
+      "id": "mcp-filesystem-read-text",
+      "repository": "modelcontextprotocol/servers",
+      "revision": "bbb701e7ac1e57f3edd1c2836b94c5457eaf7b9c",
+      "path": "src/filesystem/server.ts",
+      "url": "https://github.com/modelcontextprotocol/servers/blob/bbb701e7ac1e57f3edd1c2836b94c5457eaf7b9c/src/filesystem/server.ts",
+      "sourceBlobSha": "2a47435d6356626622de696f4eab92314c75f5c3",
+      "excerptPath": "sources/mcp-filesystem-read-text.ts",
+      "ranges": [
+        {
+          "startLine": 50,
+          "endLine": 61
+        },
+        {
+          "startLine": 234,
+          "endLine": 240
+        }
+      ],
+      "licensePath": "sources/MCP-LICENSE.txt",
+      "schemaOrigin": "manual_adaptation_from_public_tool",
+      "taskOrigin": "author_created_synthetic",
+      "reviewStatus": "unreviewed",
+      "publicationPermission": "public_source_with_license",
+      "adoptionEvidence": false,
+      "excerptSha256": "6e2b80a02a7676acc14adc572a3cc8a231b9c25f706f57784061f78fb5cdb231"
+    },
+    {
+      "id": "mcp-memory-create-relations",
+      "repository": "modelcontextprotocol/servers",
+      "revision": "bbb701e7ac1e57f3edd1c2836b94c5457eaf7b9c",
+      "path": "src/memory/index.ts",
+      "url": "https://github.com/modelcontextprotocol/servers/blob/bbb701e7ac1e57f3edd1c2836b94c5457eaf7b9c/src/memory/index.ts",
+      "sourceBlobSha": "eab385a9fa443dd6f5d8eeaaafca487774620952",
+      "excerptPath": "sources/mcp-memory-create-relations.ts",
+      "ranges": [
+        {
+          "startLine": 534,
+          "endLine": 565
+        },
+        {
+          "startLine": 722,
+          "endLine": 727
+        },
+        {
+          "startLine": 816,
+          "endLine": 847
+        }
+      ],
+      "licensePath": "sources/MCP-LICENSE.txt",
+      "schemaOrigin": "manual_adaptation_from_public_tool",
+      "taskOrigin": "author_created_synthetic",
+      "reviewStatus": "unreviewed",
+      "publicationPermission": "public_source_with_license",
+      "adoptionEvidence": false,
+      "excerptSha256": "94c38e9ad47bb66f1111e17dfa81f63dd037871b39b6267eb62f7798ec6c5258"
+    }
+  ]
+}

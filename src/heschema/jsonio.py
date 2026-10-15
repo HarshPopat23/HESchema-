@@ -23,6 +23,8 @@ def loads(text):
         parsed = float(value)
         if not math.isfinite(parsed):
             raise ValueError(f"Non-finite JSON number: {value}")
+        if parsed == 0 and any(d in '123456789' for d in value.lower().split('e', 1)[0]):
+            raise ValueError(f"Underflow JSON number outside supported float range: {value}")
         return parsed
 
     return json.loads(text, object_pairs_hook=_pairs, parse_constant=invalid, parse_float=finite_float)
