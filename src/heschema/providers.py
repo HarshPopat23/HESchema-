@@ -9,9 +9,35 @@ from pathlib import Path
 import httpx
 from dotenv import load_dotenv
 
-from .jsonio import canonical, read_json
+from .jsonio import canonical, digest, loads, read_json
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def content_has_reasoning_markers(text):
+    """Flag non-JSON content, never remove text or mislabel markers inside JSON strings."""
+    if not isinstance(text, str):
+        return False
+    if not any(marker in text.lower() for marker in ('<think>', '</think>')):
+        return False
+    try:
+        loads(text)
+    except (ValueError, TypeError):
+        return True
+    return False
+
+
+def ollama_thinking():
+    value = os.getenv('OLLAMA_THINK', 'false').strip().lower()
+    if value in {'false', '0', 'no'}:
+        return False
+    if value in {'true', '1', 'yes'}:
+        return True
+    if value in {'default', 'null'}:
+        return None
+    if value in {'low', 'medium', 'high'}:
+        return value
+    raise ValueError('OLLAMA_THINK must be true, false, default, low, medium or high')
 
 
 class ProviderError(RuntimeError):
@@ -70,6 +96,7 @@ class Provider:
             raise ValueError(f"Unknown provider: {name}")
         self.name, self.config = name, configs[name].copy()
         self.model = model or self.config["model"]
+        self.thinking = ollama_thinking() if self.config['kind'] == 'ollama' else None
         self.interval = float(os.getenv("HESCHEMA_REQUEST_INTERVAL", "3")) if interval is None else interval
         self.last_request = 0
         self.lock = asyncio.Lock()
@@ -87,6 +114,11 @@ class Provider:
         if self.client is not None:
             await self.client.aclose()
 
+    def control_config(self):
+        return {'thinkingRequested': self.thinking,
+                'reasoningEffort': 'low' if self.name == 'groq' and self.model in {'openai/gpt-oss-20b', 'openai/gpt-oss-120b'} else None,
+                'contentPolicy': 'whole_final_content_no_extraction_v1'}
+
     async def runtime_metadata(self):
         """Read-only backend identity; missing metadata remains unknown, never guessed."""
         result = {"backendVersion": None, "modelDigest": None}
@@ -103,13 +135,17 @@ class Provider:
                 for model in response.json().get('models', []):
                     if model.get('name') == self.model or model.get('model') == self.model:
                         result['modelDigest'] = model.get('digest')
+            response = await self.client.post(base + '/api/show', json={'model': self.model}, timeout=3)
+            if response.is_success:
+                data = response.json()
+                result['thinkingControls'] = data.get('thinking')
         except (httpx.RequestError, ValueError, AttributeError, TypeError):
             pass
         return result
 
     def request(self, messages, seed, max_tokens, temperature, format_schema=None):
         config, kind = self.config, self.config["kind"]
-        if format_schema is not None and kind not in {"ollama", "mock"}:
+        if format_schema is not None and kind not in {"ollama", "mock"} and self.name != "groq":
             raise ProviderError("Native schema mode is not implemented for this adapter", code="unsupported_mode", requests=0)
         base = (os.getenv("OLLAMA_BASE_URL", config.get("base_url")) if kind == "ollama" else config.get("base_url", "")).rstrip("/")
         headers = {"Content-Type": "application/json"}
@@ -131,14 +167,21 @@ class Provider:
             payload = {"model": self.model, "messages": messages, "stream": False, "options": options}
             if format_schema is not None:
                 payload["format"] = format_schema
-            if os.getenv("OLLAMA_THINK", "false").lower() in {"false", "0", "no"}:
-                payload["think"] = False
+            if self.thinking is not None:
+                payload["think"] = self.thinking
             return base + "/api/chat", headers, payload
         payload = {"model": self.model, "messages": messages, "max_tokens": max_tokens}
         if temperature is not None:
             payload["temperature"] = temperature
         if config.get("seed_supported"):
             payload["seed"] = seed
+        if self.name == "groq":
+            headers["User-Agent"] = "HESchema/0.1"
+            if self.model in {"openai/gpt-oss-20b", "openai/gpt-oss-120b"}:
+                payload["reasoning_effort"] = "low"
+            if format_schema is not None:
+                payload["response_format"] = {"type": "json_schema", "json_schema": {
+                    "name": "heschema_output", "strict": True, "schema": format_schema}}
         return base + "/chat/completions", {**headers, "Authorization": "Bearer " + self.key}, payload
 
     async def generate(self, messages, seed=0, max_tokens=1024, temperature=None, format_schema=None, retry=True):
@@ -205,6 +248,8 @@ class Provider:
                         finish_reason = data.get("done_reason")
                     else:
                         text = data["choices"][0]["message"]["content"]
+                        if self.name == "groq":
+                            reasoning = data["choices"][0]["message"].get("reasoning")
                         usage = data.get("usage", {})
                         inp, out = usage.get("prompt_tokens"), usage.get("completion_tokens")
                         finish_reason = data["choices"][0].get("finish_reason")
@@ -213,6 +258,13 @@ class Provider:
                 except (ValueError, TypeError, KeyError, IndexError, AttributeError):
                     raise ProviderError(f"{self.name}: unexpected response structure") from None
                 meta = {"resolvedModelConfirmed": bool(data.get("model"))}
+                # Fingerprint exactly the submitted body; never include headers or credentials.
+                meta['requestControls'] = {**self.control_config(), 'payloadHash': digest(payload),
+                                           'messagesHash': digest(messages),
+                                           'schemaHash': digest(format_schema) if format_schema is not None else None,
+                                           'seedSent': payload.get('options', {}).get('seed', payload.get('seed')),
+                                           'maxTokens': max_tokens, 'temperature': temperature}
+                meta['contentReasoningMarkers'] = content_has_reasoning_markers(text)
                 inp = inp if type(inp) is int and inp >= 0 else None
                 out = out if type(out) is int and out >= 0 else None
                 if kind == "ollama":
@@ -222,6 +274,13 @@ class Provider:
                                            if isinstance(data.get(source), (int, float))}
                 if finish_reason is not None:
                     meta["finish_reason"] = finish_reason
+                if self.name == "groq":
+                    meta["nativeStrictRequested"] = format_schema is not None
+                    meta["reasoningEffortRequested"] = "low" if self.model in {"openai/gpt-oss-20b", "openai/gpt-oss-120b"} else None
+                    meta["seedRequested"] = False
+                    meta["responseId"] = data.get("id")
+                    meta["systemFingerprint"] = data.get("system_fingerprint")
+                    meta["rateLimitHeaders"] = {k: v for k, v in response.headers.items() if k.startswith("x-ratelimit-")}
                 return Generation(text, inp, out, data.get("model", self.model), attempts,
                                   (time.perf_counter() - start) * 1000,
                                   meta, reasoning)

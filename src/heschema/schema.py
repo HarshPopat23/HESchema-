@@ -154,7 +154,7 @@ class SchemaEngine:
                     source = Path(folder) / "schema.json"
                     source.write_text(canonical(schema), encoding="utf-8")
                     completed = subprocess.run(
-                        [os.getenv("JSONSCHEMA_CLI", "jsonschema"), "compile", str(source), "--fast"],
+                        [os.getenv("JSONSCHEMA_CLI", "jsonschema"), "compile", str(source), "--fast", "--default-dialect", DIALECT],
                         capture_output=True, text=True, timeout=30, check=True, env=child_environment(),
                     )
                     template = loads(completed.stdout)

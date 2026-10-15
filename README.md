@@ -1,5 +1,10 @@
 # HESchema
 
+For the prospective study of recurring property relationships, see
+[the research protocol](docs/relationship-research.md) and the
+[86-case category pack](research/relationship-categories-v1/README.md).
+`heschema research-audit` checks fixtures offline; it does not produce model results.
+
 A runnable **schema-effect experiment harness + state-aware tool-argument validator**. It answers two different questions:
 
 1. **“Is this specific LLM-generated argument safe and correct?”** Check strict JSON, the tool contract, a user-confirmed state snapshot, and declared application policies. Return `PASS` or `FAIL`, with reasons.

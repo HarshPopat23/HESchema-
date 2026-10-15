@@ -26,6 +26,18 @@ body:
     validations:
       required: true
   - type: textarea
+    id: intended-task
+    attributes:
+      label: Intended task and expected result
+      description: Explain what the user wanted, how the expected result was verified, and whether this task was observed or authored as a test.
+    validations:
+      required: true
+  - type: textarea
+    id: public-sources
+    attributes:
+      label: Public source references and relationship category
+      description: If applicable, include pinned repository URLs/revisions and identify arithmetic, dates, matching fields, membership, counts, uniqueness, or an existing schema keyword. Do not include private sources.
+  - type: textarea
     id: context
     attributes:
       label: Context and source evidence

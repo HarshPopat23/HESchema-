@@ -158,6 +158,8 @@ def validate_contract(raw, engine, contract, snapshot=None, *, generation=None):
                 trusted = snapshot['data'] if snapshot else None
                 trusted_locations = set(snapshot.get('approvedPointers', [])) | {f['contextLocation'] for f in snapshot.get('facts', [])} if snapshot else set()
                 relationships = evaluate_rules(doc, contract.relationships, trusted, trusted_locations)
+                for error in relationships['errors']:
+                    error['protectedInputs'] = [binding['instanceLocation'] for binding in context['activeBindings']]
                 stages['relationships'] = relationships['status']
                 errors.extend(relationships['errors'])
             for missing in context['missingBindings']:
