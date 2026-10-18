@@ -1,0 +1,13 @@
+task_family,arm,attempts,first_pass_correct,first_pass_correct_pct,final_correct,final_correct_pct,first_pass_accepted,first_pass_accepted_pct,final_accepted,final_accepted_pct,false_acceptance_count,false_acceptance_rate_pct,false_rejection_count,false_rejection_rate_pct,repairs_attempted,repairs_recovered,recovery_rate_pct,regressions,median_latency_ms,p95_latency_ms,mean_queue_wait_ms,mean_input_tokens,mean_output_tokens,total_tokens
+bibliography-author-list-and-count,A,108,103,95.37,104,96.3,103,95.37,104,96.3,0,0.0,0,0.0,4,1,25.0,0,1921.9,8544.5,1178.1,613.0,483.5,118428
+bibliography-author-list-and-count,B,108,105,97.22,105,97.22,105,97.22,105,97.22,0,0.0,0,0.0,3,0,0.0,0,1969.0,11200.9,1103.9,973.6,488.7,157933
+bibliography-missing-author-negative-control,A,72,72,100.0,72,100.0,72,100.0,72,100.0,0,0.0,0,0.0,0,0,0.0,0,1197.8,3289.8,1080.0,385.1,181.5,40799
+bibliography-missing-author-negative-control,B,72,72,100.0,72,100.0,72,100.0,72,100.0,0,0.0,0,0.0,0,0,0.0,0,1358.4,4863.9,982.8,528.9,195.2,52135
+file-inventory-count-and-sum,A,180,112,62.22,115,63.89,173,96.11,177,98.33,62,34.44,0,0.0,7,3,42.86,0,3024.8,27689.1,1023.1,828.3,856.9,303332
+file-inventory-count-and-sum,B,180,120,66.67,120,66.67,120,66.67,120,66.67,0,0.0,0,0.0,60,0,0.0,0,3880.9,43877.8,1399.9,1731.1,968.4,485896
+release-artifact-inventory-count-and-sum,A,180,162,90.0,171,95.0,162,90.0,171,95.0,0,0.0,0,0.0,18,9,50.0,0,1836.3,17991.3,1125.6,877.9,497.9,247650
+release-artifact-inventory-count-and-sum,B,180,142,78.89,146,81.11,142,78.89,146,81.11,0,0.0,0,0.0,38,4,10.53,0,2349.5,20357.8,1236.3,1502.6,600.3,378534
+source-field-and-coordinate-association,A,180,179,99.44,179,99.44,179,99.44,179,99.44,0,0.0,0,0.0,0,0,0.0,0,1391.7,4938.2,996.1,515.6,230.5,134303
+source-field-and-coordinate-association,B,180,180,100.0,180,100.0,180,100.0,180,100.0,0,0.0,0,0.0,0,0,0.0,0,1508.0,5346.0,976.7,821.9,226.7,188756
+station-inventory-count-and-sum,A,180,180,100.0,180,100.0,180,100.0,180,100.0,0,0.0,0,0.0,0,0,0.0,0,2112.2,5724.7,962.8,797.4,532.7,239403
+station-inventory-count-and-sum,B,180,168,93.33,172,95.56,168,93.33,172,95.56,0,0.0,0,0.0,12,4,33.33,0,2374.6,10110.3,1027.1,1360.9,533.3,340961

@@ -1,0 +1,34 @@
+{
+  "manifest_version": "1.0",
+  "timestamp_utc": "2026-10-18T13:46:56.291854+00:00",
+  "repository": "https://github.com/HarshPopat23/HESchema-",
+  "commit": "c405078eb59aa5179ff004ce7efced4f37b34f8b",
+  "study_pack_sha256": "f140699197d823a39ffbd614499ff5b8c628f6fb64d9a306aaa1ce8e89eb15e2",
+  "case_array_sha256": "ab558fabd054f061fe2cc2425f84ea51c6b1fd1043a943697a8f06c4514cec05",
+  "source_archive_sha256": "85c45d2c44258f6e1fe46cb22440395cadee5a0ccb3031547886e83c9111a408",
+  "models": [
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "qwen/qwen3.8-27b"
+  ],
+  "arms": [
+    "A",
+    "B"
+  ],
+  "concurrency": 1,
+  "seed": 20261017,
+  "generation_settings": {
+    "temperature": 0.0,
+    "max_tokens": 2048,
+    "mode": "prompt_only",
+    "provider_schema_enforced": false
+  },
+  "repair_policy": {
+    "budget": 1,
+    "trigger": "detector_rejection_only",
+    "max_diagnostic_chars": 1000,
+    "oracle_feedback_leaked": false
+  },
+  "spending_cap_usd": 0.0,
+  "total_attempts_recorded": 1800
+}

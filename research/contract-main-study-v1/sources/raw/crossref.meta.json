@@ -1,0 +1,6 @@
+{
+  "url": "https://api.crossref.org/works?filter=from-pub-date:2025-01-01,until-pub-date:2025-01-31&rows=20&sort=published&order=asc",
+  "resolved_url": "https://api.crossref.org/works?filter=from-pub-date:2025-01-01,until-pub-date:2025-01-31&rows=20&sort=published&order=asc",
+  "retrieved_utc": "2026-10-17T16:38:28Z",
+  "raw_sha256": "2fedc07a0f3888ef8b25f43793b3b72d9e86c5f8f117ab0b6a7592e4e46d0117"
+}

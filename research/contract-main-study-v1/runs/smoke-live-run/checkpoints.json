@@ -1,0 +1,12 @@
+{
+  "completed": {
+    "WF-001_openai/gpt-oss-20b_1_A": {
+      "first_pass_correct": true,
+      "final_correct": true
+    },
+    "WF-001_openai/gpt-oss-20b_1_B": {
+      "first_pass_correct": true,
+      "final_correct": true
+    }
+  }
+}

@@ -1,0 +1,7 @@
+model_id,arm,attempts,total_input_tokens,total_output_tokens,calculated_reference_cost_usd,actual_invoiced_cost_usd,latency_median_ms,latency_p95_ms
+openai/gpt-oss-120b,A,300,201567,176769,0.1464,0.0,1943.1,4613.5
+openai/gpt-oss-120b,B,300,335132,191237,0.1818,0.0,2034.6,5025.5
+openai/gpt-oss-20b,A,300,229285,148039,0.1347,0.0,1425.2,9315.6
+openai/gpt-oss-20b,B,300,377764,158039,0.1704,0.0,1531.7,9616.0
+qwen/qwen3.8-27b,A,300,206543,121712,0.1143,0.0,2303.2,28608.9
+qwen/qwen3.8-27b,B,300,405315,136728,0.1631,0.0,3395.2,43338.4

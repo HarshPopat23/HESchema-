@@ -1,0 +1,18 @@
+[
+  {
+    "order": 0,
+    "case_id": "WF-001",
+    "model_id": "openai/gpt-oss-20b",
+    "repeat": 1,
+    "arm": "A",
+    "slot_key": "WF-001_openai/gpt-oss-20b_1_A"
+  },
+  {
+    "order": 1,
+    "case_id": "WF-001",
+    "model_id": "openai/gpt-oss-20b",
+    "repeat": 1,
+    "arm": "B",
+    "slot_key": "WF-001_openai/gpt-oss-20b_1_B"
+  }
+]

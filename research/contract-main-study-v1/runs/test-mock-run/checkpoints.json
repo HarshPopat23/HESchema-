@@ -1,0 +1,52 @@
+{
+  "completed": {
+    "WF-001_openai/gpt-oss-120b_1_A": {
+      "first_pass_correct": false,
+      "final_correct": false
+    },
+    "WF-001_openai/gpt-oss-120b_1_B": {
+      "first_pass_correct": false,
+      "final_correct": false
+    },
+    "WF-002_qwen/qwen3.8-27b_1_A": {
+      "first_pass_correct": false,
+      "final_correct": false
+    },
+    "WF-002_qwen/qwen3.8-27b_1_B": {
+      "first_pass_correct": false,
+      "final_correct": false
+    },
+    "WF-002_openai/gpt-oss-120b_1_B": {
+      "first_pass_correct": false,
+      "final_correct": false
+    },
+    "WF-002_openai/gpt-oss-120b_1_A": {
+      "first_pass_correct": false,
+      "final_correct": false
+    },
+    "WF-002_openai/gpt-oss-20b_1_A": {
+      "first_pass_correct": false,
+      "final_correct": false
+    },
+    "WF-002_openai/gpt-oss-20b_1_B": {
+      "first_pass_correct": false,
+      "final_correct": false
+    },
+    "WF-001_openai/gpt-oss-20b_1_A": {
+      "first_pass_correct": false,
+      "final_correct": false
+    },
+    "WF-001_openai/gpt-oss-20b_1_B": {
+      "first_pass_correct": false,
+      "final_correct": false
+    },
+    "WF-001_qwen/qwen3.8-27b_1_B": {
+      "first_pass_correct": false,
+      "final_correct": false
+    },
+    "WF-001_qwen/qwen3.8-27b_1_A": {
+      "first_pass_correct": false,
+      "final_correct": false
+    }
+  }
+}

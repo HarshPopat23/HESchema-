@@ -1,0 +1,28 @@
+{
+  "count": 1100,
+  "timestamp": "2026-10-18 16:48:22",
+  "arms": {
+    "A": {
+      "attempts": 553,
+      "first_pass_correct": 505,
+      "first_pass_pct": 91.3,
+      "final_correct": 517,
+      "final_pct": 93.5,
+      "false_acceptance": 26,
+      "false_acceptance_pct": 4.7,
+      "false_rejection": 0,
+      "mean_tokens": 1252.3
+    },
+    "B": {
+      "attempts": 547,
+      "first_pass_correct": 499,
+      "first_pass_pct": 91.2,
+      "final_correct": 506,
+      "final_pct": 92.5,
+      "false_acceptance": 0,
+      "false_acceptance_pct": 0.0,
+      "false_rejection": 0,
+      "mean_tokens": 1833.1
+    }
+  }
+}

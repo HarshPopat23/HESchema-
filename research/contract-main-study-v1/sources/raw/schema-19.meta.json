@@ -1,0 +1,6 @@
+{
+  "url": "https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/ansible.json#/$defs/playbook",
+  "resolved_url": "https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/ansible.json#/$defs/playbook",
+  "retrieved_utc": "2026-10-17T16:41:08Z",
+  "raw_sha256": "4d70ff5c7d764acfc85f40bd246ddf49abcf5d46bd81a75c71650e15954110f7"
+}

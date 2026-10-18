@@ -1,0 +1,320 @@
+[
+  {
+    "requested": "package.json",
+    "catalog_entry": {
+      "name": "package.json",
+      "description": "NPM configuration file",
+      "fileMatch": [
+        "package.json"
+      ],
+      "url": "https://www.schemastore.org/package.json"
+    },
+    "download": "ok",
+    "raw_file": "schema-01.json"
+  },
+  {
+    "requested": "composer.json",
+    "catalog_entry": {
+      "name": "composer.json",
+      "description": "PHP Composer configuration file",
+      "fileMatch": [
+        "composer.json"
+      ],
+      "url": "https://getcomposer.org/schema.json"
+    },
+    "download": "ok",
+    "raw_file": "schema-02.json"
+  },
+  {
+    "requested": "tsconfig.json",
+    "catalog_entry": {
+      "name": "tsconfig.json",
+      "description": "TypeScript compiler configuration file",
+      "fileMatch": [
+        "tsconfig*.json"
+      ],
+      "url": "https://www.schemastore.org/tsconfig.json"
+    },
+    "download": "ok",
+    "raw_file": "schema-03.json"
+  },
+  {
+    "requested": "GitHub Workflow",
+    "catalog_entry": {
+      "name": "GitHub Workflow",
+      "description": "YAML GitHub Workflow",
+      "fileMatch": [
+        "**/.github/workflows/*.yml",
+        "**/.github/workflows/*.yaml",
+        "**/.gitea/workflows/*.yml",
+        "**/.gitea/workflows/*.yaml",
+        "**/.forgejo/workflows/*.yml",
+        "**/.forgejo/workflows/*.yaml"
+      ],
+      "url": "https://www.schemastore.org/github-workflow.json"
+    },
+    "download": "ok",
+    "raw_file": "schema-04.json"
+  },
+  {
+    "requested": "devcontainer.json",
+    "catalog_entry": {
+      "name": "devcontainer.json",
+      "description": "dev container configuration files",
+      "fileMatch": [
+        "devcontainer.json",
+        ".devcontainer.json"
+      ],
+      "url": "https://raw.githubusercontent.com/devcontainers/spec/main/schemas/devContainer.base.schema.json"
+    },
+    "download": "ok",
+    "raw_file": "schema-05.json"
+  },
+  {
+    "requested": "Prettier configuration",
+    "catalog_entry": {
+      "name": "prettierrc.json",
+      "description": ".prettierrc configuration file",
+      "fileMatch": [
+        ".prettierrc",
+        ".prettierrc.json",
+        ".prettierrc.yml",
+        ".prettierrc.yaml"
+      ],
+      "url": "https://www.schemastore.org/prettierrc.json",
+      "versions": {
+        "1.8.2": "https://www.schemastore.org/prettierrc-1.8.2.json",
+        "2.8.8": "https://www.schemastore.org/prettierrc-2.8.8.json",
+        "3.0.0": "https://www.schemastore.org/prettierrc.json"
+      }
+    },
+    "download": "ok",
+    "raw_file": "schema-06.json"
+  },
+  {
+    "requested": "ESLint configuration",
+    "catalog_entry": {
+      "name": ".eslintrc",
+      "description": "ESLint configuration files",
+      "fileMatch": [
+        ".eslintrc",
+        ".eslintrc.json",
+        ".eslintrc.yml",
+        ".eslintrc.yaml"
+      ],
+      "url": "https://www.schemastore.org/eslintrc.json"
+    },
+    "download": "ok",
+    "raw_file": "schema-07.json"
+  },
+  {
+    "requested": "Renovate",
+    "catalog_entry": {
+      "name": "Renovate",
+      "description": "Renovate configuration file. Documentation: https://docs.renovatebot.com/configuration-options",
+      "fileMatch": [
+        "renovate.json",
+        "renovate.json5",
+        "**/.github/renovate.json",
+        "**/.github/renovate.json5",
+        "**/.gitlab/renovate.json",
+        "**/.gitlab/renovate.json5",
+        ".renovaterc",
+        ".renovaterc.json",
+        ".renovaterc.json5"
+      ],
+      "url": "https://docs.renovatebot.com/renovate-schema.json",
+      "versions": {
+        "43": "https://www.schemastore.org/renovate-43.json",
+        "42": "https://www.schemastore.org/renovate-42.json",
+        "41": "https://www.schemastore.org/renovate-41.json",
+        "40": "https://www.schemastore.org/renovate-40.json",
+        "39": "https://www.schemastore.org/renovate-39.json"
+      }
+    },
+    "download": "ok",
+    "raw_file": "schema-08.json"
+  },
+  {
+    "requested": "Docker Compose",
+    "catalog_entry": {
+      "name": "docker-compose.yml",
+      "description": "The Compose specification establishes a standard for the definition of multi-container platform-agnostic applications",
+      "fileMatch": [
+        "**/docker-compose.yml",
+        "**/docker-compose.yaml",
+        "**/docker-compose.*.yml",
+        "**/docker-compose.*.yaml",
+        "**/compose.yml",
+        "**/compose.yaml",
+        "**/compose.*.yml",
+        "**/compose.*.yaml"
+      ],
+      "url": "https://raw.githubusercontent.com/compose-spec/compose-go/master/schema/compose-spec.json"
+    },
+    "download": "ok",
+    "raw_file": "schema-09.json"
+  },
+  {
+    "requested": "Yamllint",
+    "catalog_entry": {
+      "name": "yamllint",
+      "description": "yamllint uses a set of rules to check source files for problems",
+      "fileMatch": [
+        "**/.yamllint",
+        "**/.yamllint.yaml",
+        "**/.yamllint.yml"
+      ],
+      "url": "https://www.schemastore.org/yamllint.json"
+    },
+    "download": "ok",
+    "raw_file": "schema-10.json"
+  },
+  {
+    "requested": "Dependabot",
+    "catalog_entry": {
+      "name": "dependabot.json",
+      "description": "Dependabot config.yml files",
+      "fileMatch": [
+        "**/.dependabot/config.yml"
+      ],
+      "url": "https://www.schemastore.org/dependabot.json"
+    },
+    "download": "ok",
+    "raw_file": "schema-11.json"
+  },
+  {
+    "requested": "Vercel",
+    "catalog_entry": {
+      "name": "Vercel",
+      "description": "Vercel configuration file",
+      "fileMatch": [
+        "vercel.json"
+      ],
+      "url": "https://openapi.vercel.sh/vercel.json"
+    },
+    "download": "ok",
+    "raw_file": "schema-12.json"
+  },
+  {
+    "requested": "Netlify",
+    "catalog_entry": {
+      "name": "Netlify config",
+      "description": "Netlify YAML config",
+      "fileMatch": [
+        "**/admin/config*.yml"
+      ],
+      "url": "https://www.schemastore.org/netlify.json"
+    },
+    "download": "ok",
+    "raw_file": "schema-13.json"
+  },
+  {
+    "requested": "Hugo",
+    "catalog_entry": {
+      "name": "Hugo",
+      "description": "Hugo static site generator config file",
+      "fileMatch": [
+        "hugo.toml",
+        "hugo.json",
+        "hugo.yaml"
+      ],
+      "url": "https://www.schemastore.org/hugo.json"
+    },
+    "download": "ok",
+    "raw_file": "schema-14.json"
+  },
+  {
+    "requested": "MkDocs",
+    "catalog_entry": {
+      "name": "mkdocs.yml",
+      "description": "MkDocs configuration file",
+      "fileMatch": [
+        "mkdocs.yml"
+      ],
+      "url": "https://www.schemastore.org/mkdocs-1.6.json",
+      "versions": {
+        "1.0": "https://www.schemastore.org/mkdocs-1.0.json",
+        "1.6": "https://www.schemastore.org/mkdocs-1.6.json"
+      }
+    },
+    "download": "ok",
+    "raw_file": "schema-15.json"
+  },
+  {
+    "requested": "Kustomization",
+    "catalog_entry": {
+      "name": "kustomization.yaml",
+      "description": "Kubernetes native configuration management",
+      "fileMatch": [
+        "kustomization.yaml",
+        "kustomization.yml"
+      ],
+      "url": "https://www.schemastore.org/kustomization.json"
+    },
+    "download": "ok",
+    "raw_file": "schema-16.json"
+  },
+  {
+    "requested": "CircleCI",
+    "catalog_entry": {
+      "name": "CircleCI config.yml",
+      "description": "CircleCI config files",
+      "fileMatch": [
+        "**/.circleci/config.yml"
+      ],
+      "url": "https://www.schemastore.org/circleciconfig.json"
+    },
+    "download": "ok",
+    "raw_file": "schema-17.json"
+  },
+  {
+    "requested": "Taskfile",
+    "catalog_entry": {
+      "name": "Taskfile config",
+      "description": "Taskfile files",
+      "fileMatch": [
+        "Taskfile.yaml",
+        "Taskfile.dist.yaml",
+        "Taskfile.yml",
+        "Taskfile.dist.yml"
+      ],
+      "url": "https://taskfile.dev/schema.json"
+    },
+    "download": "ok",
+    "raw_file": "schema-18.json"
+  },
+  {
+    "requested": "Ansible Playbook",
+    "catalog_entry": {
+      "name": "Ansible Playbook",
+      "description": "Ansible playbook files",
+      "fileMatch": [
+        "playbook.yml",
+        "playbook.yaml",
+        "site.yml",
+        "site.yaml",
+        "**/playbooks/*.yml",
+        "**/playbooks/*.yaml"
+      ],
+      "url": "https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/ansible.json#/$defs/playbook"
+    },
+    "download": "ok",
+    "raw_file": "schema-19.json"
+  },
+  {
+    "requested": "Babel configuration",
+    "catalog_entry": {
+      "name": "babelrc.json",
+      "description": "Babel configuration file",
+      "fileMatch": [
+        ".babelrc",
+        ".babelrc.json",
+        "babel.config.json"
+      ],
+      "url": "https://www.schemastore.org/babelrc.json"
+    },
+    "download": "ok",
+    "raw_file": "schema-20.json"
+  }
+]

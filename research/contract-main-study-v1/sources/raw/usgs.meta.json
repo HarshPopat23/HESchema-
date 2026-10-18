@@ -1,0 +1,6 @@
+{
+  "url": "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=2026-10-01&endtime=2026-10-08&minmagnitude=4&limit=20&orderby=time-asc",
+  "resolved_url": "https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=2026-10-01&endtime=2026-10-08&minmagnitude=4&limit=20&orderby=time-asc",
+  "retrieved_utc": "2026-10-17T16:38:31Z",
+  "raw_sha256": "b812a89950887c0e7fe4918976e08cbef904fa42dc48164398703c367ccf9065"
+}

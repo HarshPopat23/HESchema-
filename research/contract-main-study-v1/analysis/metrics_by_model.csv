@@ -1,0 +1,7 @@
+model_id,arm,attempts,first_pass_correct,first_pass_correct_pct,final_correct,final_correct_pct,first_pass_accepted,first_pass_accepted_pct,final_accepted,final_accepted_pct,false_acceptance_count,false_acceptance_rate_pct,false_rejection_count,false_rejection_rate_pct,repairs_attempted,repairs_recovered,recovery_rate_pct,regressions,median_latency_ms,p95_latency_ms,mean_queue_wait_ms,mean_input_tokens,mean_output_tokens,total_tokens
+openai/gpt-oss-120b,A,300,300,100.0,300,100.0,300,100.0,300,100.0,0,0.0,0,0.0,0,0,0.0,0,1943.1,4613.5,1260.8,671.9,589.2,378336
+openai/gpt-oss-120b,B,300,297,99.0,297,99.0,297,99.0,297,99.0,0,0.0,0,0.0,3,0,0.0,0,2034.6,5025.5,1247.9,1117.1,637.5,526369
+openai/gpt-oss-20b,A,300,267,89.0,278,92.67,274,91.33,286,95.33,8,2.67,0,0.0,26,11,42.31,0,1425.2,9315.6,1063.5,764.3,493.5,377324
+openai/gpt-oss-20b,B,300,259,86.33,261,87.0,259,86.33,261,87.0,0,0.0,0,0.0,41,2,4.88,0,1531.7,9616.0,1084.8,1259.2,526.8,535803
+qwen/qwen3.8-27b,A,300,241,80.33,243,81.0,295,98.33,297,99.0,54,18.0,0,0.0,3,2,66.67,0,2303.2,28608.9,823.6,688.5,405.7,328255
+qwen/qwen3.8-27b,B,300,231,77.0,237,79.0,231,77.0,237,79.0,0,0.0,0,0.0,69,6,8.7,0,3395.2,43338.4,1084.6,1351.0,455.8,542043
