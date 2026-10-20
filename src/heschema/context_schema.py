@@ -1,11 +1,13 @@
 """Conjoin trusted constraints without mutating or weakening the original schema."""
 
 import copy
+import re
 from datetime import datetime, timezone
+from urllib.parse import quote
 
 from jsonschema import Draft202012Validator, FormatChecker
 
-from .diagnostics import parts, resolve
+from .diagnostics import parts, pointer, resolve
 from .jsonio import digest
 from .schema import schema_children
 
@@ -37,6 +39,15 @@ def check_context(snapshot, *, version=None):
     return snapshot
 
 
+def _array_index(token):
+    if not re.fullmatch(r'0|[1-9][0-9]*', token):
+        raise ContextError('Array binding requires a canonical numeric index')
+    index = int(token)
+    if index > 1024:
+        raise ContextError('Array binding index exceeds the projection limit')
+    return index
+
+
 def _at_path(original, tokens, leaf):
     if not tokens:
         return copy.deepcopy(leaf)
@@ -44,11 +55,7 @@ def _at_path(original, tokens, leaf):
     node = original if isinstance(original, dict) else {}
     types = node.get('type')
     if types == 'array':
-        if not token.isdecimal() or (token != '0' and token.startswith('0')):
-            raise ContextError('Array binding requires a canonical numeric index')
-        index = int(token)
-        if index > 1024:
-            raise ContextError('Array binding index exceeds the projection limit')
+        index = _array_index(token)
         child = node.get('prefixItems', [])[index] if index < len(node.get('prefixItems', [])) else node.get('items', {})
         return {'type': 'array', 'minItems': index + 1,
                 'prefixItems': [True] * index + [_at_path(child, remaining, leaf)]}
@@ -60,15 +67,22 @@ def _at_path(original, tokens, leaf):
 
 def _leaf(original, tokens):
     node = original
+    location = []
     for token in tokens:
         if not isinstance(node, dict):
-            return node
+            return node, location
         if node.get('type') == 'array':
-            idx = int(token)
-            node = node.get('prefixItems', [])[idx] if idx < len(node.get('prefixItems', [])) else node.get('items', {})
+            idx = _array_index(token)
+            path = ['prefixItems', idx] if idx < len(node.get('prefixItems', [])) else ['items']
+            child = node['prefixItems'][idx] if path[0] == 'prefixItems' else node.get('items', {})
+            present = path[0] in node
         else:
-            node = node.get('properties', {}).get(token, node.get('additionalProperties', {}))
-    return node
+            present = token in node.get('properties', {}) or 'additionalProperties' in node
+            path = ['properties', token] if token in node.get('properties', {}) else ['additionalProperties']
+            child = node.get('properties', {}).get(token, node.get('additionalProperties', {}))
+        location = [*location, *path] if location is not None and present else None
+        node = child
+    return node, location
 
 
 def effective_schema(contract, snapshot=None):
@@ -95,6 +109,7 @@ def effective_schema(contract, snapshot=None):
         errors = list(Draft202012Validator(partial, format_checker=FormatChecker()).iter_errors(data))
         if errors:
             raise ContextError('Context data violates its declared schema: ' + errors[0].message)
+    original_validator = Draft202012Validator(original, format_checker=FormatChecker())
     for binding in contract.bindings:
         source = binding['contextLocation']
         try:
@@ -111,8 +126,11 @@ def effective_schema(contract, snapshot=None):
         if keyword in {'minimum', 'maximum'} and (type(value) not in {int, float}):
             raise ContextError('Trusted bounds require a number')
         tokens = parts(binding['instanceLocation'])
-        leaf = _leaf(original, tokens)
-        validator = Draft202012Validator(leaf, format_checker=FormatChecker())
+        leaf, location = _leaf(original, tokens)
+        # Evaluate the field in its original resource, not as a detached schema.
+        # A pointer lookup also preserves ancestor $id scopes for nested resources.
+        field_schema = {'$ref': '#' + quote(pointer(location), safe='/~')} if location is not None else leaf
+        validator = original_validator.evolve(schema=field_schema)
         if keyword == 'const' and not validator.is_valid(value):
             raise ContextError('Approved binding contradicts the original field schema')
         if keyword == 'enum' and not any(validator.is_valid(v) for v in value):
