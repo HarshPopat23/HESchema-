@@ -107,9 +107,11 @@
             <div class="form-group"><label for="contract-provider">Provider</label><select id="contract-provider"><option value="mock">mock (offline, nonempirical)</option><option value="ollama">ollama</option></select></div>
             <div class="form-group"><label for="contract-model">Model (optional)</label><input id="contract-model" type="text"></div>
             <div class="form-group"><label for="contract-mode">Decoding</label><select id="contract-mode"><option value="prompt_only">Prompt only</option><option value="native_original">Native original</option><option value="native_projected">Native projected</option></select></div>
+            <div class="form-group"><label for="contract-prompt-style">Prompt style</label><select id="contract-prompt-style" aria-describedby="contract-prompt-style-help"><option value="full">Full (default)</option><option value="compact">Compact</option></select></div>
             <div class="form-group"><label for="contract-repairs">Extra attempts</label><input id="contract-repairs" type="number" min="0" max="5" value="0"></div>
             <div class="form-group"><label for="contract-feedback">Feedback</label><select id="contract-feedback"><option value="actionable">Actionable</option><option value="raw">Normalized raw errors</option><option value="generic">Generic</option></select></div>
           </div>
+          <p id="contract-prompt-style-help" class="muted">Compact sends the original schema and approved facts without repeating values in projected constraints. Both styles keep full contract validation after generation.</p>
           <button id="contract-generate" class="btn btn-primary" type="button">Generate and validate</button>
         </details>
         <p id="contract-notice" class="muted" aria-live="polite">Examples are synthetic, not evidence of company adoption.</p>
