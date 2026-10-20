@@ -38,5 +38,5 @@ jobs:
           node-version: '22'
       - run: pip install -e '.[dev]'
       - run: npm ci --prefix native
-      - run: HESCHEMA_TEST_BLAZE=1 JSONSCHEMA_CLI="$PWD/native/node_modules/.bin/jsonschema" pytest -q tests/test_blaze.py
+      - run: HESCHEMA_TEST_BLAZE=1 JSONSCHEMA_CLI="$PWD/native/node_modules/.bin/jsonschema" pytest -q tests/test_blaze.py tests/test_validator_controls.py tests/test_validator_references.py
       - run: JSONSCHEMA_CLI="$PWD/native/node_modules/.bin/jsonschema" heschema research-audit --engine blaze

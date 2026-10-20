@@ -37,6 +37,10 @@ validity is `NOT_CHECKED`, missing approval is `NEEDS_CONTEXT`, and refusal is
 `REFUSED`. `accepted` means the declared validation/control checks allow the output;
 it is not an execution permit. Decisions include an evaluation timestamp and context version; consumers must recheck freshness at their own boundary. All paths retain `executionAuthorized: false`.
 
+Positive/negative controls, valid alternatives, reference-scope regressions and
+coverage limitations are described in [validator controls](validator-controls.md).
+Zero observed wrong acceptance does not establish complete validator coverage.
+
 Rules: `product_equals` and `sum_equals` use exact integers and integer minor units.
 Integral real values are accepted only within the safe IEEE-754 integer range;
 fractions, booleans and unsafe reals fail. Arbitrarily large integer tokens use
