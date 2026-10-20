@@ -118,7 +118,7 @@ def validate_contract(raw, engine, contract, snapshot=None, *, generation=None):
     """Runtime checks with no scoring oracle. Success covers only declared approved intent."""
     from .context_schema import effective_schema
     from .contracts import generation_envelope
-    from .diagnostics import diagnostic
+    from .diagnostics import diagnostic, json_parse_diagnostic
     from .rules import evaluate_rules
     started = time.perf_counter_ns()
     timing_before = engine.timing_snapshot()
@@ -132,7 +132,7 @@ def validate_contract(raw, engine, contract, snapshot=None, *, generation=None):
             stages['json'] = 'valid'
         except (ValueError, TypeError) as exc:
             stages['json'] = 'invalid'
-            errors.append(diagnostic('JSON_INVALID', 'json', message=str(exc)))
+            errors.append(json_parse_diagnostic(exc))
     original_valid = effective_valid = None
     relationships = {'status': 'not_evaluated', 'rules': [], 'errors': [], 'implementation': 'application_rules'}
     if stages['json'] == 'valid':

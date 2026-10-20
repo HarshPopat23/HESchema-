@@ -471,6 +471,10 @@ Other relationships keep their existing behavior. Raw model output and assembled
 system output are recorded separately. See the [worked example](examples/contracts/application-calculations.json)
 and [supported calculation scope](docs/contracts-and-repair.md#optional-application-calculations).
 
+The [APP CALC regression audit](research/app-calc-regressions-v1/README.md) investigates
+Crossref/PyPI failures and an observed filename-copy error from the resumed pilot.
+It includes aggregate findings, private-archive replay tooling and public-source controls.
+
 - [Contract/API and approval semantics](docs/contracts-and-repair.md)
 - [Controlled decoding and saved-output repair experiments](docs/experiments.md)
 - [Protocol 2 migration and baseline](docs/migration.md)
