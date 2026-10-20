@@ -6,6 +6,8 @@ from math import sqrt
 import numpy as np
 from scipy.stats import binomtest
 
+from .timing import summarize_timing
+
 
 def rate(numerator, denominator):
     return numerator / denominator if denominator else None
@@ -80,6 +82,7 @@ def summarize(rows):
                           "totalMs": sum(r["latencyMs"] for r in rows if r["status"] == status)}
                  for status in sorted({r["status"] for r in rows})}
     return {"runs": n, "providerErrors": n - len(available),
+            "timing": summarize_timing(rows),
             "durationsByOutcome": durations,
             "requestsAttempted": sum(r.get("requestsAttempted", len(r["attempts"]) + int(r["status"] != "ok")) for r in rows),
             "firstPassSuccessDenominator": n,

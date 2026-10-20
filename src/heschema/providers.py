@@ -10,6 +10,7 @@ import httpx
 from dotenv import load_dotenv
 
 from .jsonio import canonical, digest, loads, read_json
+from .timing import ProviderTiming
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -43,13 +44,14 @@ def ollama_thinking():
 class ProviderError(RuntimeError):
     """Sanitized provider failure: never include keys or HTTP response bodies."""
 
-    def __init__(self, message, *, code="provider_error", status=None, requests=1, elapsed_ms=None):
+    def __init__(self, message, *, code="provider_error", status=None, requests=1, elapsed_ms=None, timing=None):
         super().__init__(message)
         self.code, self.status, self.requests, self.elapsed_ms = code, status, requests, elapsed_ms
+        self.timing = timing
 
     def diagnostic(self):
         return {"code": self.code, "httpStatus": self.status, "message": str(self)[:500],
-                "requests": self.requests, "elapsedMs": self.elapsed_ms}
+                "requests": self.requests, "elapsedMs": self.elapsed_ms, "timing": self.timing}
 
 
 @dataclass
@@ -81,6 +83,7 @@ class Generation:
                 "usage": {"inputTokens": self.input_tokens, "outputTokens": self.output_tokens},
                 "transportRetries": self.transport_retries, "latencyMs": self.latency_ms,
                 "durationsMs": self.metadata.get("durationsMs", {}),
+                "timing": self.metadata.get("timing"),
                 "reasoningPresent": bool(self.reasoning)}
 
 
@@ -185,30 +188,45 @@ class Provider:
         return base + "/chat/completions", {**headers, "Authorization": "Bearer " + self.key}, payload
 
     async def generate(self, messages, seed=0, max_tokens=1024, temperature=None, format_schema=None, retry=True):
+        timing = ProviderTiming()
+        try:
+            result = await self._generate(messages, seed, max_tokens, temperature, format_schema, retry, timing)
+        except ProviderError as exc:
+            exc.timing = timing.snapshot()
+            exc.requests = len(timing.http_attempts)
+            raise
+        result.metadata['timing'] = timing.snapshot()
+        return result
+
+    async def _generate(self, messages, seed, max_tokens, temperature, format_schema, retry, timing):
         if self.config["kind"] == "mock":
             # Fixed response independent of schema and hidden gold. A pipeline smoke
             # test can never serve as empirical evidence of model improvement.
             return Generation(canonical({"action": "refuse", "tool": None, "arguments": {},
                                          "missingFields": [], "reason": "Offline stub"}),
                               0, 0, "offline-stub", metadata={"synthetic": True, "finish_reason": "stop"})
-        async with self.lock:
+        async with timing.lock(self.lock):
             delay = self.interval - (time.monotonic() - self.last_request)
             if delay > 0:
-                await asyncio.sleep(delay)
+                with timing.phase('pacingWaitMs'):
+                    await asyncio.sleep(delay)
             start = time.perf_counter()
             url, headers, payload = self.request(messages, seed, max_tokens, temperature, format_schema=format_schema)
             attempts = 0
             while True:
                 self.last_request = time.monotonic()
                 try:
-                    response = await self.client.post(url, headers=headers, json=payload)
+                    with timing.http_attempt() as attempt:
+                        response = await self.client.post(url, headers=headers, json=payload)
+                        attempt['httpStatus'] = response.status_code
                 except httpx.TimeoutException:
                     raise ProviderError(f"{self.name}: request timed out after {int(self.timeout)}s", code="timeout", requests=attempts + 1, elapsed_ms=(time.perf_counter() - start) * 1000) from None
                 except httpx.RequestError:
                     if not retry or attempts >= 2:
                         raise ProviderError(f"{self.name}: network request failed", code="network_error", requests=attempts + 1) from None
                     attempts += 1
-                    await asyncio.sleep(min(2 ** attempts, 8))
+                    with timing.phase('retryWaitMs'):
+                        await asyncio.sleep(min(2 ** attempts, 8))
                     continue
                 if response.status_code in {429, 500, 502, 503, 504} and retry and attempts < 2:
                     attempts += 1
@@ -218,7 +236,8 @@ class Provider:
                         retry_after = 2 ** attempts
                     if retry_after > 30:
                         raise ProviderError(f"{self.name}: rate limited; resume later")
-                    await asyncio.sleep(max(self.interval, retry_after))
+                    with timing.phase('retryWaitMs'):
+                        await asyncio.sleep(max(self.interval, retry_after))
                     continue
                 if response.is_error:
                     code = "request_rejected" if response.status_code in {400, 422} else "authentication_error" if response.status_code in {401, 403} else "provider_error"

@@ -54,9 +54,13 @@ def test_repair_comparison_replays_identical_first_output_and_counts_only_new_ca
         rows = [loads(s) for s in (repaired / 'runs.jsonl').read_text().splitlines()]
         assert len(rows) == 9 and len({r['firstOutputHash'] for r in rows}) == 1
         assert all(r['requestsAttempted'] == 1 and r['finalSuccess'] for r in rows)
+        assert all(r['timing']['replayedResponses'] == 1 for r in rows)
+        assert all(r['timing']['providerResponseMs'] is None for r in rows)  # Opaque test adapter.
+        assert report['arms']['actionable:1']['timing']['allOutcomes']['providerResponseMs']['missing'] == 3
         assert all(a['usage']['output_tokens'] == 30 for a in report['arms'].values())
         assert all('928173' not in canonical(messages) for messages, _ in p.seen)
         config = loads((repaired / 'config.json').read_text())
+        assert config['timingVersion'] == 'latency-v1'
         assert config['feedbackVersions'] == {'generic': 'generic-v1', 'raw': 'raw-v1', 'actionable': 'category-v1'}
         # Resuming a directory with a different feedback implementation is unsafe.
         config['feedbackVersions']['actionable'] = 'old-implementation'

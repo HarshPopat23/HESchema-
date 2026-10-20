@@ -1,5 +1,6 @@
 """Versioned contract/context API independent of generation and benchmark scoring."""
 
+import time
 from typing import Any, Literal
 
 from fastapi import Depends, HTTPException
@@ -14,6 +15,8 @@ from .jsonio import canonical
 from .providers import Provider, ProviderError
 from .repair import RepairLimits, coordinate, request_generation
 from .schema_projection import project_schema
+from .timing import VERSION as TIMING_VERSION
+from .timing import milliseconds
 from .validation import validate_contract
 
 
@@ -167,6 +170,7 @@ def install_contract_routes(app, store, engine, owner, registry):
 
     @app.post('/contracts/generate')
     async def generate(body: ContractGenerationBody, identity=Depends(owner)):
+        started = time.perf_counter()
         contract = definition(body.contractId, body.contractVersion)
         snap = context_snapshot(contract, body.contextId, body.contextVersion, identity)
         try:
@@ -211,6 +215,10 @@ def install_contract_routes(app, store, engine, owner, registry):
                 'capability': profile, 'executionAuthorized': False}
         if plan:
             response['modelOutput'] = model_output
+        elapsed_ms = milliseconds(started)
+        response['timing'] = {'version': TIMING_VERSION, 'scope': 'contract_generation_handler',
+                              'totalMs': elapsed_ms,
+                              'outsideCoordinatorMs': max(0.0, elapsed_ms - run['timing']['totalMs'])}
         return response
 
     @app.get('/capabilities/{provider}/{mode}')

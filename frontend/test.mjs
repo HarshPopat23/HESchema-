@@ -126,9 +126,47 @@ test('contract generation selects full or compact and retains the choice in evid
       const record = JSON.parse(p.get('contract-record').textContent);
       assert.equal(record.promptStyle, style);
       assert.equal(record.executionAuthorized, false);
+      assert.equal(record.clientTiming.scope, 'browser_request_to_parsed_response');
+      assert.ok(record.clientTiming.totalMs >= 0);
+      assert.equal(record.timing.scope, 'contract_generation_handler');
+      assert.equal(record.repair.timing.scope, 'repair_coordinator');
       assert.equal(record.validation.result, 'REFUSED'); // The offline provider never executes tools.
       assert.match(p.get('contract-stages').textContent, new RegExp('promptStyle' + style));
     }
+    assert.deepEqual(p.errors, []);
+  } finally { p.dom.window.close(); }
+});
+
+test('browser measures its own response-ready time and keeps failed-request evidence', async () => {
+  const p = await page('trip');
+  try {
+    await p.click('register'); await p.click('create-context'); await p.click('confirm');
+    let now = 1000, fail = false;
+    p.dom.window.performance.now = () => now;
+    p.dom.window.fetch = (url, options) => {
+      if (url === '/contracts/generate') {
+        now += 75; // Constructed browser clock control; not a speed measurement.
+        if (fail) return Promise.reject(new Error('test connection failure'));
+      }
+      return fetch(new URL(url, base), options);
+    };
+    await p.click('generate');
+    const record = JSON.parse(p.get('contract-record').textContent);
+    assert.equal(record.clientTiming.totalMs, 75);
+    assert.match(p.get('contract-stages').textContent, /browserResponseReady75.0 ms/);
+    assert.match(p.get('contract-stages').textContent, /providerResponseMs/);
+    await p.click('download');
+    assert.equal(p.downloads.length, 1);
+    fail = true;
+    await p.click('generate');
+    const failed = JSON.parse(p.get('contract-record').textContent);
+    assert.equal(failed.outcome, 'request_failed');
+    assert.equal(failed.clientTiming.totalMs, 75);
+    assert.equal(failed.validation, undefined);
+    assert.match(p.get('contract-error').textContent, /test connection failure/);
+    assert.match(p.get('contract-decision').textContent, /no validation decision/);
+    await p.click('download');
+    assert.equal(p.downloads.length, 2);
     assert.deepEqual(p.errors, []);
   } finally { p.dom.window.close(); }
 });

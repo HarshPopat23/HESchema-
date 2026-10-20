@@ -56,6 +56,12 @@ transport retry accounting remains distinct. Every started request, including
 cancelled/failed ones, is recorded. Unknown usage remains unknown. Repair of a
 schema-valid but silently wrong unbound field cannot use a hidden oracle.
 
+Generation and study evidence also includes versioned, separated timing for HTTP
+responses, adapter waits, local validation/calculation and coordinator elapsed time.
+The Contracts UI records browser response-ready time separately. See
+[latency measurement boundaries](latency-measurements.md) for scopes, missingness,
+reporting and the limits on speed claims.
+
 ### Category-specific repair feedback
 
 The default `feedbackStyle: "actionable"` now uses `category-v1`:
