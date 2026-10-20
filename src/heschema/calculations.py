@@ -72,12 +72,14 @@ def validate_with_calculations(raw, engine, contract, snapshot=None, *, generati
     if not plan:
         return validate_contract(raw, engine, contract, snapshot, generation=generation)
     started = perf_counter()
+    calculation_ms = 0.0
     evidence = {'status': 'not_applied', 'ruleIds': [rule['id'] for rule in plan],
                 'values': [], 'inputSchemaValid': None, 'sourceValid': None,
                 'correctnessScope': 'assembled_system_output'}
 
     def finish(result, status, values=None):
         return {**result, 'calculation': {**evidence, 'status': status, 'values': values or [],
+                                        'computeMs': calculation_ms,
                                         'pipelineMs': (perf_counter() - started) * 1000}}
 
     def blocked(errors=None):
@@ -115,9 +117,16 @@ def validate_with_calculations(raw, engine, contract, snapshot=None, *, generati
     if errors:
         return blocked(errors)
     values = []
+    def compute(rule):
+        nonlocal calculation_ms
+        started = perf_counter()
+        try:
+            return calculation_value(document, rule)
+        finally:
+            calculation_ms += (perf_counter() - started) * 1000
     for rule in plan:
         try:
-            value = calculation_value(document, rule)
+            value = compute(rule)
         except (KeyError, TypeError, ValueError) as exc:
             return blocked([diagnostic('CALCULATION_INPUT_INVALID', 'calculation', rule['target'],
                                        'Calculation input missing or invalid: ' + str(exc),

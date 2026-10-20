@@ -27,6 +27,11 @@ def test_contract_generation_repair_and_partial_evidence(tmp_path, monkeypatch, 
         result = client.post('/contracts/generate', json={'contractId': 'invoice', 'contractVersion': '1', 'contextId': ctx['id'], 'contextVersion': 1, 'prompt': 'Prepare invoice', 'provider': 'mock', 'repairs': 1, 'promptStyle': prompt_style}).json()
         assert result['validation']['success'] and result['repair']['requestsAttempted'] == 2
         assert result['repair']['feedbackVersion'] == 'category-v1'
+        assert result['timing']['scope'] == 'contract_generation_handler'
+        assert result['timing']['totalMs'] >= result['repair']['timing']['totalMs']
+        assert result['repair']['timing']['localEvaluationMs'] >= 0
+        # This test replaces generate(), so its provider phases are uninstrumented.
+        assert result['repair']['timing']['providerResponseMs'] is None
         assert result['repair']['attempts'][0]['repairFeedback']['message'] == seen[1][0][-1]['content']
         assert result['promptStyle'] == prompt_style
         assert seen[0][1]['retry'] is False

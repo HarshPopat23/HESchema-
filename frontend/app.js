@@ -1965,6 +1965,13 @@
         providerEnforcement: record.capability ? record.capability.keywordEnforcement : "not_evaluated" };
       if (record.promptStyle) stages.promptStyle = record.promptStyle;
       if (decision.calculation) stages.applicationCalculations = decision.calculation.status;
+      const ms = value => Number.isFinite(value) ? value.toFixed(1) + " ms" : "unknown";
+      if (record.clientTiming) stages.browserResponseReady = ms(record.clientTiming.totalMs);
+      if (record.timing) stages.serverHandler = ms(record.timing.totalMs);
+      if (record.repair && record.repair.timing) {
+        const timing = record.repair.timing;
+        ["providerResponseMs", "localValidationMs", "applicationCalculationMs", "queueWaitMs", "pacingWaitMs", "retryWaitMs"].forEach(key => { stages[key] = ms(timing[key]); });
+      }
       Object.entries(stages).forEach(([key, value]) => {
         const row = document.createElement("tr");
         [key, value].forEach((text) => { const cell = document.createElement("td"); cell.textContent = String(text); row.appendChild(cell); });
@@ -2022,8 +2029,24 @@
     bind("validate", async () => { const c = definition(); render(await apiFetch("/contracts/validate", { method: "POST", body: JSON.stringify({ contractId: c.id, contractVersion: c.version, ...contextFields(), output: json("output") }) })); });
     bind("generate", async () => {
       const c = definition();
-      const record = await apiFetch("/contracts/generate", { method: "POST", body: JSON.stringify({ contractId: c.id, contractVersion: c.version, ...contextFields(), prompt: get("prompt").value,
-        provider: get("provider").value, model: get("model").value || null, mode: get("mode").value, promptStyle: get("prompt-style").value, repairs: Number(get("repairs").value), feedbackStyle: get("feedback").value }) });
+      const request = { contractId: c.id, contractVersion: c.version, ...contextFields(), prompt: get("prompt").value,
+        provider: get("provider").value, model: get("model").value || null, mode: get("mode").value, promptStyle: get("prompt-style").value, repairs: Number(get("repairs").value), feedbackStyle: get("feedback").value };
+      const started = performance.now();
+      const clientTiming = () => ({ version: "latency-v1", scope: "browser_request_to_parsed_response", totalMs: performance.now() - started });
+      let record;
+      try {
+        record = await apiFetch("/contracts/generate", { method: "POST", body: JSON.stringify(request) });
+      } catch (error) {
+        last = { outcome: "request_failed", clientTiming: clientTiming(), error: { message: error.message }, executionAuthorized: false };
+        get("results").classList.remove("hidden");
+        get("decision").textContent = "Request failed · no validation decision";
+        get("stages").replaceChildren();
+        get("evidence").textContent = "Browser elapsed: " + last.clientTiming.totalMs.toFixed(1) + " ms · server phases unavailable";
+        get("diagnostics").textContent = JSON.stringify(last.error, null, 2);
+        get("record").textContent = JSON.stringify(last, null, 2);
+        throw error;
+      }
+      record.clientTiming = clientTiming();
       if (record.output !== null) get("output").value = record.output;
       render(record);
     });

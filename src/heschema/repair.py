@@ -11,6 +11,7 @@ from .diagnostics import runtime_feedback
 from .jsonio import canonical
 from .providers import Generation, ProviderError
 from .repair_feedback import actionable_message, feedback_version
+from .timing import coordinator_timing, duration, milliseconds
 
 
 @dataclass(frozen=True)
@@ -73,6 +74,27 @@ async def coordinate(generate, evaluate, messages, *, limits=None, feedback_styl
     requests = reserved_tokens = 0
     started = time.perf_counter()
     stop, failure = 'exhausted', None
+    evaluation_ms = calculation_ms = 0.0
+    calculation_timing_complete = True
+
+    async def evaluate_timed(generated, record=None):
+        nonlocal evaluation_ms, calculation_ms, calculation_timing_complete
+        started = time.perf_counter()
+        evaluation = None
+        try:
+            result = evaluate(generated)
+            evaluation = await result if inspect.isawaitable(result) else result
+            return evaluation
+        finally:
+            wall_ms = milliseconds(started)
+            compute_ms = evaluation['calculation'].get('computeMs') if evaluation and 'calculation' in evaluation else 0.0
+            known = duration(compute_ms) and compute_ms <= wall_ms
+            evaluation_ms += wall_ms
+            calculation_timing_complete &= known
+            calculation_ms += compute_ms if known else 0.0
+            if record is not None:
+                record.update(evaluationWallMs=wall_ms, localValidationMs=wall_ms - compute_ms if known else None,
+                              applicationCalculationMs=compute_ms if known else None)
 
     def checkpoint():
         if context_check:
@@ -91,7 +113,8 @@ async def coordinate(generate, evaluate, messages, *, limits=None, feedback_styl
             stop = 'request_budget' if limits.max_requests is not None and requests >= limits.max_requests else 'token_budget'
             break
         request_started = time.perf_counter()
-        request_record = {'attempt': index, 'requestMade': generated is None, 'status': 'started'}
+        request_record = {'attempt': index, 'requestMade': generated is None, 'requestInvoked': False,
+                          'requestWallMs': 0.0, 'status': 'started'}
         try:
             checkpoint()
             if generated is None:
@@ -99,6 +122,8 @@ async def coordinate(generate, evaluate, messages, *, limits=None, feedback_styl
                 reserved_tokens += limits.max_tokens
                 ledger.append(request_record)
                 remaining = limits.deadline_seconds - (time.perf_counter() - started)
+                provider_started = time.perf_counter()
+                request_record['requestInvoked'] = True
                 task = asyncio.create_task(generate(messages, index))
                 cancelled = asyncio.create_task(cancel_event.wait()) if cancel_event is not None else None
                 try:
@@ -114,16 +139,16 @@ async def coordinate(generate, evaluate, messages, *, limits=None, feedback_styl
                         if pending is not None and not pending.done():
                             pending.cancel()
                             await asyncio.gather(pending, return_exceptions=True)
+                    request_record['requestWallMs'] = milliseconds(provider_started)
                 # Adapters used here must disable transport retries. Still record any reported calls.
                 requests += generated.transport_retries
                 request_record.update(status='returned', generation=generated.diagnostic())
+                request_record['providerTiming'] = generated.metadata.get('timing')
             else:
                 request_record.update(status='replayed', generation=generated.diagnostic())
                 ledger.append(request_record)
             checkpoint()
-            evaluation = evaluate(generated)
-            if inspect.isawaitable(evaluation):
-                evaluation = await evaluation
+            evaluation = await evaluate_timed(generated, request_record)
             checkpoint()
             attempts.append({'generation': asdict(generated), 'evaluation': evaluation, 'requestMade': request_record['requestMade']})
             first = evaluation if first is None else first
@@ -162,6 +187,7 @@ async def coordinate(generate, evaluate, messages, *, limits=None, feedback_styl
             break
         except ProviderError as exc:
             request_record.update(status=exc.code, failure=exc.diagnostic())
+            request_record['providerTiming'] = exc.timing
             requests += exc.requests - 1
             if exc.requests == 0:
                 request_record['requestMade'] = False
@@ -187,9 +213,7 @@ async def coordinate(generate, evaluate, messages, *, limits=None, feedback_styl
         failure = {'code': stop, 'message': str(exc)[:500]}
     if first is None:
         try:
-            first = evaluate(Generation(''))
-            if inspect.isawaitable(first):
-                first = await first
+            first = await evaluate_timed(Generation(''))
         except ContextError:
             first = {'result': 'NOT_EVALUATED', 'success': False, 'accepted': False,
                      'outputPresent': False, 'stages': dict.fromkeys(('json', 'originalSchema', 'effectiveSchema', 'context', 'relationships'), 'not_evaluated'),
@@ -202,8 +226,11 @@ async def coordinate(generate, evaluate, messages, *, limits=None, feedback_styl
             final['result'] = 'STALE_CONTEXT'
             final['semanticValid'] = None
             final['stages'] = {**final.get('stages', {}), 'context': 'unknown'}
+    elapsed_ms = milliseconds(started)
+    timing = coordinator_timing(ledger, total_ms=elapsed_ms, evaluation_ms=evaluation_ms,
+                                calculation_ms=calculation_ms if calculation_timing_complete else None)
     return {'firstEvaluation': first, 'finalEvaluation': final, 'attempts': attempts,
             'requestLedger': ledger, 'requestsAttempted': requests, 'repairAttempts': max(0, len(ledger) - 1),
             'reservedOutputTokens': reserved_tokens, 'limits': asdict(limits), 'feedbackStyle': feedback_style,
             'feedbackVersion': feedback_version(feedback_style),
-            'stopReason': stop, 'failure': failure, 'elapsedMs': (time.perf_counter() - started) * 1000}
+            'stopReason': stop, 'failure': failure, 'elapsedMs': elapsed_ms, 'timing': timing}

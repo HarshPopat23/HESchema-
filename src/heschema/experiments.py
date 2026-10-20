@@ -19,6 +19,8 @@ from .reports import provenance
 from .rules import json_equal
 from .schema import SchemaEngine
 from .schema_projection import project_schema
+from .timing import VERSION as TIMING_VERSION
+from .timing import summarize_timing
 from .validation import validate_contract
 
 MODES = ('prompt_only', 'native_original', 'native_projected')
@@ -132,8 +134,10 @@ def stage_summary(rows):
             'recoveryByAttemptCount': {str(k): measure(sum(r['finalSuccess'] and r['repairAttempts'] <= k for r in failures), len(failures)) for k in range(1, 6)},
             'actualRequests': sum(r['requestsAttempted'] for r in rows), 'usage': usage,
             'durationsByOutcome': timing,
+            'timing': summarize_timing(rows),
             'totalValidationMs': sum(a['evaluation']['validationMs'] for a in attempts),
-            'totalObservedModelMs': sum(a['generation']['latency_ms'] for a in actual)}
+            'totalObservedModelMs': sum(a['generation']['latency_ms'] for a in actual),
+            'legacyTimingNotice': 'totalObservedModelMs is a legacy adapter-latency sum, not isolated model inference time. Use timing for separated phases.'}
 
 
 def _report(rows, config, scheduled, *, warmup_rows=None):
@@ -206,6 +210,7 @@ async def run_decoding(cases, provider, out, *, repeats=1, modes=MODES, seed=42,
               'thinkingRequested': getattr(provider, 'thinking', None),
               'requestControls': provider.control_config() if hasattr(provider, 'control_config') else {},
               'failureCategoryVersion': CATEGORY_VERSION,
+              'timingVersion': TIMING_VERSION,
               'scoringVersion': 'semantic_json_equality_v1',
               'requestInterval': provider.interval, 'caseIdentities': {c['id']: {'contract': prepared[c['id']][0].identity, 'contextHash': digest(c.get('context')), 'promptHash': digest(prepared[c['id']][2])} for c in cases}}
     if hasattr(provider, 'runtime_metadata'):
@@ -256,7 +261,8 @@ async def run_decoding(cases, provider, out, *, repeats=1, modes=MODES, seed=42,
                        'firstObservations': classify(first, generation=recovery['attempts'][0]['generation'] if recovery['attempts'] else None, failure=recovery['failure']),
                        'finalObservations': classify(final, generation=recovery['attempts'][-1]['generation'] if recovery['attempts'] else None, failure=recovery['failure']),
                        'attempts': recovery['attempts'], 'requestLedger': recovery['requestLedger'], 'requestsAttempted': recovery['requestsAttempted'],
-                       'repairAttempts': 0, 'latencyMs': recovery['elapsedMs'], 'projection': manifest if mode == 'native_projected' else None,
+                       'repairAttempts': 0, 'latencyMs': recovery['elapsedMs'], 'timing': recovery['timing'],
+                       'projection': manifest if mode == 'native_projected' else None,
                        'capability': profile, 'failure': recovery['failure'], 'provenance': case.get('provenance', 'author_created_synthetic')}
                 log.write(canonical(row) + '\n')
                 log.flush()
@@ -297,6 +303,7 @@ async def run_repair_study(cases, provider, first_out, out, *, budgets=(1, 2), s
               'datasetHash': digest(cases), 'provider': provider.name, 'requestedModel': provider.model,
               'budgets': list(budgets), 'styles': list(styles), 'maxTokens': max_tokens, 'seed': seed,
               'feedbackVersions': {style: feedback_version(style) for style in styles},
+              'timingVersion': TIMING_VERSION,
               'temperature': temperature, 'engine': backend, 'provenance': provenance(),
               'thinkingRequested': source_config.get('thinkingRequested'), 'requestControls': controls,
               'failureCategoryVersion': CATEGORY_VERSION, 'scoringVersion': source_config.get('scoringVersion')}
@@ -337,7 +344,7 @@ async def run_repair_study(cases, provider, first_out, out, *, budgets=(1, 2), s
                                'firstObservations': classify(first, generation=recovery['attempts'][0]['generation'] if recovery['attempts'] else None, failure=recovery['failure'] if not recovery['attempts'] else None),
                                'finalObservations': classify(final, generation=recovery['attempts'][-1]['generation'] if recovery['attempts'] else None, failure=recovery['failure']),
                                'attempts': recovery['attempts'], 'requestLedger': recovery['requestLedger'], 'requestsAttempted': recovery['requestsAttempted'],
-                               'repairAttempts': recovery['repairAttempts'], 'latencyMs': recovery['elapsedMs'],
+                               'repairAttempts': recovery['repairAttempts'], 'latencyMs': recovery['elapsedMs'], 'timing': recovery['timing'],
                                'stopReason': recovery['stopReason'], 'failure': recovery['failure'], 'provenance': source_row['provenance']}
                         log.write(canonical(row) + '\n')
                         log.flush()

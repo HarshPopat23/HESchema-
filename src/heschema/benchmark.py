@@ -14,6 +14,7 @@ from .repair import RepairLimits, coordinate, request_generation
 from .repair_feedback import feedback_version
 from .reports import provenance
 from .schema import SchemaEngine, typed_minimal
+from .timing import VERSION as TIMING_VERSION
 from .validation import evaluate, generation_gate
 
 ARMS = ("no_schema", "minimal_schema", "input_schema")
@@ -121,6 +122,7 @@ async def run(cases, provider, out, candidate=None, minimal=None, repeats=3, rep
               "provider": provider.name, "requestedModel": provider.model,
               "protocolVersion": 2, "repairProtocol": "bounded-v2", "feedbackStyle": feedback_style,
               "feedbackVersion": feedback_version(feedback_style),
+              "timingVersion": TIMING_VERSION,
               "repeats": repeats, "repairs": repairs, "seed": seed, "maxTokens": max_tokens,
               "temperature": temperature, "engine": backend, "decodingMode": "prompt_only_unconstrained",
               "provenance": provenance(), "requestInterval": provider.interval, "inputPricePerMillion": input_price,
@@ -197,6 +199,7 @@ async def run(cases, provider, out, candidate=None, minimal=None, repeats=3, rep
                        "stopReason": recovery["stopReason"], "repairLimits": recovery["limits"],
                        "transportRetries": sum(a["generation"]["transport_retries"] for a in attempts),
                        "latencyMs": (time.perf_counter() - started) * 1000,
+                       "timing": recovery['timing'],
                        "inputTokens": inp if known else None, "outputTokens": otp if known else None, "costUsd": cost}
                 log.write(canonical(row) + "\n")
                 log.flush()
@@ -266,10 +269,16 @@ def markdown_report(report):
     lines = ["# HESchema benchmark report", "", f"Provider: **{report['config']['provider']}**; model: `{report['config']['requestedModel']}`.",
              f"Cases: {report['cases']}; completed runs: {report['completedRuns']}; complete: {report['complete']}.", "",
              "## First-pass valid and correct task success", "",
-             "| Arm | Success % | Final success % | Retry % | Errors | p95 ms |",
+             "| Arm | Success % | Final success % | Retry % | Errors | Trial p95 ms |",
              "|---|---:|---:|---:|---:|---:|"]
     for arm, stats in report["arms"].items():
         lines.append(f"| {arm} | {stats['firstPassSuccessPercent']} | {stats['finalSuccessPercent']} | {stats['retryRatePercent']} | {stats['providerErrors']} | {stats['latencyP95Ms']} |")
+    lines += ["", "## Timing phases (all outcomes)", "",
+              "Provider response time includes network/remote queueing. Subphases overlap their parent totals; do not add them twice.", "",
+              "| Arm | Phase | Measured / missing | Mean ms | p95 ms |", "|---|---|---:|---:|---:|"]
+    for arm, stats in report['arms'].items():
+        for phase, values in stats['timing']['allOutcomes'].items():
+            lines.append(f"| {arm} | {phase} | {values['measured']} / {values['missing']} | {values['meanMs']} | {values['p95Ms']} |")
     lines += ["", "## Paired schema effect", ""]
     for name, effect in report["effects"].items():
         lines.append(f"- {name}: {effect.get('absoluteUpliftPoints')} percentage points; relative {effect.get('relativeImprovementPercent')}%; 95% clustered bootstrap interval {effect.get('confidenceInterval95')}.")
