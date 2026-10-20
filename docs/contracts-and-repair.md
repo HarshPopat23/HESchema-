@@ -56,6 +56,46 @@ transport retry accounting remains distinct. Every started request, including
 cancelled/failed ones, is recorded. Unknown usage remains unknown. Repair of a
 schema-valid but silently wrong unbound field cannot use a hidden oracle.
 
+### Category-specific repair feedback
+
+The default `feedbackStyle: "actionable"` now uses `category-v1`:
+
+- `invalid_json`: keep parser reason, offset and line/column when available;
+  request a complete JSON value while preserving approved fields. Duplicate keys
+  and non-finite values do not acquire invented decoder positions.
+- `source_value`: identify the first differing bound field and its approved
+  context pointer. Small values can be included; entire author/file arrays are
+  not repeated. Missing values are distinct from explicit nulls. `enum`,
+  `minimum` and `maximum` are labelled constraints, not replacement values.
+- `relationship`: identify the rule, kind and input locations. Arithmetic,
+  date ordering, membership and uniqueness get different instructions; protected
+  approved inputs must remain unchanged. Type/format violations are eligible
+  for the same bounded repair budget. Application calculation feedback asks for
+  corrected inputs while leaving computed targets omitted.
+- `schema`: identify the output field, schema location and failing keyword;
+  keep concise branch diagnostics for compound constraints.
+
+Source and relationship locations are relative to the contract document, or to
+`arguments` for a tool envelope. Legacy confirmed-state feedback explicitly uses
+an `/arguments/...` pointer. The original diagnostics remain available in each
+evaluation. The feedback is a bounded summary, not an exhaustive list of errors
+or permission to bypass any checks. Large values are marked as omitted; very
+small character budgets retain only category/code/location when space permits.
+Whole JSON entries are packed instead of slicing the serialized feedback. A large
+first error no longer silently prevents useful feedback for subsequent errors.
+
+`generic` and `raw` retain their existing rendering strategies. The coordinator
+returns `feedbackVersion`; attempts requesting a repair record the actual message,
+character count, style and version in `repairFeedback`. Benchmark and repair-study
+configurations also record versions, preventing a resume from silently combining
+feedback implementations. Use a new output directory after upgrading; historical
+pilot records and their messages must stay unchanged.
+
+These are deterministic diagnostic improvements. They do not establish an increase
+in model recovery, lower token usage or lower latency. The historical breakdown,
+public-source controls and prospective comparison plan are in
+[the repair feedback investigation](../research/repair-feedback-v1/README.md).
+
 ## Full and compact contract prompts
 
 `promptStyle` is independent of the decoding `mode`:

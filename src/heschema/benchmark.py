@@ -11,6 +11,7 @@ from .domains import DOMAINS, reference_schema
 from .jsonio import canonical, digest, loads, read_json, write_json
 from .metrics import classify, custom_fitness, paired_effect, summarize
 from .repair import RepairLimits, coordinate, request_generation
+from .repair_feedback import feedback_version
 from .reports import provenance
 from .schema import SchemaEngine, typed_minimal
 from .validation import evaluate, generation_gate
@@ -119,6 +120,7 @@ async def run(cases, provider, out, candidate=None, minimal=None, repeats=3, rep
               "minimalSchemaHashes": {d: digest(s) for d, s in minimals.items()},
               "provider": provider.name, "requestedModel": provider.model,
               "protocolVersion": 2, "repairProtocol": "bounded-v2", "feedbackStyle": feedback_style,
+              "feedbackVersion": feedback_version(feedback_style),
               "repeats": repeats, "repairs": repairs, "seed": seed, "maxTokens": max_tokens,
               "temperature": temperature, "engine": backend, "decodingMode": "prompt_only_unconstrained",
               "provenance": provenance(), "requestInterval": provider.interval, "inputPricePerMillion": input_price,

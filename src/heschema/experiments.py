@@ -14,6 +14,7 @@ from .jsonio import canonical, digest, loads, read_json, write_json
 from .metrics import paired_effect
 from .providers import Generation, content_has_reasoning_markers
 from .repair import RepairLimits, coordinate, request_generation
+from .repair_feedback import feedback_version
 from .reports import provenance
 from .rules import json_equal
 from .schema import SchemaEngine
@@ -295,6 +296,7 @@ async def run_repair_study(cases, provider, first_out, out, *, budgets=(1, 2), s
     config = {'protocolVersion': 2, 'study': 'repair_feedback', 'sourceHash': digest(saved), 'sourceConfigHash': digest(source_config),
               'datasetHash': digest(cases), 'provider': provider.name, 'requestedModel': provider.model,
               'budgets': list(budgets), 'styles': list(styles), 'maxTokens': max_tokens, 'seed': seed,
+              'feedbackVersions': {style: feedback_version(style) for style in styles},
               'temperature': temperature, 'engine': backend, 'provenance': provenance(),
               'thinkingRequested': source_config.get('thinkingRequested'), 'requestControls': controls,
               'failureCategoryVersion': CATEGORY_VERSION, 'scoringVersion': source_config.get('scoringVersion')}

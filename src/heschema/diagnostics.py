@@ -73,7 +73,7 @@ def schema_error(error, locations=None):
 
 
 def runtime_feedback(errors, *, allow_state=False):
-    allowed = {'JSON_INVALID', 'SCHEMA_INVALID', 'CANDIDATE_SCHEMA_INVALID', 'RELATION_MISMATCH',
+    allowed = {'JSON_INVALID', 'SCHEMA_INVALID', 'CANDIDATE_SCHEMA_INVALID', 'RELATION_MISMATCH', 'RELATION_TYPE_INVALID',
                'CALCULATION_INPUT_INVALID'}
     if allow_state:
         allowed |= {'STATE_MISMATCH', 'CONTEXT_MISMATCH'}

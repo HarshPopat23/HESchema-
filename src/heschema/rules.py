@@ -98,6 +98,7 @@ def evaluate_rules(document, rules, context=None, trusted_locations=None):
     for rule in rules:
         kind, rule_id = rule['kind'], rule['id']
         location = rule.get('target', rule.get('left', rule.get('arrayLocation', '')))
+        input_locations = [rule[k] for k in RULE_POINTERS[kind]] + rule.get('operands', [])
         try:
             if kind in {'product_equals', 'sum_equals'}:
                 # Preserve existing missing-evidence precedence before type checks.
@@ -143,13 +144,14 @@ def evaluate_rules(document, rules, context=None, trusted_locations=None):
                 errors.append(diagnostic('RELATION_MISMATCH', 'relationships', location,
                                          f'{kind} failed; preserve approved inputs and correct the relationship',
                                          ruleId=rule_id, kind=kind, actual=actual, expected=expected,
-                                         inputLocations=[rule[k] for k in RULE_POINTERS[kind]] + rule.get('operands', [])))
+                                         inputLocations=input_locations))
         except KeyError:
             records.append({'ruleId': rule_id, 'kind': kind, 'status': 'needs_context'})
             errors.append(diagnostic('RELATION_INPUT_MISSING', 'relationships', location,
                                      'Required rule evidence is missing', ruleId=rule_id, kind=kind, repair='needs_context'))
         except (ValueError, TypeError) as exc:
             records.append({'ruleId': rule_id, 'kind': kind, 'status': 'invalid'})
-            errors.append(diagnostic('RELATION_TYPE_INVALID', 'relationships', location, str(exc), ruleId=rule_id, kind=kind))
+            errors.append(diagnostic('RELATION_TYPE_INVALID', 'relationships', location, str(exc),
+                                     ruleId=rule_id, kind=kind, inputLocations=input_locations))
     status = 'needs_context' if any(r['status'] == 'needs_context' for r in records) else 'invalid' if errors else 'valid' if rules else 'not_evaluated'
     return {'status': status, 'rules': records, 'errors': errors, 'implementation': 'application_rules'}

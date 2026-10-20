@@ -6,6 +6,7 @@ from time import perf_counter
 from .context_schema import effective_schema
 from .diagnostics import diagnostic, parts
 from .jsonio import canonical, loads
+from .repair_feedback import source_error
 from .rules import calculation_value
 from .schema import schema_children
 
@@ -105,7 +106,7 @@ def validate_with_calculations(raw, engine, contract, snapshot=None, *, generati
         return blocked(errors)
     document = parsed['arguments'] if contract.outputKind == 'tool_envelope' else parsed
     effective, context = effective_schema(contract, snapshot)
-    errors = [{**e, 'code': 'CONTEXT_MISMATCH', 'stage': 'context'}
+    errors = [source_error(e, document, context['activeBindings'])
               for e in engine.errors(calculation_input_schema(effective, plan), document)]
     errors.extend(diagnostic('CONTEXT_REQUIRED', 'context', pointer,
                              'Confirm the declared input before calculation', repair='needs_context')
@@ -120,7 +121,9 @@ def validate_with_calculations(raw, engine, contract, snapshot=None, *, generati
         except (KeyError, TypeError, ValueError) as exc:
             return blocked([diagnostic('CALCULATION_INPUT_INVALID', 'calculation', rule['target'],
                                        'Calculation input missing or invalid: ' + str(exc),
-                                       ruleId=rule['id'], kind=rule['kind'])])
+                                       ruleId=rule['id'], kind=rule['kind'],
+                                       inputLocations=rule.get('operands', [rule.get('arrayLocation')]),
+                                       protectedInputs=[b['instanceLocation'] for b in context['activeBindings']])])
         values.append({'ruleId': rule['id'], 'kind': rule['kind'], 'target': rule['target'],
                        'value': value})
     # Atomic assembly: no output field is written until every calculation succeeds.

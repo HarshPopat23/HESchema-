@@ -57,5 +57,8 @@ def test_application_calculations_check_inputs_and_full_output_with_native_backe
         assert 'blaze_boolean_crosscheck_ipc' in result['validationComponents']
         bad = validate_with_calculations({'items': []}, engine, contract, context)
         assert not bad['accepted'] and bad['calculation']['status'] == 'blocked'
+        assert bad['errors'][0]['sourceMismatch'] == {
+            'instanceLocation': '/items/0', 'contextLocation': '/items/0', 'keyword': 'const',
+            'actualMissing': True, 'expected': {'amountMinor': 1250}}
     finally:
         engine.close()
