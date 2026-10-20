@@ -1,0 +1,59 @@
+{
+  "contract": {
+    "id": "calculated-inventory-demo",
+    "version": "1",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {"amountMinor": {"type": "integer"}},
+            "required": ["amountMinor"],
+            "additionalProperties": false
+          }
+        },
+        "itemCount": {"type": "integer", "minimum": 0},
+        "totalMinor": {"type": "integer"}
+      },
+      "required": ["items", "itemCount", "totalMinor"],
+      "additionalProperties": false
+    },
+    "contextSchema": {
+      "type": "object",
+      "properties": {"items": {"type": "array"}},
+      "additionalProperties": false
+    },
+    "bindings": [{"instanceLocation": "/items", "contextLocation": "/items"}],
+    "relationships": [
+      {
+        "id": "item-count",
+        "kind": "count_equals",
+        "arrayLocation": "/items",
+        "target": "/itemCount",
+        "compute": "application"
+      },
+      {
+        "id": "item-total",
+        "kind": "sum_items_equals",
+        "arrayLocation": "/items",
+        "itemLocation": "/amountMinor",
+        "target": "/totalMinor",
+        "compute": "application"
+      }
+    ]
+  },
+  "context": {
+    "data": {"items": [{"amountMinor": 1250}, {"amountMinor": 99}]},
+    "approvedPointers": ["/items"]
+  },
+  "prompt": "Prepare the inventory summary from the approved items. Omit application-computed fields.",
+  "modelOutput": {"items": [{"amountMinor": 1250}, {"amountMinor": 99}]},
+  "expectedOutput": {
+    "items": [{"amountMinor": 1250}, {"amountMinor": 99}],
+    "itemCount": 2,
+    "totalMinor": 1349
+  },
+  "provenance": "synthetic_documentation_example_not_empirical_evidence"
+}

@@ -2,8 +2,12 @@ import os
 
 import pytest
 
+from heschema.calculations import validate_with_calculations
+from heschema.contracts import Contract
 from heschema.dataset import values
 from heschema.domains import DOMAINS, reference_schema
+from heschema.jsonio import read_json
+from heschema.providers import ROOT
 from heschema.schema import SchemaEngine
 
 pytestmark = pytest.mark.skipif(not os.getenv("HESCHEMA_TEST_BLAZE"), reason="Opt-in native integration")
@@ -38,5 +42,20 @@ def test_native_template_parity_and_format_guard(domain):
                 args[field] = "2027-02-30"
                 assert engine.errors(schema, args)
                 break
+    finally:
+        engine.close()
+
+
+def test_application_calculations_check_inputs_and_full_output_with_native_backend():
+    example = read_json(ROOT / 'examples/contracts/application-calculations.json')
+    contract = Contract(**example['contract'])
+    context = {'id': 'example', 'version': 1, 'confirmed': True, 'facts': [], **example['context']}
+    engine = SchemaEngine('blaze')
+    try:
+        result = validate_with_calculations(example['modelOutput'], engine, contract, context)
+        assert result['success'] and result['parsed'] == example['expectedOutput']
+        assert 'blaze_boolean_crosscheck_ipc' in result['validationComponents']
+        bad = validate_with_calculations({'items': []}, engine, contract, context)
+        assert not bad['accepted'] and bad['calculation']['status'] == 'blocked'
     finally:
         engine.close()

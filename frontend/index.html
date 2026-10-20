@@ -112,6 +112,7 @@
             <div class="form-group"><label for="contract-feedback">Feedback</label><select id="contract-feedback"><option value="actionable">Actionable</option><option value="raw">Normalized raw errors</option><option value="generic">Generic</option></select></div>
           </div>
           <p id="contract-prompt-style-help" class="muted">Compact sends the original schema and approved facts without repeating values in projected constraints. Both styles keep full contract validation after generation.</p>
+          <p class="muted">To calculate a supported count, sum or product in the application, set <code>"compute": "application"</code> on that relationship in a new contract version. The model omits its target; validated inputs are used to assemble and fully validate the output. Other relationships remain model-generated.</p>
           <button id="contract-generate" class="btn btn-primary" type="button">Generate and validate</button>
         </details>
         <p id="contract-notice" class="muted" aria-live="polite">Examples are synthetic, not evidence of company adoption.</p>

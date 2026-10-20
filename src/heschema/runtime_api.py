@@ -5,10 +5,12 @@ from typing import Any, Literal
 from fastapi import Depends, HTTPException
 from pydantic import BaseModel, ConfigDict, Field
 
+from .calculations import calculation_input_schema, calculation_plan, validate_with_calculations
 from .capabilities import capability_profile
 from .context_schema import ContextError, check_context, effective_schema
 from .contract_prompt import contract_messages
 from .contracts import generation_envelope
+from .jsonio import canonical
 from .providers import Provider, ProviderError
 from .repair import RepairLimits, coordinate, request_generation
 from .schema_projection import project_schema
@@ -169,8 +171,9 @@ def install_contract_routes(app, store, engine, owner, registry):
         snap = context_snapshot(contract, body.contextId, body.contextVersion, identity)
         try:
             effective, evidence = effective_schema(contract, snap)
-            original_envelope = generation_envelope(contract, contract.schema)
-            effective_envelope = generation_envelope(contract, effective)
+            plan = calculation_plan(contract)
+            original_envelope = generation_envelope(contract, calculation_input_schema(contract.schema, plan))
+            effective_envelope = generation_envelope(contract, calculation_input_schema(effective, plan))
             prompt_envelope = original_envelope if body.promptStyle == 'compact' else effective_envelope
             projected, manifest = project_schema(original_envelope, prompt_envelope)
             profile = capability_profile(body.provider, body.mode, model=body.model)
@@ -189,7 +192,7 @@ def install_contract_routes(app, store, engine, owner, registry):
             async def request(messages, attempt):
                 return await request_generation(provider, messages, body.seed, body.maxTokens, body.temperature, generation_schema)
             try:
-                run = await coordinate(request, lambda g: validate_contract(g.text, engine, contract, snap, generation=g), messages,
+                run = await coordinate(request, lambda g: validate_with_calculations(g.text, engine, contract, snap, generation=g), messages,
                                        limits=limits, feedback_style=body.feedbackStyle, context_check=checkpoint)
             finally:
                 await provider.close()
@@ -198,11 +201,17 @@ def install_contract_routes(app, store, engine, owner, registry):
         for evaluation in (run['firstEvaluation'], run['finalEvaluation']):
             evaluation.setdefault('contract', contract.identity)
             evaluation.setdefault('context', evidence)
-        return {'protocolVersion': 2, 'output': run['attempts'][-1]['generation']['text'] if run['attempts'] else None,
+        model_output = run['attempts'][-1]['generation']['text'] if run['attempts'] else None
+        final = run['finalEvaluation']
+        calculated = final.get('calculation', {}).get('status') == 'applied'
+        response = {'protocolVersion': 2, 'output': canonical(final['parsed']) if calculated else model_output,
                 'promptStyle': body.promptStyle,
                 'validation': run['finalEvaluation'], 'repair': run,
                 'projection': manifest if body.mode == 'native_projected' else None,
                 'capability': profile, 'executionAuthorized': False}
+        if plan:
+            response['modelOutput'] = model_output
+        return response
 
     @app.get('/capabilities/{provider}/{mode}')
     def capabilities(provider: str, mode: str, identity=Depends(owner)):

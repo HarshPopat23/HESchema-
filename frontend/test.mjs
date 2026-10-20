@@ -132,3 +132,23 @@ test('contract generation selects full or compact and retains the choice in evid
     assert.deepEqual(p.errors, []);
   } finally { p.dom.window.close(); }
 });
+
+test('per-relationship calculation selection is registered and surfaced in generation evidence', async () => {
+  const p = await page('invoice');
+  try {
+    const contract = JSON.parse(p.get('contract-definition').value);
+    contract.id = 'invoice-application-calc-ui';
+    contract.relationships[0].compute = 'application';
+    p.get('contract-definition').value = JSON.stringify(contract);
+    await p.click('register'); await p.click('create-context'); await p.click('confirm');
+    await p.click('generate');
+    assert.ok(p.get('contract-error').classList.contains('hidden'));
+    const record = JSON.parse(p.get('contract-record').textContent);
+    // The offline mock returns a tool refusal, not valid invoice inputs.
+    assert.equal(record.validation.calculation.status, 'blocked');
+    assert.equal(record.modelOutput, record.output);
+    assert.equal(record.validation.accepted, false);
+    assert.match(p.get('contract-stages').textContent, /applicationCalculationsblocked/);
+    assert.deepEqual(p.errors, []);
+  } finally { p.dom.window.close(); }
+});
