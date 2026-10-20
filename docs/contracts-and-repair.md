@@ -196,6 +196,13 @@ research inputs and benchmark runners are not automatically migrated. Given the
 pilot's model/source regressions, opt in selectively and confirm the chosen design
 on untouched tasks before making accuracy, latency or token-saving claims.
 
+The [saved-response regression investigation](../research/app-calc-regressions-v1/README.md)
+reproduces the pilot's Crossref/GPT OSS 20b failures. Those final failures were JSON
+syntax errors before calculation, not demonstrated arithmetic or mapping failures.
+Runtime `JSON_INVALID` errors expose parser locations and syntax guidance when
+available; actionable repair feedback carries those details without altering raw
+output or weakening source checks.
+
 ## Native decoding and diagnostics
 
 Native mode currently supports Ollama (and the nonempirical mock adapter), without

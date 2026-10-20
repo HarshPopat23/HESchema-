@@ -1,6 +1,7 @@
 """Stable diagnostic locations and runtime-only repair feedback."""
 
 import re
+from json import JSONDecodeError
 
 
 def pointer(parts):
@@ -38,6 +39,24 @@ def resolve(document, location):
 def diagnostic(code, stage, location='', message='', *, repair='correct_output', **details):
     return {'code': code, 'stage': stage, 'instanceLocation': location,
             'message': message, 'repair': repair, **details}
+
+
+def json_parse_diagnostic(error):
+    """Report syntax evidence without modifying text or guessing missing source values."""
+    details = {}
+    if isinstance(error, JSONDecodeError):
+        trailing = error.msg == 'Extra data'
+        details['jsonError'] = {
+            'kind': 'trailing_content' if trailing else 'syntax', 'reason': error.msg,
+            'offset': error.pos, 'line': error.lineno, 'column': error.colno,
+        }
+        details['repairHint'] = (
+            'Return only the JSON value required by the output schema; remove trailing content '
+            'after it and preserve approved field values.' if trailing else
+            'Correct JSON syntax at the reported location; preserve approved field values '
+            'and nested object/array boundaries.'
+        )
+    return diagnostic('JSON_INVALID', 'json', message=str(error), **details)
 
 
 def schema_error(error, locations=None):
