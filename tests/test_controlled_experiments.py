@@ -56,6 +56,13 @@ def test_repair_comparison_replays_identical_first_output_and_counts_only_new_ca
         assert all(r['requestsAttempted'] == 1 and r['finalSuccess'] for r in rows)
         assert all(a['usage']['output_tokens'] == 30 for a in report['arms'].values())
         assert all('928173' not in canonical(messages) for messages, _ in p.seen)
+        config = loads((repaired / 'config.json').read_text())
+        assert config['feedbackVersions'] == {'generic': 'generic-v1', 'raw': 'raw-v1', 'actionable': 'category-v1'}
+        # Resuming a directory with a different feedback implementation is unsafe.
+        config['feedbackVersions']['actionable'] = 'old-implementation'
+        (repaired / 'config.json').write_text(canonical(config))
+        with pytest.raises(ValueError, match='Resume configuration differs'):
+            await run_repair_study([CASE], p, first, repaired, budgets=[1], max_tokens=20)
     asyncio.run(check())
 
 

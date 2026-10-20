@@ -10,6 +10,7 @@ from .context_schema import ContextError
 from .diagnostics import runtime_feedback
 from .jsonio import canonical
 from .providers import Generation, ProviderError
+from .repair_feedback import actionable_message, feedback_version
 
 
 @dataclass(frozen=True)
@@ -49,15 +50,11 @@ def feedback_message(errors, style='actionable', max_chars=4000):
         raise ValueError('Unknown feedback style')
     if style == 'generic':
         return 'The final output failed validation. Return corrected whole JSON using the same contract and approved context.'
+    if style == 'actionable':
+        return actionable_message(errors, max_chars)
     entries = []
     for error in errors:
-        if style == 'raw':
-            entry = error
-        else:
-            entry = {k: error[k] for k in ('code', 'stage', 'instanceLocation', 'schemaLocation', 'ruleId', 'kind', 'message', 'actual', 'expected', 'inputLocations', 'protectedInputs', 'repair', 'jsonError', 'repairHint') if k in error}
-            if error.get('details'):
-                entry['branches'] = [{k: e[k] for k in ('instanceLocation', 'schemaLocation', 'message') if k in e} for e in error['details'][:6]]
-        candidate = [*entries, entry]
+        candidate = [*entries, error]
         if len(canonical(candidate)) > max_chars - 100:
             break
         entries = candidate
@@ -151,8 +148,13 @@ async def coordinate(generate, evaluate, messages, *, limits=None, feedback_styl
                 stop = 'no_runtime_feedback'
                 break
             if index < limits.repairs:
+                message = feedback_message(feedback, feedback_style, limits.feedback_chars)
+                attempts[-1]['repairFeedback'] = {
+                    'version': feedback_version(feedback_style),
+                    'style': feedback_style, 'message': message, 'chars': len(message),
+                }
                 messages.extend([{'role': 'assistant', 'content': generated.text},
-                                 {'role': 'user', 'content': feedback_message(feedback, feedback_style, limits.feedback_chars)}])
+                                 {'role': 'user', 'content': message}])
         except ContextError as exc:
             request_record['status'] = 'context_changed'
             failure = {'code': 'context_changed', 'message': str(exc)[:500]}
@@ -203,4 +205,5 @@ async def coordinate(generate, evaluate, messages, *, limits=None, feedback_styl
     return {'firstEvaluation': first, 'finalEvaluation': final, 'attempts': attempts,
             'requestLedger': ledger, 'requestsAttempted': requests, 'repairAttempts': max(0, len(ledger) - 1),
             'reservedOutputTokens': reserved_tokens, 'limits': asdict(limits), 'feedbackStyle': feedback_style,
+            'feedbackVersion': feedback_version(feedback_style),
             'stopReason': stop, 'failure': failure, 'elapsedMs': (time.perf_counter() - started) * 1000}

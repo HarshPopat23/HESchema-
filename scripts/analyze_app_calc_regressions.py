@@ -79,6 +79,21 @@ def syntax_probe(text):
     return None
 
 
+def repair_category_summary(rows):
+    """Historical diagnostic codes; repeats are observations, not independent tasks."""
+    summary = defaultdict(lambda: defaultdict(Counter))
+    for row in rows:
+        if 'repair' not in row:
+            continue
+        # Keep mixed-code slots in a separate group rather than double-counting.
+        codes = '+'.join(sorted({e['code'] for e in row['first']['diagnostics']})) or 'no_diagnostic'
+        counts = summary[row['slot']['mode']][codes]
+        counts['attempts'] += 1
+        counts['recovered'] += bool(row['final']['correct'])
+    return {mode: {code: dict(counts) for code, counts in groups.items()}
+            for mode, groups in summary.items()}
+
+
 def audit_archive(path):
     """Validate hashes and all saved phase scores, then extract the actual failing requests."""
     with ZipFile(path) as archive:
@@ -190,6 +205,7 @@ def audit_archive(path):
             'frozen_prompt_checks': dict(prompts_verified),
             'score_discrepancies': discrepancies, 'provenance_issues': provenance_issues,
             'all_available_metrics': {mode: dict(counts) for mode, counts in metrics.items()},
+            'historical_repairs_by_diagnostic': repair_category_summary(rows),
             'matched_blocks': len(matched),
             'matched_by_source': {source: dict(counts) for source, counts in by_source.items()},
             'matched_by_model': {model: dict(counts) for model, counts in by_model.items()},

@@ -26,6 +26,8 @@ def test_contract_generation_repair_and_partial_evidence(tmp_path, monkeypatch, 
         client.post(f"/contexts/{ctx['id']}/confirm", json={'version': 1})
         result = client.post('/contracts/generate', json={'contractId': 'invoice', 'contractVersion': '1', 'contextId': ctx['id'], 'contextVersion': 1, 'prompt': 'Prepare invoice', 'provider': 'mock', 'repairs': 1, 'promptStyle': prompt_style}).json()
         assert result['validation']['success'] and result['repair']['requestsAttempted'] == 2
+        assert result['repair']['feedbackVersion'] == 'category-v1'
+        assert result['repair']['attempts'][0]['repairFeedback']['message'] == seen[1][0][-1]['content']
         assert result['promptStyle'] == prompt_style
         assert seen[0][1]['retry'] is False
         assert result['capability']['keywordEnforcement'] == 'unknown'

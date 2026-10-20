@@ -119,6 +119,7 @@ def validate_contract(raw, engine, contract, snapshot=None, *, generation=None):
     from .context_schema import effective_schema
     from .contracts import generation_envelope
     from .diagnostics import diagnostic, json_parse_diagnostic
+    from .repair_feedback import source_error
     from .rules import evaluate_rules
     started = time.perf_counter_ns()
     timing_before = engine.timing_snapshot()
@@ -151,7 +152,7 @@ def validate_contract(raw, engine, contract, snapshot=None, *, generation=None):
             effective_valid = not effective_errors
             stages['effectiveSchema'] = 'valid' if effective_valid else 'invalid'
             for e in effective_errors:
-                errors.append({**e, 'code': 'CONTEXT_MISMATCH', 'stage': 'context'})
+                errors.append(source_error(e, doc, context['activeBindings']))
             stages['context'] = 'invalid' if effective_errors else 'needs_context' if context['missingBindings'] else 'valid' if context['activeBindings'] else 'not_evaluated'
             # Source constraints precede relations. Arithmetic cannot validate wrong source inputs.
             if effective_valid and not context['missingBindings']:

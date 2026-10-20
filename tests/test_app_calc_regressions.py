@@ -38,6 +38,19 @@ def public_control(case_id):
     return contract, case['context'], document
 
 
+def test_historical_repair_summary_counts_slots_once_and_uses_saved_correctness():
+    def row(mode, codes, correct):
+        return {'slot': {'mode': mode}, 'first': {'diagnostics': [{'code': code} for code in codes]},
+                'repair': {}, 'final': {'correct': correct}}
+    controls = [row('FULL', ['json_parse', 'json_parse'], True),
+                row('FULL', ['sum_items_equals'], False),
+                row('COMPACT', ['schema_const', 'sum_items_equals'], False)]
+    assert AUDIT.repair_category_summary(controls) == {
+        'FULL': {'json_parse': {'attempts': 1, 'recovered': 1},
+                 'sum_items_equals': {'attempts': 1, 'recovered': 0}},
+        'COMPACT': {'schema_const+sum_items_equals': {'attempts': 1, 'recovered': 0}}}
+
+
 @pytest.mark.parametrize('case_id', ['CR-001', 'CR-004', 'PYPI-001'])
 @pytest.mark.parametrize('defect', ['extra_brace', 'bad_record_delimiter'])
 def test_constructed_syntax_errors_reach_feedback_without_accepting_a_json_prefix(case_id, defect):
