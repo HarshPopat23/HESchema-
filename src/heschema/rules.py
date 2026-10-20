@@ -16,6 +16,7 @@ RULE_POINTERS = {
     'unique_by': ('arrayLocation', 'itemLocation'),
 }
 KINDS = set(RULE_POINTERS)
+CALCULABLE_KINDS = {'product_equals', 'sum_equals', 'count_equals', 'sum_items_equals'}
 
 
 def json_equal(left, right):
@@ -47,8 +48,11 @@ def check_rules(rules):
         required = set(RULE_POINTERS[kind])
         if kind in {'product_equals', 'sum_equals'}:
             required.add('operands')
-        if set(rule) != {'id', 'kind'} | required:
+        options = {'compute'} if kind in CALCULABLE_KINDS else set()
+        if set(rule) - options != {'id', 'kind'} | required:
             raise ValueError(f'{kind} requires exactly these options: {sorted(required)}')
+        if 'compute' in rule and rule['compute'] not in ('model', 'application'):
+            raise ValueError('compute must be model or application')
         for key in RULE_POINTERS[kind]:
             parts(rule[key])
         if kind in {'product_equals', 'sum_equals'}:
@@ -74,6 +78,21 @@ def _integer(value):
     raise ValueError('Expected exact integer minor units; booleans, fractions and unsafe reals are not operands')
 
 
+def calculation_value(document, rule):
+    """One arithmetic implementation shared by checking and opted-in calculation."""
+    kind = rule['kind']
+    if kind in {'product_equals', 'sum_equals'}:
+        operands = [_integer(resolve(document, p)) for p in rule['operands']]
+        return prod(operands) if kind == 'product_equals' else sum(operands)
+    if kind not in {'count_equals', 'sum_items_equals'}:
+        raise ValueError('Unsupported calculation kind')
+    items = resolve(document, rule['arrayLocation'])
+    if not isinstance(items, list):
+        raise ValueError(f'{kind} requires an array at {rule["arrayLocation"]}')
+    return len(items) if kind == 'count_equals' else sum(
+        _integer(resolve(item, rule['itemLocation'])) for item in items)
+
+
 def evaluate_rules(document, rules, context=None, trusted_locations=None):
     errors, records = [], []
     for rule in rules:
@@ -81,11 +100,12 @@ def evaluate_rules(document, rules, context=None, trusted_locations=None):
         location = rule.get('target', rule.get('left', rule.get('arrayLocation', '')))
         try:
             if kind in {'product_equals', 'sum_equals'}:
-                operands = [resolve(document, p) for p in rule['operands']]
-                actual = resolve(document, rule['target'])
-                operands = [_integer(v) for v in operands]
-                actual = _integer(actual)
-                expected = prod(operands) if kind == 'product_equals' else sum(operands)
+                # Preserve existing missing-evidence precedence before type checks.
+                for source in rule['operands']:
+                    resolve(document, source)
+                raw_actual = resolve(document, rule['target'])
+                expected = calculation_value(document, rule)
+                actual = _integer(raw_actual)
                 valid = actual == expected
             elif kind == 'date_before':
                 actual, expected = resolve(document, rule['left']), resolve(document, rule['right'])
@@ -108,12 +128,9 @@ def evaluate_rules(document, rules, context=None, trusted_locations=None):
                 if kind == 'member_of':
                     actual, expected = resolve(document, rule['target']), items
                     valid = any(json_equal(actual, item) for item in items)
-                elif kind == 'count_equals':
-                    actual, expected = _integer(resolve(document, rule['target'])), len(items)
-                    valid = actual == expected
-                elif kind == 'sum_items_equals':
+                elif kind in {'count_equals', 'sum_items_equals'}:
                     actual = _integer(resolve(document, rule['target']))
-                    expected = sum(_integer(resolve(item, rule['itemLocation'])) for item in items)
+                    expected = calculation_value(document, rule)
                     valid = actual == expected
                 elif kind == 'unique_by':
                     actual = [resolve(item, rule['itemLocation']) for item in items]

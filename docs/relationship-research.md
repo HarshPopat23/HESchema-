@@ -49,6 +49,12 @@ input locations and protected approved fields. Actionable feedback includes
 these pointers, but validation still checks the complete response after repair;
 feedback is not a guarantee that a model will preserve the fields.
 
+The four arithmetic kinds also accept optional `compute: "model" | "application"`.
+The default remains `model`. Application calculation is an explicit per-rule contract
+choice, restricted to supported schemas; it validates inputs before assembly and
+runs all original checks afterward. Other relationship kinds do not accept this
+option. See [calculation semantics and restrictions](contracts-and-repair.md#optional-application-calculations).
+
 ## Provider controls and whole final content
 
 `OLLAMA_THINK=false` is the default. `true`, `default`, `low`, `medium` and `high`

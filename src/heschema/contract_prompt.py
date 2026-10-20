@@ -1,5 +1,6 @@
 """Contract prompt presentation; runtime validation remains independent of it."""
 
+from .calculations import calculation_plan
 from .context_schema import trusted_information
 from .jsonio import canonical
 
@@ -28,4 +29,10 @@ def contract_messages(contract, snapshot, evidence, output_schema, prompt, *, st
             content += ('\nMissing required bindings (do not invent): '
                         + canonical(evidence['missingBindings']))
     content += '\nTrusted facts: ' + canonical(trusted_information(snapshot))
+    plan = calculation_plan(contract)
+    if plan:
+        content += ('\nApplication-computed fields: '
+                    + canonical([rule['target'] for rule in plan])
+                    + '. Omit these fields from the document/tool arguments. '
+                    'The application calculates them from validated inputs; return all other fields normally.')
     return [{'role': 'system', 'content': content}, {'role': 'user', 'content': prompt}]

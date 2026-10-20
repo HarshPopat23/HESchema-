@@ -111,6 +111,91 @@ This implementation adds no new model benchmark or latency/accuracy claim. Full
 remains the default pending confirmation on untouched tasks. This option applies
 only to `/contracts/generate`, not legacy generation or frozen research runners.
 
+## Optional application calculations
+
+Arithmetic relationships remain checks by default. Opt in **per relationship** by
+adding `"compute": "application"` in a new contract version. Omitting `compute` or
+setting it to `"model"` preserves model generation and existing validation. There
+is no global enable switch and the server never selects relationships automatically.
+
+Supported kinds use the same exact-integer implementation as their relationship checks:
+
+| Kind | Application result |
+| --- | --- |
+| `count_equals` | Length of the array at `arrayLocation` |
+| `sum_items_equals` | Sum of each array element's integer at `itemLocation` |
+| `sum_equals` | Sum of values at `operands` |
+| `product_equals` | Product of values at `operands` |
+
+For example, this relationship tells the application to calculate the count:
+
+```json
+{
+  "id": "item-count",
+  "kind": "count_equals",
+  "arrayLocation": "/items",
+  "target": "/itemCount",
+  "compute": "application"
+}
+```
+
+See [the complete count-and-sum example](../examples/contracts/application-calculations.json).
+Register its contract, create and confirm its context, then call
+`/contracts/generate` normally. The example is synthetic documentation, not study
+evidence. Both prompt styles and all existing decoding modes support the option.
+For opted-in contracts, projection manifests describe the reduced generation
+schemas, not the full assembled-output schema.
+
+The model returns the input fields and any fields still assigned to the model;
+it must omit only the application-computed targets. The generation schema removes
+those properties and their required entries, preserving the remaining constraints
+and approved source projections. Tool envelopes retain call/refusal/clarification
+branches. A response that includes a computed target is rejected, not silently
+overwritten. There is no automatic fallback to a different computation policy.
+
+The runtime performs these steps for each initial or repair response:
+
+1. Parse the entire output strictly and require valid input structure and completion.
+2. Check all approved bindings and required context before calculating anything.
+3. Calculate every selected value, then assemble them atomically into a copy.
+4. Validate the assembled output against the **full original and effective schemas
+   and every declared relationship**, including rules not assigned to the application.
+
+Incorrect source values, invalid JSON, booleans, fractions, unsafe real-valued
+integers and missing operands cannot be repaired by inventing or rounding values.
+Empty arrays have count and sum zero; large integer tokens use Python's exact
+arithmetic. Calculated values must still satisfy their original target constraints.
+Unbound inputs receive structural checks, not independent source verification;
+calculating a consistent total does not prove those inputs are true.
+
+To avoid unsafe general schema rewriting, this initial implementation requires a
+plain, closed root object (`type: object`, `properties`, `additionalProperties: false`)
+with top-level integer target properties. Root composition/conditionals, references,
+root property-count constraints and other unhandled root keywords are rejected.
+Input properties may contain nested structures and constraints without references.
+Targets must be distinct, must not overlap context bindings, and must not be inputs
+to any application calculation. Chained, self-referential, nested-target or arbitrary
+expression calculations are rejected at registration. There is no `eval`, source-code
+execution, or new JSON Schema keyword involved.
+
+For opted-in generation, `modelOutput` is the untouched last model response and
+`output` is the assembled whole JSON when calculation was applied (otherwise the
+raw response). Each repair attempt also preserves its original `generation.text`,
+reported tokens and timing. `validation.calculation` records status, selected rule
+IDs, input/source check results, calculated values, and
+`correctnessScope: "assembled_system_output"`. A valid assembled answer is a system
+result; it is not evidence that the model performed the arithmetic correctly.
+`calculation.pipelineMs` includes input/source validation, assembly and final validation;
+provider transport is excluded and remains in the generation/run timing records.
+Refusal, clarification and known truncation skip calculation. Context changes stop
+the run, and no output authorizes execution.
+
+`/contracts/validate` remains read-only validation of a complete output: it never
+fills missing fields or corrects arithmetic. Existing contracts, validation results,
+research inputs and benchmark runners are not automatically migrated. Given the
+pilot's model/source regressions, opt in selectively and confirm the chosen design
+on untouched tasks before making accuracy, latency or token-saving claims.
+
 ## Native decoding and diagnostics
 
 Native mode currently supports Ollama (and the nonempirical mock adapter), without

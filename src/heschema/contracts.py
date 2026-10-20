@@ -39,6 +39,8 @@ class Contract:
                 raise ValueError('Binding required must be boolean')
         from .rules import check_rules
         check_rules(self.relationships)
+        from .calculations import calculation_plan
+        calculation_plan(self)
 
     @property
     def identity(self):

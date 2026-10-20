@@ -54,7 +54,8 @@ def schema_error(error, locations=None):
 
 
 def runtime_feedback(errors, *, allow_state=False):
-    allowed = {'JSON_INVALID', 'SCHEMA_INVALID', 'CANDIDATE_SCHEMA_INVALID', 'RELATION_MISMATCH'}
+    allowed = {'JSON_INVALID', 'SCHEMA_INVALID', 'CANDIDATE_SCHEMA_INVALID', 'RELATION_MISMATCH',
+               'CALCULATION_INPUT_INVALID'}
     if allow_state:
         allowed |= {'STATE_MISMATCH', 'CONTEXT_MISMATCH'}
     return [e for e in errors if e.get('code') in allowed and e.get('repair') != 'needs_context']

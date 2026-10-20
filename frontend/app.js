@@ -1964,6 +1964,7 @@
         repairs: record.repair ? record.repair.repairAttempts + " / " + record.repair.limits.repairs + " · " + record.repair.stopReason : "not_requested",
         providerEnforcement: record.capability ? record.capability.keywordEnforcement : "not_evaluated" };
       if (record.promptStyle) stages.promptStyle = record.promptStyle;
+      if (decision.calculation) stages.applicationCalculations = decision.calculation.status;
       Object.entries(stages).forEach(([key, value]) => {
         const row = document.createElement("tr");
         [key, value].forEach((text) => { const cell = document.createElement("td"); cell.textContent = String(text); row.appendChild(cell); });

@@ -463,6 +463,14 @@ context freshness checks and bounded repair. Prompt style is separate from nativ
 decoding; see the contract/API guide for the native schema behavior. Savings depend
 on the task; this option does not promise improved accuracy or latency.
 
+Counts, sums and products can also be assigned individually to application code with
+`"compute": "application"` on a supported relationship in a new contract version.
+The model omits those targets; HESchema validates input structure and approved source
+bindings, assembles exact integer results, and validates the complete output again.
+Other relationships keep their existing behavior. Raw model output and assembled
+system output are recorded separately. See the [worked example](examples/contracts/application-calculations.json)
+and [supported calculation scope](docs/contracts-and-repair.md#optional-application-calculations).
+
 - [Contract/API and approval semantics](docs/contracts-and-repair.md)
 - [Controlled decoding and saved-output repair experiments](docs/experiments.md)
 - [Protocol 2 migration and baseline](docs/migration.md)
