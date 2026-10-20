@@ -134,7 +134,7 @@ def test_default_arithmetic_diagnostics_preserve_missing_evidence_precedence():
 
 
 def test_documented_example_is_executable_and_separates_raw_from_system_output(engine):
-    example = loads((PROJECT_ROOT / 'examples/contracts/application-calculations.json').read_text())
+    example = loads((PROJECT_ROOT / 'examples/contracts/application-calculations.json').read_text(encoding='utf-8'))
     c = Contract(**example['contract'])
     snap = {'id': 'example', 'version': 1, 'confirmed': True, 'facts': [], **example['context']}
     result = validate_with_calculations(example['modelOutput'], engine, c, snap)

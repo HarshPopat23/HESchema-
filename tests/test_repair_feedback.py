@@ -39,7 +39,7 @@ def engine():
 ])
 @pytest.mark.parametrize('application', [False, True])
 def test_public_source_mismatch_identifies_one_leaf_without_echoing_whole_records(engine, case_id, field, key, application):
-    cases = loads((ROOT / 'research/contract-main-study-v1/inputs/cases.json').read_text())
+    cases = loads((ROOT / 'research/contract-main-study-v1/inputs/cases.json').read_text(encoding='utf-8'))
     case = next(case for case in cases if case['id'] == case_id)
     definition, document = copy.deepcopy(case['contract']), copy.deepcopy(case['expected_output'])
     if application:

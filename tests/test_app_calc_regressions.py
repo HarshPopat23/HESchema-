@@ -20,7 +20,7 @@ SPEC = importlib.util.spec_from_file_location('app_calc_audit', ROOT / 'scripts/
 AUDIT = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(AUDIT)
 PUBLIC_CASES = {case['id']: case for case in loads(
-    (ROOT / 'research/contract-main-study-v1/inputs/cases.json').read_text())}
+    (ROOT / 'research/contract-main-study-v1/inputs/cases.json').read_text(encoding='utf-8'))}
 
 
 def public_control(case_id):

@@ -16,7 +16,7 @@ from heschema.rules import KINDS
 from heschema.validation import envelope, validate_contract
 
 PUBLIC_CASES = {c['id']: c for c in loads((Path(__file__).resolve().parents[1] /
-    'research/contract-main-study-v1/inputs/cases.json').read_text())}
+    'research/contract-main-study-v1/inputs/cases.json').read_text(encoding='utf-8'))}
 
 
 def approved(data=None, pointers=None, **changes):

@@ -33,7 +33,8 @@ def audit_cases(dataset, sources=None, *, backend='jsonschema'):
             if not path.is_relative_to(parent) or not path.is_file():
                 raise ValueError('Public source evidence must be bundled inside the pack')
         path = parent / source['excerptPath']
-        if hashlib.sha256(path.read_bytes()).hexdigest() != source['excerptSha256']:
+        content_bytes = path.read_bytes().replace(b'\r\n', b'\n')
+        if hashlib.sha256(content_bytes).hexdigest() != source['excerptSha256']:
             raise ValueError('Public source excerpt hash differs')
     engine = SchemaEngine(backend)
     try:

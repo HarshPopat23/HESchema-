@@ -311,7 +311,7 @@ def main():
     source.add_argument('--bundle', type=Path)
     parser.add_argument('--out', type=Path, required=True)
     args = parser.parse_args()
-    bundle = audit_archive(args.archive) if args.archive else loads(args.bundle.read_text())
+    bundle = audit_archive(args.archive) if args.archive else loads(args.bundle.read_text(encoding='utf-8'))
     bundle = bundle.get('evidence', bundle)
     result = {'evidence': bundle, 'current_runtime_replay': replay_bundle(bundle)}
     args.out.parent.mkdir(parents=True, exist_ok=True)
