@@ -1963,6 +1963,7 @@
         projection: record.projection ? record.projection.equivalence : "not_requested",
         repairs: record.repair ? record.repair.repairAttempts + " / " + record.repair.limits.repairs + " · " + record.repair.stopReason : "not_requested",
         providerEnforcement: record.capability ? record.capability.keywordEnforcement : "not_evaluated" };
+      if (record.promptStyle) stages.promptStyle = record.promptStyle;
       Object.entries(stages).forEach(([key, value]) => {
         const row = document.createElement("tr");
         [key, value].forEach((text) => { const cell = document.createElement("td"); cell.textContent = String(text); row.appendChild(cell); });
@@ -2021,7 +2022,7 @@
     bind("generate", async () => {
       const c = definition();
       const record = await apiFetch("/contracts/generate", { method: "POST", body: JSON.stringify({ contractId: c.id, contractVersion: c.version, ...contextFields(), prompt: get("prompt").value,
-        provider: get("provider").value, model: get("model").value || null, mode: get("mode").value, repairs: Number(get("repairs").value), feedbackStyle: get("feedback").value }) });
+        provider: get("provider").value, model: get("model").value || null, mode: get("mode").value, promptStyle: get("prompt-style").value, repairs: Number(get("repairs").value), feedbackStyle: get("feedback").value }) });
       if (record.output !== null) get("output").value = record.output;
       render(record);
     });

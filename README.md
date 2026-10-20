@@ -455,6 +455,14 @@ product rule; total `2500` passes only with the approved quantity/price. Goa/Pun
 illustrates source agreement. Invalidate approval to exercise stale context.
 Optional generation uses the same contract and defaults to zero repairs. Run `python examples/contracts/walkthrough.py` for an offline, explicitly synthetic allowed/rejected/missing/stale/repaired walkthrough.
 
+Generation also offers **Full** (the existing default) and **Compact** prompt styles.
+Set `"promptStyle": "compact"` on `/contracts/generate`, or select it in the tab,
+to send the original schema and approved facts without repeating values in projected
+constraints and binding evidence. Both styles retain full local contract validation,
+context freshness checks and bounded repair. Prompt style is separate from native
+decoding; see the contract/API guide for the native schema behavior. Savings depend
+on the task; this option does not promise improved accuracy or latency.
+
 - [Contract/API and approval semantics](docs/contracts-and-repair.md)
 - [Controlled decoding and saved-output repair experiments](docs/experiments.md)
 - [Protocol 2 migration and baseline](docs/migration.md)

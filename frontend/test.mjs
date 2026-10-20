@@ -107,3 +107,28 @@ test('custom tool destination can be registered without DOMAINS edits and approv
     assert.deepEqual(p.errors, []);
   } finally { p.dom.window.close(); }
 });
+
+test('contract generation selects full or compact and retains the choice in evidence', async () => {
+  const p = await page('trip');
+  try {
+    await p.click('register'); await p.click('create-context'); await p.click('confirm');
+    assert.equal(p.get('contract-prompt-style').value, 'full');
+    const requests = [];
+    p.dom.window.fetch = (url, options) => {
+      if (url === '/contracts/generate') requests.push(JSON.parse(options.body));
+      return fetch(new URL(url, base), options);
+    };
+    for (const style of ['full', 'compact']) {
+      p.get('contract-prompt-style').value = style;
+      await p.click('generate');
+      assert.ok(p.get('contract-error').classList.contains('hidden'));
+      assert.equal(requests.at(-1).promptStyle, style);
+      const record = JSON.parse(p.get('contract-record').textContent);
+      assert.equal(record.promptStyle, style);
+      assert.equal(record.executionAuthorized, false);
+      assert.equal(record.validation.result, 'REFUSED'); // The offline provider never executes tools.
+      assert.match(p.get('contract-stages').textContent, new RegExp('promptStyle' + style));
+    }
+    assert.deepEqual(p.errors, []);
+  } finally { p.dom.window.close(); }
+});

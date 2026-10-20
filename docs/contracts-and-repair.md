@@ -45,7 +45,7 @@ ordering; `equals` uses JSON value equality (numeric aliases match and booleans 
 explicitly approved/verified context array. Schema and source checks precede
 relationships. Missing evidence leads to clarification, never an invented answer.
 
-`POST /contracts/generate` accepts provider/model, prompt, mode, optional context,
+`POST /contracts/generate` accepts provider/model, prompt, mode, `promptStyle`, optional context,
 `repairs` (default 0), `maxRequests`, `maxTokens`, `tokenBudget`, `deadlineSeconds`,
 and `feedbackStyle` (`generic`, `raw`, `actionable`). Output-token budgets reserve
 the advertised cap per request; they are not a bound on input tokens or a billing
@@ -55,6 +55,63 @@ budgets stop the coordinator. Provider transports are single-request in this pat
 transport retry accounting remains distinct. Every started request, including
 cancelled/failed ones, is recorded. Unknown usage remains unknown. Repair of a
 schema-valid but silently wrong unbound field cannot use a hidden oracle.
+
+## Full and compact contract prompts
+
+`promptStyle` is independent of the decoding `mode`:
+
+- `full` (the default) preserves the existing prompt: effective schema with approved
+  constraints, relationships, binding evidence including values, and trusted facts.
+- `compact` sends the original output schema, declared relationships, active binding
+  instructions without values, missing required binding locations, and trusted facts.
+  Approved values are not copied into additional `const`/`enum`/bound constraints or
+  repeated inside binding evidence. Original constraints already authored in the
+  contract remain intact. Facts still come only from approved pointers or verified
+  fact records; this setting does not approve additional context.
+
+For example, after registering a contract and confirming its context:
+
+```json
+{
+  "contractId": "invoice-demo",
+  "contractVersion": "1",
+  "contextId": "<confirmed context id>",
+  "contextVersion": 1,
+  "prompt": "Prepare the invoice from the approved facts.",
+  "provider": "ollama",
+  "mode": "prompt_only",
+  "promptStyle": "compact",
+  "repairs": 0
+}
+```
+
+Select **Prompt style** in the Contracts & Context generation controls, or supply
+the API field above. Responses and downloaded evidence identify `promptStyle`.
+Omitting it selects `full`; unknown styles return HTTP 422 before inference.
+
+Both styles construct and validate the full effective schema locally, check original
+structure, source bindings and relationships, and use the same context freshness
+checks and repair budgets. Removing context projections from the generation prompt
+does not remove them from validation. A compact answer that passes the original
+schema but disagrees with an approved fact is still rejected. Refusal and clarification
+remain available for tool envelopes. No path authorizes execution.
+
+With native decoding, `native_original` sends the selected style's envelope as the
+provider schema: effective for `full`, original for `compact`. `native_projected`
+applies the existing conservative provider transformations to that selected envelope.
+Its projection manifest describes that generation schema, not an equivalence between
+the original and context-constrained schemas. Compact native schemas do not enforce
+the omitted context bindings; the unchanged local contract gate enforces them.
+`/contracts/effective-schema` and `/contracts/validate` are unaffected.
+
+The motivating pilot observed 20.65% fewer total tokens for COMPACT on its matched
+tasks. That is a historical observation, not a promised saving for this runtime:
+small contexts, original schemas, task text and repair frequency affect usage.
+This implementation adds no new model benchmark or latency/accuracy claim. Full
+remains the default pending confirmation on untouched tasks. This option applies
+only to `/contracts/generate`, not legacy generation or frozen research runners.
+
+## Native decoding and diagnostics
 
 Native mode currently supports Ollama (and the nonempirical mock adapter), without
 silent fallback. The full tool envelope includes clarification and refusal.

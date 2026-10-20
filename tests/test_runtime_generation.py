@@ -1,5 +1,6 @@
 import asyncio
 
+import pytest
 from fastapi.testclient import TestClient
 from test_relationships import INVOICE
 
@@ -10,7 +11,8 @@ from heschema.providers import Generation
 from heschema.schema import SchemaEngine
 
 
-def test_contract_generation_repair_and_partial_evidence(tmp_path, monkeypatch):
+@pytest.mark.parametrize('prompt_style', ['full', 'compact'])
+def test_contract_generation_repair_and_partial_evidence(tmp_path, monkeypatch, prompt_style):
     monkeypatch.delenv('HESCHEMA_API_TOKEN', raising=False)
     outputs = [{'quantity': 2, 'unitPriceMinor': 1250, 'totalMinor': 25}, {'quantity': 2, 'unitPriceMinor': 1250, 'totalMinor': 2500}]
     seen = []
@@ -22,8 +24,9 @@ def test_contract_generation_repair_and_partial_evidence(tmp_path, monkeypatch):
         assert client.post('/contracts', json=INVOICE.as_dict()).status_code == 201
         ctx = client.post('/contexts', json={'contractId': 'invoice', 'contractVersion': '1', 'data': {'quantity': 2, 'unitPriceMinor': 1250}, 'approvedPointers': ['/quantity', '/unitPriceMinor']}).json()
         client.post(f"/contexts/{ctx['id']}/confirm", json={'version': 1})
-        result = client.post('/contracts/generate', json={'contractId': 'invoice', 'contractVersion': '1', 'contextId': ctx['id'], 'contextVersion': 1, 'prompt': 'Prepare invoice', 'provider': 'mock', 'repairs': 1}).json()
+        result = client.post('/contracts/generate', json={'contractId': 'invoice', 'contractVersion': '1', 'contextId': ctx['id'], 'contextVersion': 1, 'prompt': 'Prepare invoice', 'provider': 'mock', 'repairs': 1, 'promptStyle': prompt_style}).json()
         assert result['validation']['success'] and result['repair']['requestsAttempted'] == 2
+        assert result['promptStyle'] == prompt_style
         assert seen[0][1]['retry'] is False
         assert result['capability']['keywordEnforcement'] == 'unknown'
         assert not result['executionAuthorized']
