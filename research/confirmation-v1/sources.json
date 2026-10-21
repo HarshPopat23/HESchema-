@@ -1,0 +1,92 @@
+[
+  {
+    "id": "node",
+    "path": "sources/node.json",
+    "url": "https://raw.githubusercontent.com/nodejs/Release/72fdab20216c5f04e0a0fe72a225c2504e9f2b42/schedule.json",
+    "project": "nodejs/Release",
+    "revision": "72fdab20216c5f04e0a0fe72a225c2504e9f2b42",
+    "retrievedAt": "2026-10-20T15:45:13.882072+00:00",
+    "sha256": "1cf0432ceb9dfde7f1fd4cce43206519942cfdfad5a26039c2f4bb20fde8549c"
+  },
+  {
+    "id": "lifecycle",
+    "path": "sources/lifecycle.json",
+    "url": "https://endoflife.date/api/python.json",
+    "project": "endoflife-date/endoflife.date",
+    "revision": null,
+    "retrievedAt": "2026-10-20T15:45:20.840394+00:00",
+    "sha256": "cfb8ac806e97e5122029594cb54caad0126f58d71b33f559b23eaed6b9556a37"
+  },
+  {
+    "id": "spdx",
+    "path": "sources/spdx.json",
+    "url": "https://raw.githubusercontent.com/spdx/license-list-data/31ba1a50e5397e00a304dbadc76531740e89ee48/json/licenses.json",
+    "project": "spdx/license-list-data",
+    "revision": "31ba1a50e5397e00a304dbadc76531740e89ee48",
+    "retrievedAt": "2026-10-20T15:45:34.882069+00:00",
+    "sha256": "47d1cc681abe31166b342b6cc4aab13a6ba8ea5c48794697fe3bf8b1dbaf509a"
+  },
+  {
+    "id": "role",
+    "path": "sources/role.yaml",
+    "url": "https://raw.githubusercontent.com/prometheus-operator/prometheus-operator/0be079d332046de3730d72be272f33e7177eacf2/example/rbac/prometheus-operator/prometheus-operator-cluster-role.yaml",
+    "project": "prometheus-operator/prometheus-operator",
+    "revision": "0be079d332046de3730d72be272f33e7177eacf2",
+    "retrievedAt": "2026-10-20T15:46:02.748521+00:00",
+    "sha256": "038640934030e194f338220576334a666b97f3f12f079a31861090982997dd4e"
+  },
+  {
+    "id": "brew-jq",
+    "path": "sources/brew-jq.json",
+    "url": "https://formulae.brew.sh/api/formula/jq.json",
+    "project": "Homebrew/homebrew-core",
+    "revision": null,
+    "retrievedAt": "2026-10-20T15:46:09.462871+00:00",
+    "sha256": "86413dcd7a0821428dadaa52cd765b2ff3ad71d55bc4490f54a18070f79f50c9"
+  },
+  {
+    "id": "brew-git",
+    "path": "sources/brew-git.json",
+    "url": "https://formulae.brew.sh/api/formula/git.json",
+    "project": "Homebrew/homebrew-core",
+    "revision": null,
+    "retrievedAt": "2026-10-20T15:46:09.553208+00:00",
+    "sha256": "6b75b0340e667ddfc3efba15d729bb12d978e3bd64b1b3fed683ec145c44c324"
+  },
+  {
+    "id": "brew-curl",
+    "path": "sources/brew-curl.json",
+    "url": "https://formulae.brew.sh/api/formula/curl.json",
+    "project": "Homebrew/homebrew-core",
+    "revision": null,
+    "retrievedAt": "2026-10-20T15:46:09.636087+00:00",
+    "sha256": "b8f2edb9e1273a1f2f941a3bd16e77ce304b22b418010b21b7dc5cfebc6b8eb9"
+  },
+  {
+    "id": "brew-wget",
+    "path": "sources/brew-wget.json",
+    "url": "https://formulae.brew.sh/api/formula/wget.json",
+    "project": "Homebrew/homebrew-core",
+    "revision": null,
+    "retrievedAt": "2026-10-20T15:46:09.723100+00:00",
+    "sha256": "c03d240586d3f972bf1f6156701542fe61aeb9bc0f1958225300a7f08953ad50"
+  },
+  {
+    "id": "brew-ripgrep",
+    "path": "sources/brew-ripgrep.json",
+    "url": "https://formulae.brew.sh/api/formula/ripgrep.json",
+    "project": "Homebrew/homebrew-core",
+    "revision": null,
+    "retrievedAt": "2026-10-20T15:46:09.808444+00:00",
+    "sha256": "d77f5cc89974a88e8d97525bd1d62df845d5619c8cecfaf4f8ad4215f401777a"
+  },
+  {
+    "id": "media-types",
+    "path": "sources/media-types.csv",
+    "url": "https://www.iana.org/assignments/media-types/application.csv",
+    "project": "IANA/media-types",
+    "revision": null,
+    "retrievedAt": "2026-10-20T15:47:53.975485+00:00",
+    "sha256": "15e2989e3948846d0897f564c5ec997bfd375ee75c0e10023d11ebed234e5012"
+  }
+]

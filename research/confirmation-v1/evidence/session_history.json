@@ -1,0 +1,578 @@
+[
+  {
+    "priorConfig": {
+      "freezeSha256": "4ef970c9d5aa66a30e81de92ec3ac0a9ef9d4ad0c69ec58e420ee49143a99441",
+      "protocol": {
+        "version": "confirmation-v1",
+        "purpose": "Prospective confirmation on new public-record non-arithmetic tasks; FULL versus COMPACT with identical contract checks.",
+        "tasks": 30,
+        "sourceClusters": 6,
+        "families": [
+          "date_ordering",
+          "identifier_matching",
+          "list_membership"
+        ],
+        "models": [
+          "openai/gpt-oss-120b",
+          "openai/gpt-oss-20b",
+          "qwen/qwen3.8-27b"
+        ],
+        "arms": [
+          "full",
+          "compact"
+        ],
+        "repeats": 3,
+        "seed": 20261020,
+        "temperature": 0.0,
+        "maxTokens": 2048,
+        "repairs": 1,
+        "repairTrigger": "contract_rejection_only",
+        "feedback": "actionable/category-v1, at most 1000 characters; no scoring oracle feedback",
+        "mode": "prompt_only",
+        "applicationCalculations": false,
+        "providerSchemaEnforced": false,
+        "minimumWorkerIntervalSeconds": 10,
+        "maximumQuotaRetries": 1,
+        "quotaWaitSeconds": 120,
+        "quotaPolicy": "Wait on the same credential; never change credentials in response to a quota error. Stop on persistent quota, authentication, network or provider failure and retain partial results.",
+        "spendingCapUsd": 0.0,
+        "billing": "Use only user-authorized free-tier Groq credentials. Actual account billing cannot be verified by this runner.",
+        "primaryOutcomes": [
+          "first_correctness",
+          "final_correctness",
+          "wrong_acceptance",
+          "correct_rejection",
+          "all_observed_tokens"
+        ],
+        "latency": "Descriptive only: provider client phases, coordinator work, dispatch waits, quota waits and session wall time remain separate. No speed claim from parallel throughput.",
+        "analysis": "Report matched pairs and model/family strata. Repeats measure consistency, not independent task count. Describe per-task paired differences averaged over models/repeats and cluster bootstrap by six projects; uncertainty with six clusters is weak.",
+        "stopRule": "Complete frozen schedule or stop after declared provider failure or request cap; never stop because an accuracy threshold was met.",
+        "novelty": "Untouched by prior local model experiments, not guaranteed absent from model pretraining. New tasks are researcher-created adaptations of real public records, not organically collected user prompts.",
+        "review": "Deterministic independent semantic oracle plus exhaustive valid alternatives and corruption controls; no independent human review. Synthetic corruption controls are not live inputs.",
+        "interpretation": "Tests declared application relationships only. Does not establish a need for new JSON Schema vocabulary or prove general production safety. No ordinary-schema-only generation arm."
+      },
+      "codeHashes": {
+        "src/heschema/confirmation.py": "bf74d69caa977d6be9b44a7151825d3540abcb77770e6b12e43f27ee8cf47004",
+        "src/heschema/confirmation_run.py": "9d48c2e657d254fccc1753b18b1f99c017462f45963f4e25089b347249f33f24",
+        "src/heschema/contract_prompt.py": "4e3defc1471320711bb4506e9c58c6d288c8197b7f629cde81a6a58796d97e71",
+        "src/heschema/providers.py": "aabc56cac6c00fd7e614d4282ba32e8ca71fbe982453e663e451c6acd45cad01",
+        "src/heschema/repair.py": "ea7ebdca1f9621f3617376ea6c04f2119721884bbe49f768c0a078c38875302b",
+        "src/heschema/validation.py": "e169be0bd5c0a3626caa4467b82d264a4d814c21fe434ead43a05f62b26f1b18",
+        "src/heschema/rules.py": "98d2223bcceeb83a3d3d794077748ff8bf6bbe0e4a0d32a5f7da1e3d0afb06bf",
+        "src/heschema/context_schema.py": "4b0cc171e8dc22e34a622f4d8d756e9de24dcd302d4c6ffb1921d45814c88dbf",
+        "src/heschema/repair_feedback.py": "20c1b31b3a307d1470c2a14fd3b2a1b6bf666fbb7b875964ce189bc8151ee3c6"
+      },
+      "workers": 4,
+      "interval": 10
+    },
+    "priorSummary": {
+      "plannedSlots": 540,
+      "completedSlots": 185,
+      "matchedPairs": 92,
+      "tasks": 29,
+      "sourceClusters": 6,
+      "arms": {
+        "full": {
+          "matchedSlots": 92,
+          "firstCorrect": 91,
+          "finalCorrect": 92,
+          "wrongAcceptedResponses": 0,
+          "correctRejectedResponses": 0,
+          "schemaOnlyWrongAcceptedResponses": 1,
+          "returnedResponses": 93,
+          "totalTokensIncludingEarlierCheckpoints": 44929,
+          "medianCoordinatorMs": 6781.640985000195,
+          "byModel": {
+            "openai/gpt-oss-120b": {
+              "slots": 25,
+              "firstCorrect": 25,
+              "finalCorrect": 25
+            },
+            "openai/gpt-oss-20b": {
+              "slots": 33,
+              "firstCorrect": 32,
+              "finalCorrect": 33
+            },
+            "qwen/qwen3.8-27b": {
+              "slots": 34,
+              "firstCorrect": 34,
+              "finalCorrect": 34
+            }
+          },
+          "byFamily": {
+            "date_ordering": {
+              "slots": 28,
+              "firstCorrect": 28,
+              "finalCorrect": 28
+            },
+            "identifier_matching": {
+              "slots": 32,
+              "firstCorrect": 32,
+              "finalCorrect": 32
+            },
+            "list_membership": {
+              "slots": 32,
+              "firstCorrect": 31,
+              "finalCorrect": 32
+            }
+          }
+        },
+        "compact": {
+          "matchedSlots": 92,
+          "firstCorrect": 83,
+          "finalCorrect": 85,
+          "wrongAcceptedResponses": 0,
+          "correctRejectedResponses": 0,
+          "schemaOnlyWrongAcceptedResponses": 0,
+          "returnedResponses": 101,
+          "totalTokensIncludingEarlierCheckpoints": 46516,
+          "medianCoordinatorMs": 6788.831982000147,
+          "byModel": {
+            "openai/gpt-oss-120b": {
+              "slots": 25,
+              "firstCorrect": 25,
+              "finalCorrect": 25
+            },
+            "openai/gpt-oss-20b": {
+              "slots": 33,
+              "firstCorrect": 33,
+              "finalCorrect": 33
+            },
+            "qwen/qwen3.8-27b": {
+              "slots": 34,
+              "firstCorrect": 25,
+              "finalCorrect": 27
+            }
+          },
+          "byFamily": {
+            "date_ordering": {
+              "slots": 28,
+              "firstCorrect": 20,
+              "finalCorrect": 21
+            },
+            "identifier_matching": {
+              "slots": 32,
+              "firstCorrect": 32,
+              "finalCorrect": 32
+            },
+            "list_membership": {
+              "slots": 32,
+              "firstCorrect": 31,
+              "finalCorrect": 32
+            }
+          }
+        }
+      },
+      "providerRequestsAttempted": 198,
+      "returnedResponses": 195,
+      "billingVerified": false,
+      "notice": "Repeats are not independent tasks. Six project clusters limit generalization. Both arms retain contract validation; this is not a schema-only generation comparison.",
+      "runWallMs": 524243.1959169999,
+      "freezeCreatedAt": "2026-10-20T15:50:13.820009+00:00",
+      "stoppedAfterFailure": true
+    },
+    "priorJournalSha256": "88c4b00674355da87444db03e9cb7e131d4429b6f45b52cff453050de5ad032e",
+    "recordedBeforeResumeAt": "2026-10-20T16:03:38.721463+00:00",
+    "nextWorkerIntervalSeconds": 20,
+    "reason": "Quota stop; slower pacing after cooldown. Same frozen tasks, model settings and authorized credential pool. Completed slots are retained, pending repair replays its saved initial output.",
+    "previousWorkerForEachNewWorker": [
+      3,
+      0,
+      1,
+      2
+    ],
+    "assignmentNote": "The first pending slot previously failed on worker 3; new worker 0 retains that same credential. Other credential assignments are recorded by relative prior worker index, never by credential value."
+  },
+  {
+    "priorConfig": {
+      "freezeSha256": "4ef970c9d5aa66a30e81de92ec3ac0a9ef9d4ad0c69ec58e420ee49143a99441",
+      "protocol": {
+        "version": "confirmation-v1",
+        "purpose": "Prospective confirmation on new public-record non-arithmetic tasks; FULL versus COMPACT with identical contract checks.",
+        "tasks": 30,
+        "sourceClusters": 6,
+        "families": [
+          "date_ordering",
+          "identifier_matching",
+          "list_membership"
+        ],
+        "models": [
+          "openai/gpt-oss-120b",
+          "openai/gpt-oss-20b",
+          "qwen/qwen3.8-27b"
+        ],
+        "arms": [
+          "full",
+          "compact"
+        ],
+        "repeats": 3,
+        "seed": 20261020,
+        "temperature": 0.0,
+        "maxTokens": 2048,
+        "repairs": 1,
+        "repairTrigger": "contract_rejection_only",
+        "feedback": "actionable/category-v1, at most 1000 characters; no scoring oracle feedback",
+        "mode": "prompt_only",
+        "applicationCalculations": false,
+        "providerSchemaEnforced": false,
+        "minimumWorkerIntervalSeconds": 10,
+        "maximumQuotaRetries": 1,
+        "quotaWaitSeconds": 120,
+        "quotaPolicy": "Wait on the same credential; never change credentials in response to a quota error. Stop on persistent quota, authentication, network or provider failure and retain partial results.",
+        "spendingCapUsd": 0.0,
+        "billing": "Use only user-authorized free-tier Groq credentials. Actual account billing cannot be verified by this runner.",
+        "primaryOutcomes": [
+          "first_correctness",
+          "final_correctness",
+          "wrong_acceptance",
+          "correct_rejection",
+          "all_observed_tokens"
+        ],
+        "latency": "Descriptive only: provider client phases, coordinator work, dispatch waits, quota waits and session wall time remain separate. No speed claim from parallel throughput.",
+        "analysis": "Report matched pairs and model/family strata. Repeats measure consistency, not independent task count. Describe per-task paired differences averaged over models/repeats and cluster bootstrap by six projects; uncertainty with six clusters is weak.",
+        "stopRule": "Complete frozen schedule or stop after declared provider failure or request cap; never stop because an accuracy threshold was met.",
+        "novelty": "Untouched by prior local model experiments, not guaranteed absent from model pretraining. New tasks are researcher-created adaptations of real public records, not organically collected user prompts.",
+        "review": "Deterministic independent semantic oracle plus exhaustive valid alternatives and corruption controls; no independent human review. Synthetic corruption controls are not live inputs.",
+        "interpretation": "Tests declared application relationships only. Does not establish a need for new JSON Schema vocabulary or prove general production safety. No ordinary-schema-only generation arm."
+      },
+      "codeHashes": {
+        "src/heschema/confirmation.py": "bf74d69caa977d6be9b44a7151825d3540abcb77770e6b12e43f27ee8cf47004",
+        "src/heschema/confirmation_run.py": "9d48c2e657d254fccc1753b18b1f99c017462f45963f4e25089b347249f33f24",
+        "src/heschema/contract_prompt.py": "4e3defc1471320711bb4506e9c58c6d288c8197b7f629cde81a6a58796d97e71",
+        "src/heschema/providers.py": "aabc56cac6c00fd7e614d4282ba32e8ca71fbe982453e663e451c6acd45cad01",
+        "src/heschema/repair.py": "ea7ebdca1f9621f3617376ea6c04f2119721884bbe49f768c0a078c38875302b",
+        "src/heschema/validation.py": "e169be0bd5c0a3626caa4467b82d264a4d814c21fe434ead43a05f62b26f1b18",
+        "src/heschema/rules.py": "98d2223bcceeb83a3d3d794077748ff8bf6bbe0e4a0d32a5f7da1e3d0afb06bf",
+        "src/heschema/context_schema.py": "4b0cc171e8dc22e34a622f4d8d756e9de24dcd302d4c6ffb1921d45814c88dbf",
+        "src/heschema/repair_feedback.py": "20c1b31b3a307d1470c2a14fd3b2a1b6bf666fbb7b875964ce189bc8151ee3c6"
+      },
+      "workers": 4,
+      "interval": 20
+    },
+    "priorSummary": {
+      "plannedSlots": 540,
+      "completedSlots": 198,
+      "matchedPairs": 98,
+      "tasks": 29,
+      "sourceClusters": 6,
+      "arms": {
+        "full": {
+          "matchedSlots": 98,
+          "firstCorrect": 97,
+          "finalCorrect": 98,
+          "wrongAcceptedResponses": 0,
+          "correctRejectedResponses": 0,
+          "schemaOnlyWrongAcceptedResponses": 1,
+          "returnedResponses": 99,
+          "totalTokensIncludingEarlierCheckpoints": 47345,
+          "medianCoordinatorMs": 6786.414220000324,
+          "byModel": {
+            "openai/gpt-oss-120b": {
+              "slots": 27,
+              "firstCorrect": 27,
+              "finalCorrect": 27
+            },
+            "openai/gpt-oss-20b": {
+              "slots": 34,
+              "firstCorrect": 33,
+              "finalCorrect": 34
+            },
+            "qwen/qwen3.8-27b": {
+              "slots": 37,
+              "firstCorrect": 37,
+              "finalCorrect": 37
+            }
+          },
+          "byFamily": {
+            "date_ordering": {
+              "slots": 32,
+              "firstCorrect": 32,
+              "finalCorrect": 32
+            },
+            "identifier_matching": {
+              "slots": 32,
+              "firstCorrect": 32,
+              "finalCorrect": 32
+            },
+            "list_membership": {
+              "slots": 34,
+              "firstCorrect": 33,
+              "finalCorrect": 34
+            }
+          }
+        },
+        "compact": {
+          "matchedSlots": 98,
+          "firstCorrect": 87,
+          "finalCorrect": 90,
+          "wrongAcceptedResponses": 0,
+          "correctRejectedResponses": 0,
+          "schemaOnlyWrongAcceptedResponses": 0,
+          "returnedResponses": 109,
+          "totalTokensIncludingEarlierCheckpoints": 49965,
+          "medianCoordinatorMs": 6800.116974000048,
+          "byModel": {
+            "openai/gpt-oss-120b": {
+              "slots": 27,
+              "firstCorrect": 27,
+              "finalCorrect": 27
+            },
+            "openai/gpt-oss-20b": {
+              "slots": 34,
+              "firstCorrect": 34,
+              "finalCorrect": 34
+            },
+            "qwen/qwen3.8-27b": {
+              "slots": 37,
+              "firstCorrect": 26,
+              "finalCorrect": 29
+            }
+          },
+          "byFamily": {
+            "date_ordering": {
+              "slots": 32,
+              "firstCorrect": 22,
+              "finalCorrect": 24
+            },
+            "identifier_matching": {
+              "slots": 32,
+              "firstCorrect": 32,
+              "finalCorrect": 32
+            },
+            "list_membership": {
+              "slots": 34,
+              "firstCorrect": 33,
+              "finalCorrect": 34
+            }
+          }
+        }
+      },
+      "providerRequestsAttempted": 216,
+      "returnedResponses": 211,
+      "billingVerified": false,
+      "notice": "Repeats are not independent tasks. Six project clusters limit generalization. Both arms retain contract validation; this is not a schema-only generation comparison."
+    },
+    "priorJournalSha256": "147da6d1cc048cc5116bf1e65330255d7b38c100a454cf16d5bfe140842672e9",
+    "recordedBeforeResumeAt": "2026-10-21T03:47:45.644331+00:00",
+    "nextWorkerIntervalSeconds": 20,
+    "reason": "Resume after execution workspace became unavailable. Frozen tasks, runtime file hashes and generation settings unchanged. First pending quota-failed slot retains its prior credential; completed slots are skipped.",
+    "previousWorkerForEachNewWorker": [
+      3,
+      0,
+      1,
+      2
+    ],
+    "interruption": {
+      "lastSavedCompletedSlots": 198,
+      "unrecordedRequests": "unknown",
+      "possibleUnrecordedRequestsUpperBound": 8,
+      "basis": "Four workers, at most two physical calls per in-flight slot; results are committed per slot, so an interrupted slot may have lost a completed initial response. Exact total usage and full response preservation cannot be claimed."
+    }
+  },
+  {
+    "priorConfig": {
+      "freezeSha256": "4ef970c9d5aa66a30e81de92ec3ac0a9ef9d4ad0c69ec58e420ee49143a99441",
+      "protocol": {
+        "version": "confirmation-v1",
+        "purpose": "Prospective confirmation on new public-record non-arithmetic tasks; FULL versus COMPACT with identical contract checks.",
+        "tasks": 30,
+        "sourceClusters": 6,
+        "families": [
+          "date_ordering",
+          "identifier_matching",
+          "list_membership"
+        ],
+        "models": [
+          "openai/gpt-oss-120b",
+          "openai/gpt-oss-20b",
+          "qwen/qwen3.8-27b"
+        ],
+        "arms": [
+          "full",
+          "compact"
+        ],
+        "repeats": 3,
+        "seed": 20261020,
+        "temperature": 0.0,
+        "maxTokens": 2048,
+        "repairs": 1,
+        "repairTrigger": "contract_rejection_only",
+        "feedback": "actionable/category-v1, at most 1000 characters; no scoring oracle feedback",
+        "mode": "prompt_only",
+        "applicationCalculations": false,
+        "providerSchemaEnforced": false,
+        "minimumWorkerIntervalSeconds": 10,
+        "maximumQuotaRetries": 1,
+        "quotaWaitSeconds": 120,
+        "quotaPolicy": "Wait on the same credential; never change credentials in response to a quota error. Stop on persistent quota, authentication, network or provider failure and retain partial results.",
+        "spendingCapUsd": 0.0,
+        "billing": "Use only user-authorized free-tier Groq credentials. Actual account billing cannot be verified by this runner.",
+        "primaryOutcomes": [
+          "first_correctness",
+          "final_correctness",
+          "wrong_acceptance",
+          "correct_rejection",
+          "all_observed_tokens"
+        ],
+        "latency": "Descriptive only: provider client phases, coordinator work, dispatch waits, quota waits and session wall time remain separate. No speed claim from parallel throughput.",
+        "analysis": "Report matched pairs and model/family strata. Repeats measure consistency, not independent task count. Describe per-task paired differences averaged over models/repeats and cluster bootstrap by six projects; uncertainty with six clusters is weak.",
+        "stopRule": "Complete frozen schedule or stop after declared provider failure or request cap; never stop because an accuracy threshold was met.",
+        "novelty": "Untouched by prior local model experiments, not guaranteed absent from model pretraining. New tasks are researcher-created adaptations of real public records, not organically collected user prompts.",
+        "review": "Deterministic independent semantic oracle plus exhaustive valid alternatives and corruption controls; no independent human review. Synthetic corruption controls are not live inputs.",
+        "interpretation": "Tests declared application relationships only. Does not establish a need for new JSON Schema vocabulary or prove general production safety. No ordinary-schema-only generation arm."
+      },
+      "codeHashes": {
+        "src/heschema/confirmation.py": "bf74d69caa977d6be9b44a7151825d3540abcb77770e6b12e43f27ee8cf47004",
+        "src/heschema/confirmation_run.py": "9d48c2e657d254fccc1753b18b1f99c017462f45963f4e25089b347249f33f24",
+        "src/heschema/contract_prompt.py": "4e3defc1471320711bb4506e9c58c6d288c8197b7f629cde81a6a58796d97e71",
+        "src/heschema/providers.py": "aabc56cac6c00fd7e614d4282ba32e8ca71fbe982453e663e451c6acd45cad01",
+        "src/heschema/repair.py": "ea7ebdca1f9621f3617376ea6c04f2119721884bbe49f768c0a078c38875302b",
+        "src/heschema/validation.py": "e169be0bd5c0a3626caa4467b82d264a4d814c21fe434ead43a05f62b26f1b18",
+        "src/heschema/rules.py": "98d2223bcceeb83a3d3d794077748ff8bf6bbe0e4a0d32a5f7da1e3d0afb06bf",
+        "src/heschema/context_schema.py": "4b0cc171e8dc22e34a622f4d8d756e9de24dcd302d4c6ffb1921d45814c88dbf",
+        "src/heschema/repair_feedback.py": "20c1b31b3a307d1470c2a14fd3b2a1b6bf666fbb7b875964ce189bc8151ee3c6"
+      },
+      "workers": 4,
+      "interval": 20
+    },
+    "priorEnvironment": {
+      "codeHash": "60f429156c0789e19ab86ad6455ec3833dccd6db3f23c531b573cefb3b824de1",
+      "revision": "ab363ae4931542db402beaa383da09b08d6dc927",
+      "dependencies": {
+        "heschema": "0.1.0",
+        "jsonschema": "4.26.0",
+        "httpx": "0.28.1",
+        "fastapi": "0.156.4",
+        "numpy": "2.3.5",
+        "scipy": "1.17.0",
+        "PyYAML": "6.0.3"
+      },
+      "pythonVersion": "3.12.14",
+      "hardware": {
+        "machine": "x86_64",
+        "processor": "x86_64"
+      },
+      "backendVersion": null,
+      "modelDigest": null,
+      "capturedAt": "2026-10-21T03:47:45.664801+00:00",
+      "notice": "Session 3 environment restored after workspace interruption; relevant HTTP/JSON Schema/PyYAML versions match prior session. FastAPI changed but is not used in this runner."
+    },
+    "priorSummary": {
+      "plannedSlots": 540,
+      "completedSlots": 413,
+      "matchedPairs": 206,
+      "tasks": 30,
+      "sourceClusters": 6,
+      "arms": {
+        "full": {
+          "matchedSlots": 206,
+          "firstCorrect": 201,
+          "finalCorrect": 206,
+          "wrongAcceptedResponses": 0,
+          "correctRejectedResponses": 0,
+          "schemaOnlyWrongAcceptedResponses": 5,
+          "returnedResponses": 211,
+          "totalTokensIncludingEarlierCheckpoints": 101791,
+          "medianCoordinatorMs": 6266.54661900011,
+          "byModel": {
+            "openai/gpt-oss-120b": {
+              "slots": 66,
+              "firstCorrect": 66,
+              "finalCorrect": 66
+            },
+            "openai/gpt-oss-20b": {
+              "slots": 69,
+              "firstCorrect": 64,
+              "finalCorrect": 69
+            },
+            "qwen/qwen3.8-27b": {
+              "slots": 71,
+              "firstCorrect": 71,
+              "finalCorrect": 71
+            }
+          },
+          "byFamily": {
+            "date_ordering": {
+              "slots": 66,
+              "firstCorrect": 66,
+              "finalCorrect": 66
+            },
+            "identifier_matching": {
+              "slots": 72,
+              "firstCorrect": 72,
+              "finalCorrect": 72
+            },
+            "list_membership": {
+              "slots": 68,
+              "firstCorrect": 63,
+              "finalCorrect": 68
+            }
+          }
+        },
+        "compact": {
+          "matchedSlots": 206,
+          "firstCorrect": 184,
+          "finalCorrect": 195,
+          "wrongAcceptedResponses": 0,
+          "correctRejectedResponses": 0,
+          "schemaOnlyWrongAcceptedResponses": 3,
+          "returnedResponses": 228,
+          "totalTokensIncludingEarlierCheckpoints": 106299,
+          "medianCoordinatorMs": 6301.898020500175,
+          "byModel": {
+            "openai/gpt-oss-120b": {
+              "slots": 66,
+              "firstCorrect": 66,
+              "finalCorrect": 66
+            },
+            "openai/gpt-oss-20b": {
+              "slots": 69,
+              "firstCorrect": 66,
+              "finalCorrect": 69
+            },
+            "qwen/qwen3.8-27b": {
+              "slots": 71,
+              "firstCorrect": 52,
+              "finalCorrect": 60
+            }
+          },
+          "byFamily": {
+            "date_ordering": {
+              "slots": 66,
+              "firstCorrect": 49,
+              "finalCorrect": 55
+            },
+            "identifier_matching": {
+              "slots": 72,
+              "firstCorrect": 72,
+              "finalCorrect": 72
+            },
+            "list_membership": {
+              "slots": 68,
+              "firstCorrect": 63,
+              "finalCorrect": 68
+            }
+          }
+        }
+      },
+      "providerRequestsAttempted": 449,
+      "returnedResponses": 440,
+      "billingVerified": false,
+      "notice": "Repeats are not independent tasks. Six project clusters limit generalization. Both arms retain contract validation; this is not a schema-only generation comparison.",
+      "runWallMs": 1205661.658965,
+      "freezeCreatedAt": "2026-10-20T15:50:13.820009+00:00",
+      "stoppedAfterFailure": true
+    },
+    "priorJournalSha256": "4cd63668c3d6741e5551806f6a9c564e2e12d59ce06d88ba1431b6808eb145e9",
+    "recordedBeforeResumeAt": "2026-10-21T04:10:26.596055+00:00",
+    "nextWorkerIntervalSeconds": 30,
+    "reason": "Per-minute quota stop. Resume after cooldown with 30-second worker spacing and at least 30 seconds between calls to each worker/model provider, including repairs. Same credential-to-worker assignment as session 3; unfinished slots are normally redispatched from the unchanged schedule. No task, prompt, model setting, runtime file hash or scoring change.",
+    "previousWorkerForEachNewWorker": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "nextRequestIntervalSeconds": 30
+  }
+]

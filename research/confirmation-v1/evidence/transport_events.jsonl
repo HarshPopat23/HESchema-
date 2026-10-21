@@ -1,0 +1,4 @@
+{"categories":["tokens_per_minute"],"event":"provider_quota","model":"qwen/qwen3.8-27b","recordedAt":"2026-10-21T03:58:12.435553+00:00","status":429}
+{"categories":["tokens_per_minute"],"event":"provider_quota","model":"qwen/qwen3.8-27b","recordedAt":"2026-10-21T04:05:51.473253+00:00","status":429}
+{"categories":["tokens_per_minute"],"event":"provider_quota","model":"qwen/qwen3.8-27b","recordedAt":"2026-10-21T04:05:51.506343+00:00","status":429}
+{"categories":["tokens_per_minute"],"event":"provider_quota","model":"qwen/qwen3.8-27b","recordedAt":"2026-10-21T04:06:33.359128+00:00","status":429}

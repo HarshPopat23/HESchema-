@@ -1,0 +1,29 @@
+{
+  "version": "confirmation-v1",
+  "frozenAt": "2026-10-20T15:50:13.820009+00:00",
+  "baselineCommit": "ab363ae4931542db402beaa383da09b08d6dc927",
+  "files": {
+    "cases.json": "a99ad39a1970ea4a3abc3aa6950154b34a8dccc88fd945956cbd26167ae59b12",
+    "exposure.json": "a74885743ffd4c00876e348dd59176d1a9030a8f2bfac865e33adee36d1398c6",
+    "protocol.json": "5d2f77aaa1ec8cbc10b5758d78bd587ec18202f5c8080dce7fa7cfa62c3432ee",
+    "sources.json": "2febaa6f1bd9c2b1b15fce44de43ee32e9062dbdc6cc59739723429c45040de2",
+    "sources/brew-curl.json": "b8f2edb9e1273a1f2f941a3bd16e77ce304b22b418010b21b7dc5cfebc6b8eb9",
+    "sources/brew-git.json": "6b75b0340e667ddfc3efba15d729bb12d978e3bd64b1b3fed683ec145c44c324",
+    "sources/brew-jq.json": "86413dcd7a0821428dadaa52cd765b2ff3ad71d55bc4490f54a18070f79f50c9",
+    "sources/brew-ripgrep.json": "d77f5cc89974a88e8d97525bd1d62df845d5619c8cecfaf4f8ad4215f401777a",
+    "sources/brew-wget.json": "c03d240586d3f972bf1f6156701542fe61aeb9bc0f1958225300a7f08953ad50",
+    "sources/lifecycle.json": "cfb8ac806e97e5122029594cb54caad0126f58d71b33f559b23eaed6b9556a37",
+    "sources/media-types.csv": "15e2989e3948846d0897f564c5ec997bfd375ee75c0e10023d11ebed234e5012",
+    "sources/node.json": "1cf0432ceb9dfde7f1fd4cce43206519942cfdfad5a26039c2f4bb20fde8549c",
+    "sources/role-decoded.json": "e1cedf1c57e15e3ee91034c686e6a4f22802a0d5dde2cfc176256d2805fe4520",
+    "sources/role.yaml": "038640934030e194f338220576334a666b97f3f12f079a31861090982997dd4e",
+    "sources/spdx.json": "47d1cc681abe31166b342b6cc4aab13a6ba8ea5c48794697fe3bf8b1dbaf509a"
+  },
+  "audit": {
+    "tasks": 30,
+    "clusters": 6,
+    "controls": 190,
+    "schemaOnlyAcceptedInvalidControls": 60
+  },
+  "modelCallsBeforeFreeze": 0
+}

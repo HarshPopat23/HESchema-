@@ -1,0 +1,2752 @@
+[
+  {
+    "id": "confirmation-01",
+    "family": "date_ordering",
+    "cluster": "nodejs/Release",
+    "sourceId": "node",
+    "sourceLocator": "/v16",
+    "provenance": "researcher_adaptation_of_public_record",
+    "prompt": "Prepare a release-lifecycle interval using only this record. Return its label and any two distinct listed dates as earlier and later, with earlier strictly before later. More than one interval may be correct. Do not invent or change dates.",
+    "contract": {
+      "id": "confirmation-01",
+      "version": "1",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "earlier": {
+            "type": "string",
+            "minLength": 1,
+            "format": "date"
+          },
+          "later": {
+            "type": "string",
+            "minLength": 1,
+            "format": "date"
+          }
+        },
+        "required": [
+          "label",
+          "earlier",
+          "later"
+        ],
+        "additionalProperties": false
+      },
+      "outputKind": "document",
+      "tool": null,
+      "description": "",
+      "contextSchema": {
+        "type": "object"
+      },
+      "bindings": [
+        {
+          "instanceLocation": "/label",
+          "contextLocation": "/label"
+        }
+      ],
+      "relationships": [
+        {
+          "id": "member-earlier",
+          "kind": "reference_member",
+          "target": "/earlier",
+          "contextLocation": "/dates"
+        },
+        {
+          "id": "member-later",
+          "kind": "reference_member",
+          "target": "/later",
+          "contextLocation": "/dates"
+        },
+        {
+          "id": "ordered",
+          "kind": "date_before",
+          "left": "/earlier",
+          "right": "/later"
+        }
+      ]
+    },
+    "snapshot": {
+      "id": "confirmation-01-source",
+      "version": 1,
+      "confirmed": true,
+      "approvedPointers": [
+        "/label",
+        "/dates"
+      ],
+      "data": {
+        "label": "v16",
+        "dates": [
+          "2022-10-18",
+          "2023-09-11",
+          "2021-10-26",
+          "2021-04-20"
+        ]
+      },
+      "facts": []
+    }
+  },
+  {
+    "id": "confirmation-02",
+    "family": "date_ordering",
+    "cluster": "nodejs/Release",
+    "sourceId": "node",
+    "sourceLocator": "/v18",
+    "provenance": "researcher_adaptation_of_public_record",
+    "prompt": "Prepare a release-lifecycle interval using only this record. Return its label and any two distinct listed dates as earlier and later, with earlier strictly before later. More than one interval may be correct. Do not invent or change dates.",
+    "contract": {
+      "id": "confirmation-02",
+      "version": "1",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "earlier": {
+            "type": "string",
+            "minLength": 1,
+            "format": "date"
+          },
+          "later": {
+            "type": "string",
+            "minLength": 1,
+            "format": "date"
+          }
+        },
+        "required": [
+          "label",
+          "earlier",
+          "later"
+        ],
+        "additionalProperties": false
+      },
+      "outputKind": "document",
+      "tool": null,
+      "description": "",
+      "contextSchema": {
+        "type": "object"
+      },
+      "bindings": [
+        {
+          "instanceLocation": "/label",
+          "contextLocation": "/label"
+        }
+      ],
+      "relationships": [
+        {
+          "id": "member-earlier",
+          "kind": "reference_member",
+          "target": "/earlier",
+          "contextLocation": "/dates"
+        },
+        {
+          "id": "member-later",
+          "kind": "reference_member",
+          "target": "/later",
+          "contextLocation": "/dates"
+        },
+        {
+          "id": "ordered",
+          "kind": "date_before",
+          "left": "/earlier",
+          "right": "/later"
+        }
+      ]
+    },
+    "snapshot": {
+      "id": "confirmation-02-source",
+      "version": 1,
+      "confirmed": true,
+      "approvedPointers": [
+        "/label",
+        "/dates"
+      ],
+      "data": {
+        "label": "v18",
+        "dates": [
+          "2022-04-19",
+          "2025-04-30",
+          "2022-10-25",
+          "2023-10-18"
+        ]
+      },
+      "facts": []
+    }
+  },
+  {
+    "id": "confirmation-03",
+    "family": "date_ordering",
+    "cluster": "nodejs/Release",
+    "sourceId": "node",
+    "sourceLocator": "/v20",
+    "provenance": "researcher_adaptation_of_public_record",
+    "prompt": "Prepare a release-lifecycle interval using only this record. Return its label and any two distinct listed dates as earlier and later, with earlier strictly before later. More than one interval may be correct. Do not invent or change dates.",
+    "contract": {
+      "id": "confirmation-03",
+      "version": "1",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "earlier": {
+            "type": "string",
+            "minLength": 1,
+            "format": "date"
+          },
+          "later": {
+            "type": "string",
+            "minLength": 1,
+            "format": "date"
+          }
+        },
+        "required": [
+          "label",
+          "earlier",
+          "later"
+        ],
+        "additionalProperties": false
+      },
+      "outputKind": "document",
+      "tool": null,
+      "description": "",
+      "contextSchema": {
+        "type": "object"
+      },
+      "bindings": [
+        {
+          "instanceLocation": "/label",
+          "contextLocation": "/label"
+        }
+      ],
+      "relationships": [
+        {
+          "id": "member-earlier",
+          "kind": "reference_member",
+          "target": "/earlier",
+          "contextLocation": "/dates"
+        },
+        {
+          "id": "member-later",
+          "kind": "reference_member",
+          "target": "/later",
+          "contextLocation": "/dates"
+        },
+        {
+          "id": "ordered",
+          "kind": "date_before",
+          "left": "/earlier",
+          "right": "/later"
+        }
+      ]
+    },
+    "snapshot": {
+      "id": "confirmation-03-source",
+      "version": 1,
+      "confirmed": true,
+      "approvedPointers": [
+        "/label",
+        "/dates"
+      ],
+      "data": {
+        "label": "v20",
+        "dates": [
+          "2026-04-30",
+          "2023-10-24",
+          "2024-10-22",
+          "2023-04-18"
+        ]
+      },
+      "facts": []
+    }
+  },
+  {
+    "id": "confirmation-04",
+    "family": "date_ordering",
+    "cluster": "nodejs/Release",
+    "sourceId": "node",
+    "sourceLocator": "/v22",
+    "provenance": "researcher_adaptation_of_public_record",
+    "prompt": "Prepare a release-lifecycle interval using only this record. Return its label and any two distinct listed dates as earlier and later, with earlier strictly before later. More than one interval may be correct. Do not invent or change dates.",
+    "contract": {
+      "id": "confirmation-04",
+      "version": "1",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "earlier": {
+            "type": "string",
+            "minLength": 1,
+            "format": "date"
+          },
+          "later": {
+            "type": "string",
+            "minLength": 1,
+            "format": "date"
+          }
+        },
+        "required": [
+          "label",
+          "earlier",
+          "later"
+        ],
+        "additionalProperties": false
+      },
+      "outputKind": "document",
+      "tool": null,
+      "description": "",
+      "contextSchema": {
+        "type": "object"
+      },
+      "bindings": [
+        {
+          "instanceLocation": "/label",
+          "contextLocation": "/label"
+        }
+      ],
+      "relationships": [
+        {
+          "id": "member-earlier",
+          "kind": "reference_member",
+          "target": "/earlier",
+          "contextLocation": "/dates"
+        },
+        {
+          "id": "member-later",
+          "kind": "reference_member",
+          "target": "/later",
+          "contextLocation": "/dates"
+        },
+        {
+          "id": "ordered",
+          "kind": "date_before",
+          "left": "/earlier",
+          "right": "/later"
+        }
+      ]
+    },
+    "snapshot": {
+      "id": "confirmation-04-source",
+      "version": 1,
+      "confirmed": true,
+      "approvedPointers": [
+        "/label",
+        "/dates"
+      ],
+      "data": {
+        "label": "v22",
+        "dates": [
+          "2025-10-21",
+          "2024-10-29",
+          "2027-04-30",
+          "2024-04-24"
+        ]
+      },
+      "facts": []
+    }
+  },
+  {
+    "id": "confirmation-05",
+    "family": "date_ordering",
+    "cluster": "nodejs/Release",
+    "sourceId": "node",
+    "sourceLocator": "/v24",
+    "provenance": "researcher_adaptation_of_public_record",
+    "prompt": "Prepare a release-lifecycle interval using only this record. Return its label and any two distinct listed dates as earlier and later, with earlier strictly before later. More than one interval may be correct. Do not invent or change dates.",
+    "contract": {
+      "id": "confirmation-05",
+      "version": "1",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "earlier": {
+            "type": "string",
+            "minLength": 1,
+            "format": "date"
+          },
+          "later": {
+            "type": "string",
+            "minLength": 1,
+            "format": "date"
+          }
+        },
+        "required": [
+          "label",
+          "earlier",
+          "later"
+        ],
+        "additionalProperties": false
+      },
+      "outputKind": "document",
+      "tool": null,
+      "description": "",
+      "contextSchema": {
+        "type": "object"
+      },
+      "bindings": [
+        {
+          "instanceLocation": "/label",
+          "contextLocation": "/label"
+        }
+      ],
+      "relationships": [
+        {
+          "id": "member-earlier",
+          "kind": "reference_member",
+          "target": "/earlier",
+          "contextLocation": "/dates"
+        },
+        {
+          "id": "member-later",
+          "kind": "reference_member",
+          "target": "/later",
+          "contextLocation": "/dates"
+        },
+        {
+          "id": "ordered",
+          "kind": "date_before",
+          "left": "/earlier",
+          "right": "/later"
+        }
+      ]
+    },
+    "snapshot": {
+      "id": "confirmation-05-source",
+      "version": 1,
+      "confirmed": true,
+      "approvedPointers": [
+        "/label",
+        "/dates"
+      ],
+      "data": {
+        "label": "v24",
+        "dates": [
+          "2025-05-06",
+          "2028-04-30",
+          "2025-10-28",
+          "2026-10-20"
+        ]
+      },
+      "facts": []
+    }
+  },
+  {
+    "id": "confirmation-06",
+    "family": "date_ordering",
+    "cluster": "endoflife-date/endoflife.date",
+    "sourceId": "lifecycle",
+    "sourceLocator": "/6",
+    "provenance": "researcher_adaptation_of_public_record",
+    "prompt": "Prepare a release-lifecycle interval using only this record. Return its label and any two distinct listed dates as earlier and later, with earlier strictly before later. More than one interval may be correct. Do not invent or change dates.",
+    "contract": {
+      "id": "confirmation-06",
+      "version": "1",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "earlier": {
+            "type": "string",
+            "minLength": 1,
+            "format": "date"
+          },
+          "later": {
+            "type": "string",
+            "minLength": 1,
+            "format": "date"
+          }
+        },
+        "required": [
+          "label",
+          "earlier",
+          "later"
+        ],
+        "additionalProperties": false
+      },
+      "outputKind": "document",
+      "tool": null,
+      "description": "",
+      "contextSchema": {
+        "type": "object"
+      },
+      "bindings": [
+        {
+          "instanceLocation": "/label",
+          "contextLocation": "/label"
+        }
+      ],
+      "relationships": [
+        {
+          "id": "member-earlier",
+          "kind": "reference_member",
+          "target": "/earlier",
+          "contextLocation": "/dates"
+        },
+        {
+          "id": "member-later",
+          "kind": "reference_member",
+          "target": "/later",
+          "contextLocation": "/dates"
+        },
+        {
+          "id": "ordered",
+          "kind": "date_before",
+          "left": "/earlier",
+          "right": "/later"
+        }
+      ]
+    },
+    "snapshot": {
+      "id": "confirmation-06-source",
+      "version": 1,
+      "confirmed": true,
+      "approvedPointers": [
+        "/label",
+        "/dates"
+      ],
+      "data": {
+        "label": "3.9",
+        "dates": [
+          "2025-10-31",
+          "2022-05-17",
+          "2020-10-05"
+        ]
+      },
+      "facts": []
+    }
+  },
+  {
+    "id": "confirmation-07",
+    "family": "date_ordering",
+    "cluster": "endoflife-date/endoflife.date",
+    "sourceId": "lifecycle",
+    "sourceLocator": "/5",
+    "provenance": "researcher_adaptation_of_public_record",
+    "prompt": "Prepare a release-lifecycle interval using only this record. Return its label and any two distinct listed dates as earlier and later, with earlier strictly before later. More than one interval may be correct. Do not invent or change dates.",
+    "contract": {
+      "id": "confirmation-07",
+      "version": "1",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "earlier": {
+            "type": "string",
+            "minLength": 1,
+            "format": "date"
+          },
+          "later": {
+            "type": "string",
+            "minLength": 1,
+            "format": "date"
+          }
+        },
+        "required": [
+          "label",
+          "earlier",
+          "later"
+        ],
+        "additionalProperties": false
+      },
+      "outputKind": "document",
+      "tool": null,
+      "description": "",
+      "contextSchema": {
+        "type": "object"
+      },
+      "bindings": [
+        {
+          "instanceLocation": "/label",
+          "contextLocation": "/label"
+        }
+      ],
+      "relationships": [
+        {
+          "id": "member-earlier",
+          "kind": "reference_member",
+          "target": "/earlier",
+          "contextLocation": "/dates"
+        },
+        {
+          "id": "member-later",
+          "kind": "reference_member",
+          "target": "/later",
+          "contextLocation": "/dates"
+        },
+        {
+          "id": "ordered",
+          "kind": "date_before",
+          "left": "/earlier",
+          "right": "/later"
+        }
+      ]
+    },
+    "snapshot": {
+      "id": "confirmation-07-source",
+      "version": 1,
+      "confirmed": true,
+      "approvedPointers": [
+        "/label",
+        "/dates"
+      ],
+      "data": {
+        "label": "3.10",
+        "dates": [
+          "2026-10-01",
+          "2023-04-05",
+          "2021-10-04"
+        ]
+      },
+      "facts": []
+    }
+  },
+  {
+    "id": "confirmation-08",
+    "family": "date_ordering",
+    "cluster": "endoflife-date/endoflife.date",
+    "sourceId": "lifecycle",
+    "sourceLocator": "/4",
+    "provenance": "researcher_adaptation_of_public_record",
+    "prompt": "Prepare a release-lifecycle interval using only this record. Return its label and any two distinct listed dates as earlier and later, with earlier strictly before later. More than one interval may be correct. Do not invent or change dates.",
+    "contract": {
+      "id": "confirmation-08",
+      "version": "1",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "earlier": {
+            "type": "string",
+            "minLength": 1,
+            "format": "date"
+          },
+          "later": {
+            "type": "string",
+            "minLength": 1,
+            "format": "date"
+          }
+        },
+        "required": [
+          "label",
+          "earlier",
+          "later"
+        ],
+        "additionalProperties": false
+      },
+      "outputKind": "document",
+      "tool": null,
+      "description": "",
+      "contextSchema": {
+        "type": "object"
+      },
+      "bindings": [
+        {
+          "instanceLocation": "/label",
+          "contextLocation": "/label"
+        }
+      ],
+      "relationships": [
+        {
+          "id": "member-earlier",
+          "kind": "reference_member",
+          "target": "/earlier",
+          "contextLocation": "/dates"
+        },
+        {
+          "id": "member-later",
+          "kind": "reference_member",
+          "target": "/later",
+          "contextLocation": "/dates"
+        },
+        {
+          "id": "ordered",
+          "kind": "date_before",
+          "left": "/earlier",
+          "right": "/later"
+        }
+      ]
+    },
+    "snapshot": {
+      "id": "confirmation-08-source",
+      "version": 1,
+      "confirmed": true,
+      "approvedPointers": [
+        "/label",
+        "/dates"
+      ],
+      "data": {
+        "label": "3.11",
+        "dates": [
+          "2024-04-01",
+          "2022-10-24",
+          "2027-10-31"
+        ]
+      },
+      "facts": []
+    }
+  },
+  {
+    "id": "confirmation-09",
+    "family": "date_ordering",
+    "cluster": "endoflife-date/endoflife.date",
+    "sourceId": "lifecycle",
+    "sourceLocator": "/3",
+    "provenance": "researcher_adaptation_of_public_record",
+    "prompt": "Prepare a release-lifecycle interval using only this record. Return its label and any two distinct listed dates as earlier and later, with earlier strictly before later. More than one interval may be correct. Do not invent or change dates.",
+    "contract": {
+      "id": "confirmation-09",
+      "version": "1",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "earlier": {
+            "type": "string",
+            "minLength": 1,
+            "format": "date"
+          },
+          "later": {
+            "type": "string",
+            "minLength": 1,
+            "format": "date"
+          }
+        },
+        "required": [
+          "label",
+          "earlier",
+          "later"
+        ],
+        "additionalProperties": false
+      },
+      "outputKind": "document",
+      "tool": null,
+      "description": "",
+      "contextSchema": {
+        "type": "object"
+      },
+      "bindings": [
+        {
+          "instanceLocation": "/label",
+          "contextLocation": "/label"
+        }
+      ],
+      "relationships": [
+        {
+          "id": "member-earlier",
+          "kind": "reference_member",
+          "target": "/earlier",
+          "contextLocation": "/dates"
+        },
+        {
+          "id": "member-later",
+          "kind": "reference_member",
+          "target": "/later",
+          "contextLocation": "/dates"
+        },
+        {
+          "id": "ordered",
+          "kind": "date_before",
+          "left": "/earlier",
+          "right": "/later"
+        }
+      ]
+    },
+    "snapshot": {
+      "id": "confirmation-09-source",
+      "version": 1,
+      "confirmed": true,
+      "approvedPointers": [
+        "/label",
+        "/dates"
+      ],
+      "data": {
+        "label": "3.12",
+        "dates": [
+          "2028-10-31",
+          "2023-10-02",
+          "2025-04-02"
+        ]
+      },
+      "facts": []
+    }
+  },
+  {
+    "id": "confirmation-10",
+    "family": "date_ordering",
+    "cluster": "endoflife-date/endoflife.date",
+    "sourceId": "lifecycle",
+    "sourceLocator": "/2",
+    "provenance": "researcher_adaptation_of_public_record",
+    "prompt": "Prepare a release-lifecycle interval using only this record. Return its label and any two distinct listed dates as earlier and later, with earlier strictly before later. More than one interval may be correct. Do not invent or change dates.",
+    "contract": {
+      "id": "confirmation-10",
+      "version": "1",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "earlier": {
+            "type": "string",
+            "minLength": 1,
+            "format": "date"
+          },
+          "later": {
+            "type": "string",
+            "minLength": 1,
+            "format": "date"
+          }
+        },
+        "required": [
+          "label",
+          "earlier",
+          "later"
+        ],
+        "additionalProperties": false
+      },
+      "outputKind": "document",
+      "tool": null,
+      "description": "",
+      "contextSchema": {
+        "type": "object"
+      },
+      "bindings": [
+        {
+          "instanceLocation": "/label",
+          "contextLocation": "/label"
+        }
+      ],
+      "relationships": [
+        {
+          "id": "member-earlier",
+          "kind": "reference_member",
+          "target": "/earlier",
+          "contextLocation": "/dates"
+        },
+        {
+          "id": "member-later",
+          "kind": "reference_member",
+          "target": "/later",
+          "contextLocation": "/dates"
+        },
+        {
+          "id": "ordered",
+          "kind": "date_before",
+          "left": "/earlier",
+          "right": "/later"
+        }
+      ]
+    },
+    "snapshot": {
+      "id": "confirmation-10-source",
+      "version": 1,
+      "confirmed": true,
+      "approvedPointers": [
+        "/label",
+        "/dates"
+      ],
+      "data": {
+        "label": "3.13",
+        "dates": [
+          "2026-10-01",
+          "2029-10-31",
+          "2024-10-07"
+        ]
+      },
+      "facts": []
+    }
+  },
+  {
+    "id": "confirmation-11",
+    "family": "identifier_matching",
+    "cluster": "spdx/license-list-data",
+    "sourceId": "spdx",
+    "sourceLocator": "/licenses",
+    "provenance": "researcher_adaptation_of_public_record",
+    "prompt": "Resolve the exact, case-sensitive requestedId in the supplied registry candidates. Return requestedId and the complete matching record as selected. Preserve its identifier, name and URL exactly; do not mix fields from different records.",
+    "contract": {
+      "id": "confirmation-11",
+      "version": "1",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "requestedId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "selected": {
+            "type": "object",
+            "properties": {
+              "identifier": {
+                "type": "string",
+                "minLength": 1
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "url": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "identifier",
+              "name",
+              "url"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "requestedId",
+          "selected"
+        ],
+        "additionalProperties": false
+      },
+      "outputKind": "document",
+      "tool": null,
+      "description": "",
+      "contextSchema": {
+        "type": "object"
+      },
+      "bindings": [
+        {
+          "instanceLocation": "/requestedId",
+          "contextLocation": "/requestedId"
+        }
+      ],
+      "relationships": [
+        {
+          "id": "member-selected",
+          "kind": "reference_member",
+          "target": "/selected",
+          "contextLocation": "/records"
+        },
+        {
+          "id": "identifier-match",
+          "kind": "equals",
+          "left": "/requestedId",
+          "right": "/selected/identifier"
+        }
+      ]
+    },
+    "snapshot": {
+      "id": "confirmation-11-source",
+      "version": 1,
+      "confirmed": true,
+      "approvedPointers": [
+        "/requestedId",
+        "/records"
+      ],
+      "data": {
+        "requestedId": "MIT",
+        "records": [
+          {
+            "identifier": "ISC",
+            "name": "ISC License",
+            "url": "https://spdx.org/licenses/ISC.json"
+          },
+          {
+            "identifier": "MPL-2.0",
+            "name": "Mozilla Public License 2.0",
+            "url": "https://spdx.org/licenses/MPL-2.0.json"
+          },
+          {
+            "identifier": "MIT",
+            "name": "MIT License",
+            "url": "https://spdx.org/licenses/MIT.json"
+          },
+          {
+            "identifier": "BSD-2-Clause",
+            "name": "BSD 2-Clause \"Simplified\" License",
+            "url": "https://spdx.org/licenses/BSD-2-Clause.json"
+          },
+          {
+            "identifier": "Apache-2.0",
+            "name": "Apache License 2.0",
+            "url": "https://spdx.org/licenses/Apache-2.0.json"
+          }
+        ]
+      },
+      "facts": []
+    }
+  },
+  {
+    "id": "confirmation-12",
+    "family": "identifier_matching",
+    "cluster": "spdx/license-list-data",
+    "sourceId": "spdx",
+    "sourceLocator": "/licenses",
+    "provenance": "researcher_adaptation_of_public_record",
+    "prompt": "Resolve the exact, case-sensitive requestedId in the supplied registry candidates. Return requestedId and the complete matching record as selected. Preserve its identifier, name and URL exactly; do not mix fields from different records.",
+    "contract": {
+      "id": "confirmation-12",
+      "version": "1",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "requestedId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "selected": {
+            "type": "object",
+            "properties": {
+              "identifier": {
+                "type": "string",
+                "minLength": 1
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "url": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "identifier",
+              "name",
+              "url"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "requestedId",
+          "selected"
+        ],
+        "additionalProperties": false
+      },
+      "outputKind": "document",
+      "tool": null,
+      "description": "",
+      "contextSchema": {
+        "type": "object"
+      },
+      "bindings": [
+        {
+          "instanceLocation": "/requestedId",
+          "contextLocation": "/requestedId"
+        }
+      ],
+      "relationships": [
+        {
+          "id": "member-selected",
+          "kind": "reference_member",
+          "target": "/selected",
+          "contextLocation": "/records"
+        },
+        {
+          "id": "identifier-match",
+          "kind": "equals",
+          "left": "/requestedId",
+          "right": "/selected/identifier"
+        }
+      ]
+    },
+    "snapshot": {
+      "id": "confirmation-12-source",
+      "version": 1,
+      "confirmed": true,
+      "approvedPointers": [
+        "/requestedId",
+        "/records"
+      ],
+      "data": {
+        "requestedId": "Apache-2.0",
+        "records": [
+          {
+            "identifier": "MPL-2.0",
+            "name": "Mozilla Public License 2.0",
+            "url": "https://spdx.org/licenses/MPL-2.0.json"
+          },
+          {
+            "identifier": "Apache-2.0",
+            "name": "Apache License 2.0",
+            "url": "https://spdx.org/licenses/Apache-2.0.json"
+          },
+          {
+            "identifier": "ISC",
+            "name": "ISC License",
+            "url": "https://spdx.org/licenses/ISC.json"
+          },
+          {
+            "identifier": "BSD-2-Clause",
+            "name": "BSD 2-Clause \"Simplified\" License",
+            "url": "https://spdx.org/licenses/BSD-2-Clause.json"
+          },
+          {
+            "identifier": "MIT",
+            "name": "MIT License",
+            "url": "https://spdx.org/licenses/MIT.json"
+          }
+        ]
+      },
+      "facts": []
+    }
+  },
+  {
+    "id": "confirmation-13",
+    "family": "identifier_matching",
+    "cluster": "spdx/license-list-data",
+    "sourceId": "spdx",
+    "sourceLocator": "/licenses",
+    "provenance": "researcher_adaptation_of_public_record",
+    "prompt": "Resolve the exact, case-sensitive requestedId in the supplied registry candidates. Return requestedId and the complete matching record as selected. Preserve its identifier, name and URL exactly; do not mix fields from different records.",
+    "contract": {
+      "id": "confirmation-13",
+      "version": "1",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "requestedId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "selected": {
+            "type": "object",
+            "properties": {
+              "identifier": {
+                "type": "string",
+                "minLength": 1
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "url": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "identifier",
+              "name",
+              "url"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "requestedId",
+          "selected"
+        ],
+        "additionalProperties": false
+      },
+      "outputKind": "document",
+      "tool": null,
+      "description": "",
+      "contextSchema": {
+        "type": "object"
+      },
+      "bindings": [
+        {
+          "instanceLocation": "/requestedId",
+          "contextLocation": "/requestedId"
+        }
+      ],
+      "relationships": [
+        {
+          "id": "member-selected",
+          "kind": "reference_member",
+          "target": "/selected",
+          "contextLocation": "/records"
+        },
+        {
+          "id": "identifier-match",
+          "kind": "equals",
+          "left": "/requestedId",
+          "right": "/selected/identifier"
+        }
+      ]
+    },
+    "snapshot": {
+      "id": "confirmation-13-source",
+      "version": 1,
+      "confirmed": true,
+      "approvedPointers": [
+        "/requestedId",
+        "/records"
+      ],
+      "data": {
+        "requestedId": "BSD-2-Clause",
+        "records": [
+          {
+            "identifier": "MPL-2.0",
+            "name": "Mozilla Public License 2.0",
+            "url": "https://spdx.org/licenses/MPL-2.0.json"
+          },
+          {
+            "identifier": "BSD-2-Clause",
+            "name": "BSD 2-Clause \"Simplified\" License",
+            "url": "https://spdx.org/licenses/BSD-2-Clause.json"
+          },
+          {
+            "identifier": "Apache-2.0",
+            "name": "Apache License 2.0",
+            "url": "https://spdx.org/licenses/Apache-2.0.json"
+          },
+          {
+            "identifier": "MIT",
+            "name": "MIT License",
+            "url": "https://spdx.org/licenses/MIT.json"
+          },
+          {
+            "identifier": "ISC",
+            "name": "ISC License",
+            "url": "https://spdx.org/licenses/ISC.json"
+          }
+        ]
+      },
+      "facts": []
+    }
+  },
+  {
+    "id": "confirmation-14",
+    "family": "identifier_matching",
+    "cluster": "spdx/license-list-data",
+    "sourceId": "spdx",
+    "sourceLocator": "/licenses",
+    "provenance": "researcher_adaptation_of_public_record",
+    "prompt": "Resolve the exact, case-sensitive requestedId in the supplied registry candidates. Return requestedId and the complete matching record as selected. Preserve its identifier, name and URL exactly; do not mix fields from different records.",
+    "contract": {
+      "id": "confirmation-14",
+      "version": "1",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "requestedId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "selected": {
+            "type": "object",
+            "properties": {
+              "identifier": {
+                "type": "string",
+                "minLength": 1
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "url": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "identifier",
+              "name",
+              "url"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "requestedId",
+          "selected"
+        ],
+        "additionalProperties": false
+      },
+      "outputKind": "document",
+      "tool": null,
+      "description": "",
+      "contextSchema": {
+        "type": "object"
+      },
+      "bindings": [
+        {
+          "instanceLocation": "/requestedId",
+          "contextLocation": "/requestedId"
+        }
+      ],
+      "relationships": [
+        {
+          "id": "member-selected",
+          "kind": "reference_member",
+          "target": "/selected",
+          "contextLocation": "/records"
+        },
+        {
+          "id": "identifier-match",
+          "kind": "equals",
+          "left": "/requestedId",
+          "right": "/selected/identifier"
+        }
+      ]
+    },
+    "snapshot": {
+      "id": "confirmation-14-source",
+      "version": 1,
+      "confirmed": true,
+      "approvedPointers": [
+        "/requestedId",
+        "/records"
+      ],
+      "data": {
+        "requestedId": "MPL-2.0",
+        "records": [
+          {
+            "identifier": "MIT",
+            "name": "MIT License",
+            "url": "https://spdx.org/licenses/MIT.json"
+          },
+          {
+            "identifier": "Apache-2.0",
+            "name": "Apache License 2.0",
+            "url": "https://spdx.org/licenses/Apache-2.0.json"
+          },
+          {
+            "identifier": "ISC",
+            "name": "ISC License",
+            "url": "https://spdx.org/licenses/ISC.json"
+          },
+          {
+            "identifier": "MPL-2.0",
+            "name": "Mozilla Public License 2.0",
+            "url": "https://spdx.org/licenses/MPL-2.0.json"
+          },
+          {
+            "identifier": "BSD-2-Clause",
+            "name": "BSD 2-Clause \"Simplified\" License",
+            "url": "https://spdx.org/licenses/BSD-2-Clause.json"
+          }
+        ]
+      },
+      "facts": []
+    }
+  },
+  {
+    "id": "confirmation-15",
+    "family": "identifier_matching",
+    "cluster": "spdx/license-list-data",
+    "sourceId": "spdx",
+    "sourceLocator": "/licenses",
+    "provenance": "researcher_adaptation_of_public_record",
+    "prompt": "Resolve the exact, case-sensitive requestedId in the supplied registry candidates. Return requestedId and the complete matching record as selected. Preserve its identifier, name and URL exactly; do not mix fields from different records.",
+    "contract": {
+      "id": "confirmation-15",
+      "version": "1",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "requestedId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "selected": {
+            "type": "object",
+            "properties": {
+              "identifier": {
+                "type": "string",
+                "minLength": 1
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "url": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "identifier",
+              "name",
+              "url"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "requestedId",
+          "selected"
+        ],
+        "additionalProperties": false
+      },
+      "outputKind": "document",
+      "tool": null,
+      "description": "",
+      "contextSchema": {
+        "type": "object"
+      },
+      "bindings": [
+        {
+          "instanceLocation": "/requestedId",
+          "contextLocation": "/requestedId"
+        }
+      ],
+      "relationships": [
+        {
+          "id": "member-selected",
+          "kind": "reference_member",
+          "target": "/selected",
+          "contextLocation": "/records"
+        },
+        {
+          "id": "identifier-match",
+          "kind": "equals",
+          "left": "/requestedId",
+          "right": "/selected/identifier"
+        }
+      ]
+    },
+    "snapshot": {
+      "id": "confirmation-15-source",
+      "version": 1,
+      "confirmed": true,
+      "approvedPointers": [
+        "/requestedId",
+        "/records"
+      ],
+      "data": {
+        "requestedId": "ISC",
+        "records": [
+          {
+            "identifier": "Apache-2.0",
+            "name": "Apache License 2.0",
+            "url": "https://spdx.org/licenses/Apache-2.0.json"
+          },
+          {
+            "identifier": "ISC",
+            "name": "ISC License",
+            "url": "https://spdx.org/licenses/ISC.json"
+          },
+          {
+            "identifier": "BSD-2-Clause",
+            "name": "BSD 2-Clause \"Simplified\" License",
+            "url": "https://spdx.org/licenses/BSD-2-Clause.json"
+          },
+          {
+            "identifier": "MPL-2.0",
+            "name": "Mozilla Public License 2.0",
+            "url": "https://spdx.org/licenses/MPL-2.0.json"
+          },
+          {
+            "identifier": "MIT",
+            "name": "MIT License",
+            "url": "https://spdx.org/licenses/MIT.json"
+          }
+        ]
+      },
+      "facts": []
+    }
+  },
+  {
+    "id": "confirmation-16",
+    "family": "identifier_matching",
+    "cluster": "IANA/media-types",
+    "sourceId": "media-types",
+    "sourceLocator": "CSV rows keyed by Name",
+    "provenance": "researcher_adaptation_of_public_record",
+    "prompt": "Resolve the exact, case-sensitive requestedId in the supplied registry candidates. Return requestedId and the complete matching record as selected. Preserve its identifier, name and URL exactly; do not mix fields from different records.",
+    "contract": {
+      "id": "confirmation-16",
+      "version": "1",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "requestedId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "selected": {
+            "type": "object",
+            "properties": {
+              "identifier": {
+                "type": "string",
+                "minLength": 1
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "url": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "identifier",
+              "name",
+              "url"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "requestedId",
+          "selected"
+        ],
+        "additionalProperties": false
+      },
+      "outputKind": "document",
+      "tool": null,
+      "description": "",
+      "contextSchema": {
+        "type": "object"
+      },
+      "bindings": [
+        {
+          "instanceLocation": "/requestedId",
+          "contextLocation": "/requestedId"
+        }
+      ],
+      "relationships": [
+        {
+          "id": "member-selected",
+          "kind": "reference_member",
+          "target": "/selected",
+          "contextLocation": "/records"
+        },
+        {
+          "id": "identifier-match",
+          "kind": "equals",
+          "left": "/requestedId",
+          "right": "/selected/identifier"
+        }
+      ]
+    },
+    "snapshot": {
+      "id": "confirmation-16-source",
+      "version": 1,
+      "confirmed": true,
+      "approvedPointers": [
+        "/requestedId",
+        "/records"
+      ],
+      "data": {
+        "requestedId": "json",
+        "records": [
+          {
+            "identifier": "octet-stream",
+            "name": "application/octet-stream",
+            "url": "https://www.iana.org/assignments/media-types/application/octet-stream"
+          },
+          {
+            "identifier": "xml",
+            "name": "application/xml",
+            "url": "https://www.iana.org/assignments/media-types/application/xml"
+          },
+          {
+            "identifier": "json",
+            "name": "application/json",
+            "url": "https://www.iana.org/assignments/media-types/application/json"
+          },
+          {
+            "identifier": "pdf",
+            "name": "application/pdf",
+            "url": "https://www.iana.org/assignments/media-types/application/pdf"
+          },
+          {
+            "identifier": "zip",
+            "name": "application/zip",
+            "url": "https://www.iana.org/assignments/media-types/application/zip"
+          }
+        ]
+      },
+      "facts": []
+    }
+  },
+  {
+    "id": "confirmation-17",
+    "family": "identifier_matching",
+    "cluster": "IANA/media-types",
+    "sourceId": "media-types",
+    "sourceLocator": "CSV rows keyed by Name",
+    "provenance": "researcher_adaptation_of_public_record",
+    "prompt": "Resolve the exact, case-sensitive requestedId in the supplied registry candidates. Return requestedId and the complete matching record as selected. Preserve its identifier, name and URL exactly; do not mix fields from different records.",
+    "contract": {
+      "id": "confirmation-17",
+      "version": "1",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "requestedId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "selected": {
+            "type": "object",
+            "properties": {
+              "identifier": {
+                "type": "string",
+                "minLength": 1
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "url": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "identifier",
+              "name",
+              "url"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "requestedId",
+          "selected"
+        ],
+        "additionalProperties": false
+      },
+      "outputKind": "document",
+      "tool": null,
+      "description": "",
+      "contextSchema": {
+        "type": "object"
+      },
+      "bindings": [
+        {
+          "instanceLocation": "/requestedId",
+          "contextLocation": "/requestedId"
+        }
+      ],
+      "relationships": [
+        {
+          "id": "member-selected",
+          "kind": "reference_member",
+          "target": "/selected",
+          "contextLocation": "/records"
+        },
+        {
+          "id": "identifier-match",
+          "kind": "equals",
+          "left": "/requestedId",
+          "right": "/selected/identifier"
+        }
+      ]
+    },
+    "snapshot": {
+      "id": "confirmation-17-source",
+      "version": 1,
+      "confirmed": true,
+      "approvedPointers": [
+        "/requestedId",
+        "/records"
+      ],
+      "data": {
+        "requestedId": "xml",
+        "records": [
+          {
+            "identifier": "octet-stream",
+            "name": "application/octet-stream",
+            "url": "https://www.iana.org/assignments/media-types/application/octet-stream"
+          },
+          {
+            "identifier": "xml",
+            "name": "application/xml",
+            "url": "https://www.iana.org/assignments/media-types/application/xml"
+          },
+          {
+            "identifier": "zip",
+            "name": "application/zip",
+            "url": "https://www.iana.org/assignments/media-types/application/zip"
+          },
+          {
+            "identifier": "pdf",
+            "name": "application/pdf",
+            "url": "https://www.iana.org/assignments/media-types/application/pdf"
+          },
+          {
+            "identifier": "json",
+            "name": "application/json",
+            "url": "https://www.iana.org/assignments/media-types/application/json"
+          }
+        ]
+      },
+      "facts": []
+    }
+  },
+  {
+    "id": "confirmation-18",
+    "family": "identifier_matching",
+    "cluster": "IANA/media-types",
+    "sourceId": "media-types",
+    "sourceLocator": "CSV rows keyed by Name",
+    "provenance": "researcher_adaptation_of_public_record",
+    "prompt": "Resolve the exact, case-sensitive requestedId in the supplied registry candidates. Return requestedId and the complete matching record as selected. Preserve its identifier, name and URL exactly; do not mix fields from different records.",
+    "contract": {
+      "id": "confirmation-18",
+      "version": "1",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "requestedId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "selected": {
+            "type": "object",
+            "properties": {
+              "identifier": {
+                "type": "string",
+                "minLength": 1
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "url": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "identifier",
+              "name",
+              "url"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "requestedId",
+          "selected"
+        ],
+        "additionalProperties": false
+      },
+      "outputKind": "document",
+      "tool": null,
+      "description": "",
+      "contextSchema": {
+        "type": "object"
+      },
+      "bindings": [
+        {
+          "instanceLocation": "/requestedId",
+          "contextLocation": "/requestedId"
+        }
+      ],
+      "relationships": [
+        {
+          "id": "member-selected",
+          "kind": "reference_member",
+          "target": "/selected",
+          "contextLocation": "/records"
+        },
+        {
+          "id": "identifier-match",
+          "kind": "equals",
+          "left": "/requestedId",
+          "right": "/selected/identifier"
+        }
+      ]
+    },
+    "snapshot": {
+      "id": "confirmation-18-source",
+      "version": 1,
+      "confirmed": true,
+      "approvedPointers": [
+        "/requestedId",
+        "/records"
+      ],
+      "data": {
+        "requestedId": "pdf",
+        "records": [
+          {
+            "identifier": "octet-stream",
+            "name": "application/octet-stream",
+            "url": "https://www.iana.org/assignments/media-types/application/octet-stream"
+          },
+          {
+            "identifier": "pdf",
+            "name": "application/pdf",
+            "url": "https://www.iana.org/assignments/media-types/application/pdf"
+          },
+          {
+            "identifier": "zip",
+            "name": "application/zip",
+            "url": "https://www.iana.org/assignments/media-types/application/zip"
+          },
+          {
+            "identifier": "json",
+            "name": "application/json",
+            "url": "https://www.iana.org/assignments/media-types/application/json"
+          },
+          {
+            "identifier": "xml",
+            "name": "application/xml",
+            "url": "https://www.iana.org/assignments/media-types/application/xml"
+          }
+        ]
+      },
+      "facts": []
+    }
+  },
+  {
+    "id": "confirmation-19",
+    "family": "identifier_matching",
+    "cluster": "IANA/media-types",
+    "sourceId": "media-types",
+    "sourceLocator": "CSV rows keyed by Name",
+    "provenance": "researcher_adaptation_of_public_record",
+    "prompt": "Resolve the exact, case-sensitive requestedId in the supplied registry candidates. Return requestedId and the complete matching record as selected. Preserve its identifier, name and URL exactly; do not mix fields from different records.",
+    "contract": {
+      "id": "confirmation-19",
+      "version": "1",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "requestedId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "selected": {
+            "type": "object",
+            "properties": {
+              "identifier": {
+                "type": "string",
+                "minLength": 1
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "url": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "identifier",
+              "name",
+              "url"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "requestedId",
+          "selected"
+        ],
+        "additionalProperties": false
+      },
+      "outputKind": "document",
+      "tool": null,
+      "description": "",
+      "contextSchema": {
+        "type": "object"
+      },
+      "bindings": [
+        {
+          "instanceLocation": "/requestedId",
+          "contextLocation": "/requestedId"
+        }
+      ],
+      "relationships": [
+        {
+          "id": "member-selected",
+          "kind": "reference_member",
+          "target": "/selected",
+          "contextLocation": "/records"
+        },
+        {
+          "id": "identifier-match",
+          "kind": "equals",
+          "left": "/requestedId",
+          "right": "/selected/identifier"
+        }
+      ]
+    },
+    "snapshot": {
+      "id": "confirmation-19-source",
+      "version": 1,
+      "confirmed": true,
+      "approvedPointers": [
+        "/requestedId",
+        "/records"
+      ],
+      "data": {
+        "requestedId": "zip",
+        "records": [
+          {
+            "identifier": "xml",
+            "name": "application/xml",
+            "url": "https://www.iana.org/assignments/media-types/application/xml"
+          },
+          {
+            "identifier": "octet-stream",
+            "name": "application/octet-stream",
+            "url": "https://www.iana.org/assignments/media-types/application/octet-stream"
+          },
+          {
+            "identifier": "zip",
+            "name": "application/zip",
+            "url": "https://www.iana.org/assignments/media-types/application/zip"
+          },
+          {
+            "identifier": "pdf",
+            "name": "application/pdf",
+            "url": "https://www.iana.org/assignments/media-types/application/pdf"
+          },
+          {
+            "identifier": "json",
+            "name": "application/json",
+            "url": "https://www.iana.org/assignments/media-types/application/json"
+          }
+        ]
+      },
+      "facts": []
+    }
+  },
+  {
+    "id": "confirmation-20",
+    "family": "identifier_matching",
+    "cluster": "IANA/media-types",
+    "sourceId": "media-types",
+    "sourceLocator": "CSV rows keyed by Name",
+    "provenance": "researcher_adaptation_of_public_record",
+    "prompt": "Resolve the exact, case-sensitive requestedId in the supplied registry candidates. Return requestedId and the complete matching record as selected. Preserve its identifier, name and URL exactly; do not mix fields from different records.",
+    "contract": {
+      "id": "confirmation-20",
+      "version": "1",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "requestedId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "selected": {
+            "type": "object",
+            "properties": {
+              "identifier": {
+                "type": "string",
+                "minLength": 1
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "url": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "identifier",
+              "name",
+              "url"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "requestedId",
+          "selected"
+        ],
+        "additionalProperties": false
+      },
+      "outputKind": "document",
+      "tool": null,
+      "description": "",
+      "contextSchema": {
+        "type": "object"
+      },
+      "bindings": [
+        {
+          "instanceLocation": "/requestedId",
+          "contextLocation": "/requestedId"
+        }
+      ],
+      "relationships": [
+        {
+          "id": "member-selected",
+          "kind": "reference_member",
+          "target": "/selected",
+          "contextLocation": "/records"
+        },
+        {
+          "id": "identifier-match",
+          "kind": "equals",
+          "left": "/requestedId",
+          "right": "/selected/identifier"
+        }
+      ]
+    },
+    "snapshot": {
+      "id": "confirmation-20-source",
+      "version": 1,
+      "confirmed": true,
+      "approvedPointers": [
+        "/requestedId",
+        "/records"
+      ],
+      "data": {
+        "requestedId": "octet-stream",
+        "records": [
+          {
+            "identifier": "json",
+            "name": "application/json",
+            "url": "https://www.iana.org/assignments/media-types/application/json"
+          },
+          {
+            "identifier": "octet-stream",
+            "name": "application/octet-stream",
+            "url": "https://www.iana.org/assignments/media-types/application/octet-stream"
+          },
+          {
+            "identifier": "xml",
+            "name": "application/xml",
+            "url": "https://www.iana.org/assignments/media-types/application/xml"
+          },
+          {
+            "identifier": "zip",
+            "name": "application/zip",
+            "url": "https://www.iana.org/assignments/media-types/application/zip"
+          },
+          {
+            "identifier": "pdf",
+            "name": "application/pdf",
+            "url": "https://www.iana.org/assignments/media-types/application/pdf"
+          }
+        ]
+      },
+      "facts": []
+    }
+  },
+  {
+    "id": "confirmation-21",
+    "family": "list_membership",
+    "cluster": "prometheus-operator/prometheus-operator",
+    "sourceId": "role",
+    "sourceLocator": "/rules/0",
+    "provenance": "researcher_adaptation_of_public_record",
+    "prompt": "Choose any one explicitly listed allowed value for this exact label. Return label and choice. For an RBAC rule this means a verb allowed by that rule block; for a Homebrew formula it means an available bottle platform tag. Treat strings literally, without expanding wildcards. Multiple choices may be correct; do not invent a value.",
+    "contract": {
+      "id": "confirmation-21",
+      "version": "1",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "choice": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "label",
+          "choice"
+        ],
+        "additionalProperties": false
+      },
+      "outputKind": "document",
+      "tool": null,
+      "description": "",
+      "contextSchema": {
+        "type": "object"
+      },
+      "bindings": [
+        {
+          "instanceLocation": "/label",
+          "contextLocation": "/label"
+        }
+      ],
+      "relationships": [
+        {
+          "id": "member-choice",
+          "kind": "reference_member",
+          "target": "/choice",
+          "contextLocation": "/allowed"
+        }
+      ]
+    },
+    "snapshot": {
+      "id": "confirmation-21-source",
+      "version": 1,
+      "confirmed": true,
+      "approvedPointers": [
+        "/label",
+        "/allowed"
+      ],
+      "data": {
+        "label": "apiGroups=[\"monitoring.coreos.com\"]; resources=[\"alertmanagers\", \"alertmanagers/finalizers\", \"prometheusagents\", \"prometheusagents/finalizers\", \"prometheuses\", \"prometheuses/finalizers\", \"thanosrulers\", \"thanosrulers/finalizers\"]",
+        "allowed": [
+          "patch"
+        ]
+      },
+      "facts": []
+    }
+  },
+  {
+    "id": "confirmation-22",
+    "family": "list_membership",
+    "cluster": "prometheus-operator/prometheus-operator",
+    "sourceId": "role",
+    "sourceLocator": "/rules/1",
+    "provenance": "researcher_adaptation_of_public_record",
+    "prompt": "Choose any one explicitly listed allowed value for this exact label. Return label and choice. For an RBAC rule this means a verb allowed by that rule block; for a Homebrew formula it means an available bottle platform tag. Treat strings literally, without expanding wildcards. Multiple choices may be correct; do not invent a value.",
+    "contract": {
+      "id": "confirmation-22",
+      "version": "1",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "choice": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "label",
+          "choice"
+        ],
+        "additionalProperties": false
+      },
+      "outputKind": "document",
+      "tool": null,
+      "description": "",
+      "contextSchema": {
+        "type": "object"
+      },
+      "bindings": [
+        {
+          "instanceLocation": "/label",
+          "contextLocation": "/label"
+        }
+      ],
+      "relationships": [
+        {
+          "id": "member-choice",
+          "kind": "reference_member",
+          "target": "/choice",
+          "contextLocation": "/allowed"
+        }
+      ]
+    },
+    "snapshot": {
+      "id": "confirmation-22-source",
+      "version": 1,
+      "confirmed": true,
+      "approvedPointers": [
+        "/label",
+        "/allowed"
+      ],
+      "data": {
+        "label": "apiGroups=[\"monitoring.coreos.com\"]; resources=[\"alertmanagers/finalizers\", \"prometheusagents/finalizers\", \"prometheuses/finalizers\", \"thanosrulers/finalizers\"]",
+        "allowed": [
+          "update"
+        ]
+      },
+      "facts": []
+    }
+  },
+  {
+    "id": "confirmation-23",
+    "family": "list_membership",
+    "cluster": "prometheus-operator/prometheus-operator",
+    "sourceId": "role",
+    "sourceLocator": "/rules/2",
+    "provenance": "researcher_adaptation_of_public_record",
+    "prompt": "Choose any one explicitly listed allowed value for this exact label. Return label and choice. For an RBAC rule this means a verb allowed by that rule block; for a Homebrew formula it means an available bottle platform tag. Treat strings literally, without expanding wildcards. Multiple choices may be correct; do not invent a value.",
+    "contract": {
+      "id": "confirmation-23",
+      "version": "1",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "choice": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "label",
+          "choice"
+        ],
+        "additionalProperties": false
+      },
+      "outputKind": "document",
+      "tool": null,
+      "description": "",
+      "contextSchema": {
+        "type": "object"
+      },
+      "bindings": [
+        {
+          "instanceLocation": "/label",
+          "contextLocation": "/label"
+        }
+      ],
+      "relationships": [
+        {
+          "id": "member-choice",
+          "kind": "reference_member",
+          "target": "/choice",
+          "contextLocation": "/allowed"
+        }
+      ]
+    },
+    "snapshot": {
+      "id": "confirmation-23-source",
+      "version": 1,
+      "confirmed": true,
+      "approvedPointers": [
+        "/label",
+        "/allowed"
+      ],
+      "data": {
+        "label": "apiGroups=[\"monitoring.coreos.com\"]; resources=[\"alertmanagers/status\", \"alertmanagerconfigs/status\", \"podmonitors/status\", \"probes/status\", \"prometheuses/status\", \"prometheusagents/status\", \"prometheusrules/status\", \"scrapeconfigs/status\", \"servicemonitors/status\", \"thanosrulers/status\"]",
+        "allowed": [
+          "update",
+          "create",
+          "delete",
+          "patch"
+        ]
+      },
+      "facts": []
+    }
+  },
+  {
+    "id": "confirmation-24",
+    "family": "list_membership",
+    "cluster": "prometheus-operator/prometheus-operator",
+    "sourceId": "role",
+    "sourceLocator": "/rules/3",
+    "provenance": "researcher_adaptation_of_public_record",
+    "prompt": "Choose any one explicitly listed allowed value for this exact label. Return label and choice. For an RBAC rule this means a verb allowed by that rule block; for a Homebrew formula it means an available bottle platform tag. Treat strings literally, without expanding wildcards. Multiple choices may be correct; do not invent a value.",
+    "contract": {
+      "id": "confirmation-24",
+      "version": "1",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "choice": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "label",
+          "choice"
+        ],
+        "additionalProperties": false
+      },
+      "outputKind": "document",
+      "tool": null,
+      "description": "",
+      "contextSchema": {
+        "type": "object"
+      },
+      "bindings": [
+        {
+          "instanceLocation": "/label",
+          "contextLocation": "/label"
+        }
+      ],
+      "relationships": [
+        {
+          "id": "member-choice",
+          "kind": "reference_member",
+          "target": "/choice",
+          "contextLocation": "/allowed"
+        }
+      ]
+    },
+    "snapshot": {
+      "id": "confirmation-24-source",
+      "version": 1,
+      "confirmed": true,
+      "approvedPointers": [
+        "/label",
+        "/allowed"
+      ],
+      "data": {
+        "label": "apiGroups=[\"monitoring.coreos.com\"]; resources=[\"alertmanagers\", \"alertmanagerconfigs\", \"podmonitors\", \"probes\", \"prometheusagents\", \"prometheuses\", \"prometheusrules\", \"servicemonitors\", \"scrapeconfigs\", \"thanosrulers\"]",
+        "allowed": [
+          "watch",
+          "get",
+          "list"
+        ]
+      },
+      "facts": []
+    }
+  },
+  {
+    "id": "confirmation-25",
+    "family": "list_membership",
+    "cluster": "prometheus-operator/prometheus-operator",
+    "sourceId": "role",
+    "sourceLocator": "/rules/4",
+    "provenance": "researcher_adaptation_of_public_record",
+    "prompt": "Choose any one explicitly listed allowed value for this exact label. Return label and choice. For an RBAC rule this means a verb allowed by that rule block; for a Homebrew formula it means an available bottle platform tag. Treat strings literally, without expanding wildcards. Multiple choices may be correct; do not invent a value.",
+    "contract": {
+      "id": "confirmation-25",
+      "version": "1",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "choice": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "label",
+          "choice"
+        ],
+        "additionalProperties": false
+      },
+      "outputKind": "document",
+      "tool": null,
+      "description": "",
+      "contextSchema": {
+        "type": "object"
+      },
+      "bindings": [
+        {
+          "instanceLocation": "/label",
+          "contextLocation": "/label"
+        }
+      ],
+      "relationships": [
+        {
+          "id": "member-choice",
+          "kind": "reference_member",
+          "target": "/choice",
+          "contextLocation": "/allowed"
+        }
+      ]
+    },
+    "snapshot": {
+      "id": "confirmation-25-source",
+      "version": 1,
+      "confirmed": true,
+      "approvedPointers": [
+        "/label",
+        "/allowed"
+      ],
+      "data": {
+        "label": "apiGroups=[\"apps\"]; resources=[\"statefulsets\"]",
+        "allowed": [
+          "get",
+          "list",
+          "patch",
+          "update",
+          "delete",
+          "create",
+          "watch"
+        ]
+      },
+      "facts": []
+    }
+  },
+  {
+    "id": "confirmation-26",
+    "family": "list_membership",
+    "cluster": "Homebrew/homebrew-core",
+    "sourceId": "brew-jq",
+    "sourceLocator": "/bottle/stable/files",
+    "provenance": "researcher_adaptation_of_public_record",
+    "prompt": "Choose any one explicitly listed allowed value for this exact label. Return label and choice. For an RBAC rule this means a verb allowed by that rule block; for a Homebrew formula it means an available bottle platform tag. Treat strings literally, without expanding wildcards. Multiple choices may be correct; do not invent a value.",
+    "contract": {
+      "id": "confirmation-26",
+      "version": "1",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "choice": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "label",
+          "choice"
+        ],
+        "additionalProperties": false
+      },
+      "outputKind": "document",
+      "tool": null,
+      "description": "",
+      "contextSchema": {
+        "type": "object"
+      },
+      "bindings": [
+        {
+          "instanceLocation": "/label",
+          "contextLocation": "/label"
+        }
+      ],
+      "relationships": [
+        {
+          "id": "member-choice",
+          "kind": "reference_member",
+          "target": "/choice",
+          "contextLocation": "/allowed"
+        }
+      ]
+    },
+    "snapshot": {
+      "id": "confirmation-26-source",
+      "version": 1,
+      "confirmed": true,
+      "approvedPointers": [
+        "/label",
+        "/allowed"
+      ],
+      "data": {
+        "label": "jq",
+        "allowed": [
+          "arm64_sonoma",
+          "arm64_tahoe",
+          "x86_64_linux",
+          "arm64_golden_gate",
+          "arm64_linux",
+          "arm64_sequoia",
+          "sonoma"
+        ]
+      },
+      "facts": []
+    }
+  },
+  {
+    "id": "confirmation-27",
+    "family": "list_membership",
+    "cluster": "Homebrew/homebrew-core",
+    "sourceId": "brew-git",
+    "sourceLocator": "/bottle/stable/files",
+    "provenance": "researcher_adaptation_of_public_record",
+    "prompt": "Choose any one explicitly listed allowed value for this exact label. Return label and choice. For an RBAC rule this means a verb allowed by that rule block; for a Homebrew formula it means an available bottle platform tag. Treat strings literally, without expanding wildcards. Multiple choices may be correct; do not invent a value.",
+    "contract": {
+      "id": "confirmation-27",
+      "version": "1",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "choice": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "label",
+          "choice"
+        ],
+        "additionalProperties": false
+      },
+      "outputKind": "document",
+      "tool": null,
+      "description": "",
+      "contextSchema": {
+        "type": "object"
+      },
+      "bindings": [
+        {
+          "instanceLocation": "/label",
+          "contextLocation": "/label"
+        }
+      ],
+      "relationships": [
+        {
+          "id": "member-choice",
+          "kind": "reference_member",
+          "target": "/choice",
+          "contextLocation": "/allowed"
+        }
+      ]
+    },
+    "snapshot": {
+      "id": "confirmation-27-source",
+      "version": 1,
+      "confirmed": true,
+      "approvedPointers": [
+        "/label",
+        "/allowed"
+      ],
+      "data": {
+        "label": "git",
+        "allowed": [
+          "arm64_sequoia",
+          "x86_64_linux",
+          "arm64_linux",
+          "arm64_tahoe",
+          "arm64_golden_gate"
+        ]
+      },
+      "facts": []
+    }
+  },
+  {
+    "id": "confirmation-28",
+    "family": "list_membership",
+    "cluster": "Homebrew/homebrew-core",
+    "sourceId": "brew-curl",
+    "sourceLocator": "/bottle/stable/files",
+    "provenance": "researcher_adaptation_of_public_record",
+    "prompt": "Choose any one explicitly listed allowed value for this exact label. Return label and choice. For an RBAC rule this means a verb allowed by that rule block; for a Homebrew formula it means an available bottle platform tag. Treat strings literally, without expanding wildcards. Multiple choices may be correct; do not invent a value.",
+    "contract": {
+      "id": "confirmation-28",
+      "version": "1",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "choice": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "label",
+          "choice"
+        ],
+        "additionalProperties": false
+      },
+      "outputKind": "document",
+      "tool": null,
+      "description": "",
+      "contextSchema": {
+        "type": "object"
+      },
+      "bindings": [
+        {
+          "instanceLocation": "/label",
+          "contextLocation": "/label"
+        }
+      ],
+      "relationships": [
+        {
+          "id": "member-choice",
+          "kind": "reference_member",
+          "target": "/choice",
+          "contextLocation": "/allowed"
+        }
+      ]
+    },
+    "snapshot": {
+      "id": "confirmation-28-source",
+      "version": 1,
+      "confirmed": true,
+      "approvedPointers": [
+        "/label",
+        "/allowed"
+      ],
+      "data": {
+        "label": "curl",
+        "allowed": [
+          "arm64_golden_gate",
+          "x86_64_linux",
+          "arm64_tahoe",
+          "arm64_sequoia",
+          "arm64_linux"
+        ]
+      },
+      "facts": []
+    }
+  },
+  {
+    "id": "confirmation-29",
+    "family": "list_membership",
+    "cluster": "Homebrew/homebrew-core",
+    "sourceId": "brew-wget",
+    "sourceLocator": "/bottle/stable/files",
+    "provenance": "researcher_adaptation_of_public_record",
+    "prompt": "Choose any one explicitly listed allowed value for this exact label. Return label and choice. For an RBAC rule this means a verb allowed by that rule block; for a Homebrew formula it means an available bottle platform tag. Treat strings literally, without expanding wildcards. Multiple choices may be correct; do not invent a value.",
+    "contract": {
+      "id": "confirmation-29",
+      "version": "1",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "choice": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "label",
+          "choice"
+        ],
+        "additionalProperties": false
+      },
+      "outputKind": "document",
+      "tool": null,
+      "description": "",
+      "contextSchema": {
+        "type": "object"
+      },
+      "bindings": [
+        {
+          "instanceLocation": "/label",
+          "contextLocation": "/label"
+        }
+      ],
+      "relationships": [
+        {
+          "id": "member-choice",
+          "kind": "reference_member",
+          "target": "/choice",
+          "contextLocation": "/allowed"
+        }
+      ]
+    },
+    "snapshot": {
+      "id": "confirmation-29-source",
+      "version": 1,
+      "confirmed": true,
+      "approvedPointers": [
+        "/label",
+        "/allowed"
+      ],
+      "data": {
+        "label": "wget",
+        "allowed": [
+          "x86_64_linux",
+          "arm64_linux",
+          "arm64_tahoe",
+          "arm64_sequoia",
+          "arm64_golden_gate"
+        ]
+      },
+      "facts": []
+    }
+  },
+  {
+    "id": "confirmation-30",
+    "family": "list_membership",
+    "cluster": "Homebrew/homebrew-core",
+    "sourceId": "brew-ripgrep",
+    "sourceLocator": "/bottle/stable/files",
+    "provenance": "researcher_adaptation_of_public_record",
+    "prompt": "Choose any one explicitly listed allowed value for this exact label. Return label and choice. For an RBAC rule this means a verb allowed by that rule block; for a Homebrew formula it means an available bottle platform tag. Treat strings literally, without expanding wildcards. Multiple choices may be correct; do not invent a value.",
+    "contract": {
+      "id": "confirmation-30",
+      "version": "1",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1
+          },
+          "choice": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "label",
+          "choice"
+        ],
+        "additionalProperties": false
+      },
+      "outputKind": "document",
+      "tool": null,
+      "description": "",
+      "contextSchema": {
+        "type": "object"
+      },
+      "bindings": [
+        {
+          "instanceLocation": "/label",
+          "contextLocation": "/label"
+        }
+      ],
+      "relationships": [
+        {
+          "id": "member-choice",
+          "kind": "reference_member",
+          "target": "/choice",
+          "contextLocation": "/allowed"
+        }
+      ]
+    },
+    "snapshot": {
+      "id": "confirmation-30-source",
+      "version": 1,
+      "confirmed": true,
+      "approvedPointers": [
+        "/label",
+        "/allowed"
+      ],
+      "data": {
+        "label": "ripgrep",
+        "allowed": [
+          "x86_64_linux",
+          "arm64_tahoe",
+          "sonoma",
+          "arm64_linux",
+          "arm64_sequoia",
+          "arm64_sonoma",
+          "arm64_golden_gate"
+        ]
+      },
+      "facts": []
+    }
+  }
+]
