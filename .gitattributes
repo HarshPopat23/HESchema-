@@ -1,0 +1,2 @@
+# Preserve the IANA snapshot's original CRLF bytes and frozen SHA-256.
+research/confirmation-v1/sources/media-types.csv -text whitespace=cr-at-eol

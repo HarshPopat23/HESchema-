@@ -5,6 +5,12 @@ For the prospective study of recurring property relationships, see
 [86-case category pack](research/relationship-categories-v1/README.md).
 `heschema research-audit` checks fixtures offline; it does not produce model results.
 
+For confirmation on 30 fresh public-record tasks covering date ordering,
+identifier matching and list membership, see the
+[frozen confirmation study](research/confirmation-v1/README.md).
+`python -m heschema.confirmation_run` verifies that pack offline; `--execute`
+explicitly enables the checkpointed FULL/COMPACT model comparison.
+
 A runnable **schema-effect experiment harness + state-aware tool-argument validator**. It answers two different questions:
 
 1. **“Is this specific LLM-generated argument safe and correct?”** Check strict JSON, the tool contract, a user-confirmed state snapshot, and declared application policies. Return `PASS` or `FAIL`, with reasons.

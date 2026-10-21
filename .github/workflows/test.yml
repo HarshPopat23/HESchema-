@@ -16,6 +16,7 @@ jobs:
       - run: pytest -q
       - run: heschema dataset
       - run: heschema research-audit
+      - run: python -m heschema.confirmation_run
       - run: heschema benchmark --provider mock --limit 8 --repeats 1 --out results/ci
       - uses: actions/setup-node@v4
         with:
