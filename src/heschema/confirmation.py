@@ -25,7 +25,11 @@ PACK = Path(__file__).resolve().parents[2] / 'research/confirmation-v1'
 
 
 def sha(path):
-    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+    p = Path(path)
+    data = p.read_bytes()
+    if p.name == 'media-types.csv':
+        return hashlib.sha256(data).hexdigest()
+    return hashlib.sha256(data.replace(b'\r\n', b'\n')).hexdigest()
 
 
 def make_case(identifier, family, project, source_id, locator, facts):

@@ -226,9 +226,9 @@ class Provider:
                     with timing.phase('retryWaitMs'):
                         await asyncio.sleep(min(2 ** attempts, 16))
                     continue
-                except (httpx.RequestError, httpx.TransportError) as exc:
+                except (httpx.RequestError, httpx.TransportError):
                     if not retry or attempts >= 3:
-                        raise ProviderError(f"{self.name}: network request failed: {str(exc)[:200]}", code="network_error", requests=attempts + 1) from None
+                        raise ProviderError(f"{self.name}: network request failed", code="network_error", requests=attempts + 1) from None
                     attempts += 1
                     with timing.phase('retryWaitMs'):
                         await asyncio.sleep(min(2 ** attempts, 16))

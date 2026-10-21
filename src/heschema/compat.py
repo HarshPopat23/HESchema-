@@ -69,6 +69,12 @@ async def handle_chat_completion(raw_body: dict[str, Any], operator_identity: st
         return make_error_response(400, "Streaming is not supported by this endpoint; set stream to false or omit it.", param="stream", code="streaming_not_supported")
 
     tools = raw_body.get("tools")
+    if tools is not None:
+        if raw_body.get("response_format"):
+            return make_error_response(400, "Combining response_format with tools is not supported.", param="tools", code="tools_not_supported")
+        if not isinstance(tools, list) or not any(isinstance(t, dict) and "function" in t and isinstance(t.get("function"), dict) and t["function"].get("name") for t in tools):
+            return make_error_response(400, "Tools parameter is not supported or missing valid function declaration.", param="tools", code="tools_not_supported")
+
     if raw_body.get("n") is not None and raw_body.get("n") > 1:
         return make_error_response(400, "Multiple completions (n > 1) are not supported.", param="n", code="n_not_supported")
 

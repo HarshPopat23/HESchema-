@@ -337,6 +337,7 @@ def test_cli_integration_lab_endpoints(tmp_path, monkeypatch):
 
 def get_free_port():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         s.bind(("127.0.0.1", 0))
         return s.getsockname()[1]
 
@@ -398,8 +399,8 @@ def test_real_cli_interoperability_with_uvicorn_and_fake_ollama(tmp_path, monkey
         pytest.skip(f"Sourcemeta CLI llm capability not available on this host: {cli_probe['message']}")
 
     # 1. Start Fake Ollama server on free port
-    ollama_port = get_free_port()
-    ollama_server = HTTPServer(("127.0.0.1", ollama_port), FakeOllamaHandler)
+    ollama_server = HTTPServer(("127.0.0.1", 0), FakeOllamaHandler)
+    ollama_port = ollama_server.server_address[1]
     ollama_thread = threading.Thread(target=ollama_server.serve_forever, daemon=True)
     ollama_thread.start()
 

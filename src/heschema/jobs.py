@@ -213,9 +213,9 @@ class JobManager:
             else:
                 record.status = "completed"
 
-        except Exception as exc:
-            record.error = str(exc)
-            if record.cancel_event.is_set():
+        except (Exception, asyncio.CancelledError) as exc:
+            record.error = str(exc) if not isinstance(exc, asyncio.CancelledError) else "Job cancelled by operator"
+            if record.cancel_event.is_set() or isinstance(exc, asyncio.CancelledError):
                 record.status = "cancelled"
             else:
                 record.status = "failed"
@@ -250,6 +250,8 @@ class JobManager:
         job = self.get_job(job_id, operator)
         if job.status in {"queued", "running"}:
             job.cancel_event.set()
+            if job.task and not job.task.done():
+                job.task.cancel()
             job.status = "cancelled"
         return job
 
