@@ -10,7 +10,7 @@ from .contracts import Contract, generation_envelope
 from .failure_categories import VERSION as CATEGORY_VERSION
 from .failure_categories import classify, relationship_checks
 from .failure_categories import summary as category_summary
-from .jsonio import canonical, digest, loads, read_json, write_json
+from .jsonio import canonical, digest, read_json, write_json
 from .metrics import paired_effect
 from .providers import Generation, content_has_reasoning_markers
 from .repair import RepairLimits, coordinate, request_generation
@@ -19,6 +19,8 @@ from .reports import provenance
 from .rules import json_equal
 from .schema import SchemaEngine
 from .schema_projection import project_schema
+from .study_evidence import VERSION as EVIDENCE_VERSION
+from .study_evidence import StudyEvidence, append_jsonl, atomic_json
 from .timing import VERSION as TIMING_VERSION
 from .timing import summarize_timing
 from .validation import validate_contract
@@ -78,10 +80,18 @@ def _config(out, config):
 
 
 def _read_rows(out):
-    path = out / 'runs.jsonl'
-    rows = [loads(line) for line in path.read_text(encoding='utf-8').splitlines()] if path.exists() else []
+    rows = StudyEvidence(out).load_rows()
     latest = {(r['caseId'], r['repeat'], r['arm']): r for r in rows}
     return latest
+
+
+def _attach_evidence(report, evidence):
+    report['evidence'] = evidence.audit()
+    report['designValid'] &= report['evidence']['evidenceComplete']
+    report['comparisonValid'] &= report['evidence']['evidenceComplete']
+    if not report['evidence']['evidenceComplete']:
+        report['warnings'].append('Missing response/usage evidence limits the comparison; inspect evidence_report.json.')
+    return report
 
 
 def stage_summary(rows):
@@ -204,6 +214,7 @@ async def run_decoding(cases, provider, out, *, repeats=1, modes=MODES, seed=42,
         raise ValueError('Positive token and request budgets required')
     prepared = {c['id']: _task(c) for c in cases}
     config = {'protocolVersion': 2, 'study': 'controlled_decoding', 'datasetHash': digest(cases),
+              'evidenceVersion': EVIDENCE_VERSION,
               'provider': provider.name, 'requestedModel': provider.model, 'repeats': repeats, 'modes': list(modes),
               'seed': seed, 'maxTokens': max_tokens, 'temperature': temperature, 'warmup': warmup, 'engine': backend,
               'repairs': 0, 'projectionVersion': '1', 'provenance': provenance(),
@@ -216,27 +227,33 @@ async def run_decoding(cases, provider, out, *, repeats=1, modes=MODES, seed=42,
     if hasattr(provider, 'runtime_metadata'):
         config['provenance'].update(await provider.runtime_metadata())
     out = _config(out, config)
+    evidence = StudyEvidence(out)
     latest = _read_rows(out)
     requests = 0
     unexpected_errors = 0
     engine = SchemaEngine(backend)
     warmup_path = out / 'warmup.json'
-    warmup_rows = read_json(warmup_path) if warmup_path.exists() else []
+    warmup_evidence = StudyEvidence(out / 'warmup-evidence')
+    warmup_evidence.set_schedule([{'warmupIndex': index} for index in range(warmup)])
+    warmup_rows = [row['result'] for row in warmup_evidence.load_rows()]
     try:
         for index in range(len(warmup_rows), warmup):
             if max_requests is not None and requests >= max_requests:
                 break
             c = cases[0]
             contract, snapshot, messages, _, _, _ = prepared[c['id']]
+            session = warmup_evidence.session({'warmupIndex': index})
             async def request(messages, attempt):
                 return await request_generation(provider, messages, seed, max_tokens, temperature)
             r = await coordinate(request, lambda g: validate_contract(g.text, engine, contract, snapshot, generation=g), messages,
-                                 limits=RepairLimits(0, max_tokens=max_tokens), cancel_event=cancel_event)
+                                 limits=RepairLimits(0, max_tokens=max_tokens), cancel_event=cancel_event, evidence=session)
             requests += r['requestsAttempted']
+            session.commit({'result': r}, r)
             warmup_rows.append(r)
-            write_json(warmup_path, warmup_rows)
+            atomic_json(warmup_path, warmup_rows)
         schedule = [(c, repeat, mode) for c in cases for repeat in range(repeats) for mode in modes]
         random.Random(seed).shuffle(schedule)
+        evidence.set_schedule([{'caseId': c['id'], 'repeat': repeat, 'arm': mode} for c, repeat, mode in schedule])
         with (out / 'runs.jsonl').open('a', encoding='utf-8') as log:
             for order, (case, repeat, mode) in enumerate(schedule):
                 key = case['id'], repeat, mode
@@ -247,10 +264,12 @@ async def run_decoding(cases, provider, out, *, repeats=1, modes=MODES, seed=42,
                 contract, snapshot, messages, effective, projected, manifest = prepared[case['id']]
                 profile = capability_profile(provider.name, mode, model=provider.model)
                 native = None if mode == 'prompt_only' else projected if mode == 'native_projected' else effective
+                session = evidence.session({'caseId': case['id'], 'repeat': repeat, 'arm': mode})
                 async def request(messages, attempt):
                     return await request_generation(provider, messages, seed + int(digest(case['id'])[:8], 16) + repeat, max_tokens, temperature, native)
                 recovery = await coordinate(request, lambda g: validate_contract(g.text, engine, contract, snapshot, generation=g), messages,
-                                            limits=RepairLimits(0, max_requests - requests if max_requests is not None else None, max_tokens), cancel_event=cancel_event)
+                                            limits=RepairLimits(0, max_requests - requests if max_requests is not None else None, max_tokens), cancel_event=cancel_event,
+                                            evidence=session)
                 requests += recovery['requestsAttempted']
                 first, final = _score(recovery['firstEvaluation'], case), _score(recovery['finalEvaluation'], case)
                 status = 'ok' if recovery['attempts'] else 'native_request_rejected' if mode != 'prompt_only' and recovery['stopReason'] == 'request_rejected' else 'unsupported_adapter' if recovery['stopReason'] == 'unsupported_mode' else recovery['stopReason']
@@ -264,17 +283,23 @@ async def run_decoding(cases, provider, out, *, repeats=1, modes=MODES, seed=42,
                        'repairAttempts': 0, 'latencyMs': recovery['elapsedMs'], 'timing': recovery['timing'],
                        'projection': manifest if mode == 'native_projected' else None,
                        'capability': profile, 'failure': recovery['failure'], 'provenance': case.get('provenance', 'author_created_synthetic')}
-                log.write(canonical(row) + '\n')
-                log.flush()
+                row = session.commit(row, recovery)
+                append_jsonl(log, row)
                 latest[key] = row
                 # Expected rejections do not trigger a transport outage breaker or silent fallback.
                 unexpected_errors = unexpected_errors + 1 if status not in {'ok', 'native_request_rejected', 'unsupported_adapter'} else 0
                 if unexpected_errors >= 3 or recovery['stopReason'] == 'cancelled':
                     break
         report = _report(list(latest.values()), config, schedule_info['firstPassRequests'], warmup_rows=warmup_rows)
+        _attach_evidence(report, evidence)
+        report['warmupEvidence'] = warmup_evidence.audit()
+        report['designValid'] &= report['warmupEvidence']['evidenceComplete']
+        report['comparisonValid'] &= report['warmupEvidence']['evidenceComplete']
         write_json(out / 'report.json', report)
         return report
     finally:
+        evidence.audit()
+        warmup_evidence.audit()
         engine.close()
 
 
@@ -298,8 +323,11 @@ async def run_repair_study(cases, provider, first_out, out, *, budgets=(1, 2), s
         raise ValueError('Invalid repair experiment settings')
     if max_tokens != source_config['maxTokens'] or seed != source_config['seed'] or temperature != source_config['temperature'] or backend != source_config['engine']:
         raise ValueError('Repair sampling, limits and engine must match first-pass evidence')
+    if source_config.get('evidenceVersion') != EVIDENCE_VERSION:
+        raise ValueError('Saved first-pass evidence predates durable evidence; do not infer missing responses')
     saved = [r for r in _read_rows(source).values() if r['attempts']]
     config = {'protocolVersion': 2, 'study': 'repair_feedback', 'sourceHash': digest(saved), 'sourceConfigHash': digest(source_config),
+              'evidenceVersion': EVIDENCE_VERSION,
               'datasetHash': digest(cases), 'provider': provider.name, 'requestedModel': provider.model,
               'budgets': list(budgets), 'styles': list(styles), 'maxTokens': max_tokens, 'seed': seed,
               'feedbackVersions': {style: feedback_version(style) for style in styles},
@@ -308,8 +336,11 @@ async def run_repair_study(cases, provider, first_out, out, *, budgets=(1, 2), s
               'thinkingRequested': source_config.get('thinkingRequested'), 'requestControls': controls,
               'failureCategoryVersion': CATEGORY_VERSION, 'scoringVersion': source_config.get('scoringVersion')}
     out = _config(out, config)
+    evidence = StudyEvidence(out)
     latest = _read_rows(out)
     engine = SchemaEngine(backend)
+    evidence.set_schedule([{'caseId': f"{row['caseId']}:{row['arm']}", 'repeat': row['repeat'], 'arm': f'{style}:{budget}'}
+                           for row in saved for budget in budgets for style in styles])
     requests = 0
     try:
         by_id = {c['id']: c for c in cases}
@@ -330,11 +361,12 @@ async def run_repair_study(cases, provider, first_out, out, *, budgets=(1, 2), s
                             continue
                         replay = Generation(**source_row['attempts'][0]['generation'])
                         native = None if source_row['arm'] == 'prompt_only' else projected if source_row['arm'] == 'native_projected' else effective
+                        session = evidence.session({'caseId': source_id, 'repeat': source_row['repeat'], 'arm': arm})
                         async def request(messages, attempt):
                             return await request_generation(provider, messages, seed + int(digest(case['id'])[:8], 16) + source_row['repeat'], max_tokens, temperature, native)
                         recovery = await coordinate(request, lambda g: validate_contract(g.text, engine, contract, snapshot, generation=g), messages,
                                                     first_generation=replay, limits=RepairLimits(budget, max_requests - requests if max_requests is not None else None, max_tokens),
-                                                    feedback_style=style, cancel_event=cancel_event)
+                                                    feedback_style=style, cancel_event=cancel_event, evidence=session)
                         requests += recovery['requestsAttempted']
                         first, final = _score(recovery['firstEvaluation'], case), _score(recovery['finalEvaluation'], case)
                         row = {'caseId': source_id, 'cluster': case.get('family', case['id']), 'repeat': source_row['repeat'], 'arm': arm,
@@ -346,12 +378,14 @@ async def run_repair_study(cases, provider, first_out, out, *, budgets=(1, 2), s
                                'attempts': recovery['attempts'], 'requestLedger': recovery['requestLedger'], 'requestsAttempted': recovery['requestsAttempted'],
                                'repairAttempts': recovery['repairAttempts'], 'latencyMs': recovery['elapsedMs'], 'timing': recovery['timing'],
                                'stopReason': recovery['stopReason'], 'failure': recovery['failure'], 'provenance': source_row['provenance']}
-                        log.write(canonical(row) + '\n')
-                        log.flush()
+                        row = session.commit(row, recovery)
+                        append_jsonl(log, row)
                         latest[key] = row
         report = _report(list(latest.values()), config, len(saved) * len(budgets) * len(styles))
+        _attach_evidence(report, evidence)
         report['sourceRequestsWithoutOutput'] = len(_read_rows(source)) - len(saved)
         write_json(out / 'report.json', report)
         return report
     finally:
+        evidence.audit()
         engine.close()

@@ -8,12 +8,14 @@ from pathlib import Path
 
 from .diagnostics import runtime_feedback
 from .domains import DOMAINS, reference_schema
-from .jsonio import canonical, digest, loads, read_json, write_json
+from .jsonio import canonical, digest, read_json, write_json
 from .metrics import classify, custom_fitness, paired_effect, summarize
 from .repair import RepairLimits, coordinate, request_generation
 from .repair_feedback import feedback_version
 from .reports import provenance
 from .schema import SchemaEngine, typed_minimal
+from .study_evidence import VERSION as EVIDENCE_VERSION
+from .study_evidence import StudyEvidence, append_jsonl
 from .timing import VERSION as TIMING_VERSION
 from .validation import evaluate, generation_gate
 
@@ -123,6 +125,7 @@ async def run(cases, provider, out, candidate=None, minimal=None, repeats=3, rep
               "protocolVersion": 2, "repairProtocol": "bounded-v2", "feedbackStyle": feedback_style,
               "feedbackVersion": feedback_version(feedback_style),
               "timingVersion": TIMING_VERSION,
+              "evidenceVersion": EVIDENCE_VERSION,
               "repeats": repeats, "repairs": repairs, "seed": seed, "maxTokens": max_tokens,
               "temperature": temperature, "engine": backend, "decodingMode": "prompt_only_unconstrained",
               "provenance": provenance(), "requestInterval": provider.interval, "inputPricePerMillion": input_price,
@@ -133,13 +136,15 @@ async def run(cases, provider, out, candidate=None, minimal=None, repeats=3, rep
     if manifest_path.exists() and read_json(manifest_path) != config:
         raise ValueError("Resume configuration differs; choose a new output directory")
     write_json(manifest_path, config)
-    rows = [loads(line) for line in log_path.read_text(encoding="utf-8").splitlines()] if log_path.exists() else []
+    evidence = StudyEvidence(out)
+    rows = evidence.load_rows()
     # Append-only retries retain history; only the latest row per logical run
     # contributes to the report. Provider failures remain resumable.
     latest = {(r["caseId"], r["repeat"], r["arm"]): r for r in rows}
     done = {key for key, row in latest.items() if row["status"] == "ok"}
     schedule = [(case, rep, arm) for case in cases for rep in range(repeats) for arm in ARMS]
     random.Random(seed).shuffle(schedule)
+    evidence.set_schedule([{'caseId': c['id'], 'repeat': rep, 'arm': arm} for c, rep, arm in schedule])
     requests = consecutive_errors = 0
     was_cancelled = False
     try:
@@ -168,6 +173,7 @@ async def run(cases, provider, out, candidate=None, minimal=None, repeats=3, rep
                 messages = messages_for(case, shown)
                 started = time.perf_counter()
                 paired_seed = seed + int(digest(case["id"])[:8], 16) + rep
+                session = evidence.session({'caseId': case['id'], 'repeat': rep, 'arm': arm})
                 async def request(messages, attempt):
                     return await request_generation(provider, messages, paired_seed, max_tokens, temperature)
                 def score(generated):
@@ -178,7 +184,8 @@ async def run(cases, provider, out, candidate=None, minimal=None, repeats=3, rep
                     return runtime_feedback(result["errors"], allow_state=bool(case.get("context", {}).get("confirmedState")))
                 recovery = await coordinate(request, score, messages,
                                             limits=RepairLimits(repairs, max_requests - requests if max_requests is not None else None, max_tokens),
-                                            feedback_style=feedback_style, feedback_selector=feedback, cancel_event=cancel_event)
+                                            feedback_style=feedback_style, feedback_selector=feedback, cancel_event=cancel_event,
+                                            evidence=session)
                 attempts = recovery["attempts"]
                 requests += recovery["requestsAttempted"]
                 first, final = recovery["firstEvaluation"], recovery["finalEvaluation"]
@@ -201,8 +208,8 @@ async def run(cases, provider, out, candidate=None, minimal=None, repeats=3, rep
                        "latencyMs": (time.perf_counter() - started) * 1000,
                        "timing": recovery['timing'],
                        "inputTokens": inp if known else None, "outputTokens": otp if known else None, "costUsd": cost}
-                log.write(canonical(row) + "\n")
-                log.flush()
+                row = session.commit(row, recovery)
+                append_jsonl(log, row)
                 latest[(row["caseId"], row["repeat"], row["arm"])] = row
                 consecutive_errors = consecutive_errors + 1 if generation_error else 0
                 if on_progress:
@@ -219,6 +226,8 @@ async def run(cases, provider, out, candidate=None, minimal=None, repeats=3, rep
                     break  # Avoid exhausting an account during an outage/quota failure.
         rows = list(latest.values())
         report = make_report(rows, config, cases, schemas, engine)
+        report['evidence'] = evidence.audit()
+        report['comparisonValid'] &= report['evidence']['evidenceComplete']
         if was_cancelled:
             report["cancelled"] = True
             report["warnings"].append("Experiment cancelled early by user; reporting partial completed runs.")
@@ -226,6 +235,7 @@ async def run(cases, provider, out, candidate=None, minimal=None, repeats=3, rep
         (out / "report.md").write_text(markdown_report(report), encoding="utf-8")
         return report
     finally:
+        evidence.audit()
         engine.close()
 
 

@@ -11,6 +11,11 @@ identifier matching and list membership, see the
 `python -m heschema.confirmation_run` verifies that pack offline; `--execute`
 explicitly enables the checkpointed FULL/COMPACT model comparison.
 
+New package study runs save final responses and reported usage before validation
+or result status advances. See [durable study evidence](docs/study-evidence.md).
+`heschema evidence-audit results/my-run` verifies saved evidence offline and marks
+missing responses/usage explicitly; it cannot recover historical missing outputs.
+
 A runnable **schema-effect experiment harness + state-aware tool-argument validator**. It answers two different questions:
 
 1. **“Is this specific LLM-generated argument safe and correct?”** Check strict JSON, the tool contract, a user-confirmed state snapshot, and declared application policies. Return `PASS` or `FAIL`, with reasons.

@@ -112,12 +112,15 @@ tables use complete matched pairs and state their denominators. Usage includes
 all returned attempts, including prior checkpoints. Provider errors may lack
 usage, so recorded tokens cannot establish actual billing.
 
-Checkpoint durability is **per slot**, after its initial generation and any
+For the recorded study, checkpoint durability was **per slot**, after its initial generation and any
 repair return. An abrupt process/workspace interruption can therefore lose
 in-flight responses before the slot is saved. Such calls cannot be reconstructed
 from the journal. Session histories disclose that uncertainty; observed usage
 must not be described as the total for every physical request. Per-request
-durability is a follow-up engineering improvement, not a guarantee of this runner.
+durability was not a guarantee of that measured implementation. New package runs
+use [request-level durable evidence](../../docs/study-evidence.md), with an explicit
+evidence version; that engineering change does not repair the historical record
+or permit silently resuming its frozen runtime with changed code.
 
 The runner uses previously authorized credentials described as free-tier; it
 cannot inspect account billing or independently enforce the account's billing

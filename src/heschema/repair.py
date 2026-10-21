@@ -63,7 +63,8 @@ def feedback_message(errors, style='actionable', max_chars=4000):
 
 
 async def coordinate(generate, evaluate, messages, *, limits=None, feedback_style='actionable',
-                     feedback_selector=None, context_check=None, cancel_event=None, first_generation=None):
+                     feedback_selector=None, context_check=None, cancel_event=None, first_generation=None,
+                     evidence=None):
     limits = limits or RepairLimits()
     if feedback_style not in {'generic', 'raw', 'actionable'}:
         raise ValueError('Unknown feedback style')
@@ -117,6 +118,8 @@ async def coordinate(generate, evaluate, messages, *, limits=None, feedback_styl
                           'requestWallMs': 0.0, 'status': 'started'}
         try:
             checkpoint()
+            if evidence is not None:
+                request_record['evidenceRef'] = evidence.started(index, messages, replay=generated)
             if generated is None:
                 requests += 1
                 reserved_tokens += limits.max_tokens
@@ -126,6 +129,7 @@ async def coordinate(generate, evaluate, messages, *, limits=None, feedback_styl
                 request_record['requestInvoked'] = True
                 task = asyncio.create_task(generate(messages, index))
                 cancelled = asyncio.create_task(cancel_event.wait()) if cancel_event is not None else None
+                provider_completed_ms = None
                 try:
                     waiting = {task} | ({cancelled} if cancelled else set())
                     done, _ = await asyncio.wait(waiting, timeout=max(0, remaining), return_when=asyncio.FIRST_COMPLETED)
@@ -134,12 +138,15 @@ async def coordinate(generate, evaluate, messages, *, limits=None, feedback_styl
                     if task not in done:
                         raise TimeoutError
                     generated = await task
+                    provider_completed_ms = milliseconds(provider_started)
+                    if evidence is not None:
+                        request_record['evidenceRef'] = evidence.returned(request_record['evidenceRef'], generated)
                 finally:
                     for pending in (task, cancelled):
                         if pending is not None and not pending.done():
                             pending.cancel()
                             await asyncio.gather(pending, return_exceptions=True)
-                    request_record['requestWallMs'] = milliseconds(provider_started)
+                    request_record['requestWallMs'] = provider_completed_ms if provider_completed_ms is not None else milliseconds(provider_started)
                 # Adapters used here must disable transport retries. Still record any reported calls.
                 requests += generated.transport_retries
                 request_record.update(status='returned', generation=generated.diagnostic())
@@ -186,6 +193,8 @@ async def coordinate(generate, evaluate, messages, *, limits=None, feedback_styl
             stop = 'context_changed'
             break
         except ProviderError as exc:
+            if evidence is not None and 'evidenceRef' in request_record:
+                request_record['evidenceRef'] = evidence.failed(request_record['evidenceRef'], exc.diagnostic())
             request_record.update(status=exc.code, failure=exc.diagnostic())
             request_record['providerTiming'] = exc.timing
             requests += exc.requests - 1
