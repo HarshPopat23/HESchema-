@@ -1,0 +1,16 @@
+{
+  "freezeSha256": "4ef970c9d5aa66a30e81de92ec3ac0a9ef9d4ad0c69ec58e420ee49143a99441",
+  "rawJournalSha256": "2f5d1eae474923f02baa9341c661309f5fd47622f6cb7ca9493a5b740c4e872f",
+  "files": {
+    "checkpoints.jsonl": "950c56d14204281883c2fe0d670b52ff0002daeae4e99afe789f2d5acc4ef66c",
+    "environment-prior.json": "e3cc1ce9069b1571d2e89b67ee5c41cde9fe4904ed40b0724dd38c4fe85bb1c3",
+    "environment.json": "9f36deacf6b9a08c66efb6b347b7e0fbe118cb282f8710485b0554e026867511",
+    "failures.jsonl": "c47f7d111a723a33de81883867a969cbbdcca37a3ded9a8494107b6acc67a556",
+    "responses.jsonl": "e409815c0d06190fd0072258b478d9c305b3df0cc45d11df4859b4ce2b1602ae",
+    "run_config.json": "42a4181251ab419facfdd6111f9e1a80325878b9dc0cff8503e43532c402a21e",
+    "session_history.json": "921ad2d22a2bc6319382e0706e72e76e627137d8a9d020f5143f47a848682bd4",
+    "summary.json": "9652a785d2719ad9e7fbcc050fa510f8e7ffcb14eeb40efc16a2ec8dc0682c69",
+    "transport_events.jsonl": "412cd04e26520dbda52fc2fe11db5aa38a82e8bf3f86a5bec9211781d3c3626e"
+  },
+  "notice": "Only new public-source task responses. Exact final content and usage preserved; reasoning and HTTP headers omitted. Raw private traces stay in ignored results/. No previous private archives published."
+}

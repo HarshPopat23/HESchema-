@@ -16,9 +16,13 @@ from pathlib import Path
 
 from heschema.confirmation import PACK, oracle, sha, verify_freeze
 from heschema.confirmation_run import read_journal, schedule, slot_key, summarize
+from heschema.contracts import Contract
 from heschema.failure_categories import classify
 from heschema.jsonio import canonical
+from heschema.providers import Generation
+from heschema.schema import SchemaEngine
 from heschema.timing import summarize_timing
+from heschema.validation import validate_contract
 
 
 def fenced_payload_diagnostic(case, text):
@@ -74,10 +78,14 @@ def export(run_dir, target=PACK / 'evidence'):
     config = json.loads((run_dir / 'config.json').read_text())
     if config['freezeSha256'] != sha(PACK / 'freeze.json') or config['protocol'] != protocol:
         raise ValueError('This exporter only accepts confirmation-v1, never previous archives')
+    root = Path(__file__).resolve().parents[1]
+    if any(sha(root / path) != expected for path, expected in config.get('codeHashes', {}).items()):
+        raise ValueError('Measured runtime changed; revalidate using its preserved implementation')
     rows = read_journal(run_dir / 'runs.jsonl')
     slots = schedule(cases, protocol)
     allowed_slots = {slot_key(s) for s in slots}
     responses, checkpoints, failures = [], [], []
+    engine = SchemaEngine()
     for checkpoint_index, row in enumerate(rows):
         case = by_id[row['caseId']]
         if slot_key(row) not in allowed_slots or row['freezeSha256'] != config['freezeSha256']:
@@ -85,6 +93,10 @@ def export(run_dir, target=PACK / 'evidence'):
         if datetime.fromisoformat(row['recordedAt']) < datetime.fromisoformat(freeze['frozenAt']):
             raise ValueError('Response checkpoint predates the frozen protocol')
         result = row['result']
+        expected_first = oracle(case, result['attempts'][0]['generation']['text']) if result['attempts'] else None
+        expected_final = oracle(case, result['attempts'][-1]['generation']['text']) if result['attempts'] else None
+        if (row['firstCorrect'], row['finalCorrect']) != (expected_first, expected_final):
+            raise ValueError('Saved slot outcome differs on re-score')
         for attempt_index, attempt in enumerate(result['attempts']):
             generated = attempt['generation']
             if generated['model'] != row['model'] or not generated['metadata'].get('resolvedModelConfirmed'):
@@ -93,6 +105,10 @@ def export(run_dir, target=PACK / 'evidence'):
             if correct != row['observations'][attempt_index]['correct']:
                 raise ValueError('Saved oracle judgment differs on re-score')
             evaluation = attempt['evaluation']
+            replayed = validate_contract(generated['text'], engine, Contract(**case['contract']),
+                                         case['snapshot'], generation=Generation(**generated))
+            if replayed['accepted'] != evaluation['accepted']:
+                raise ValueError('Recorded contract acceptance differs on replay')
             if attempt['requestMade']:
                 output = {key: row[key] for key in ('caseId', 'model', 'repeat', 'arm', 'family', 'cluster')}
                 output.update(checkpoint=checkpoint_index, attempt=attempt_index,
@@ -129,9 +145,15 @@ def export(run_dir, target=PACK / 'evidence'):
     history_path = run_dir / 'session_history.json'
     session_history = json.loads(history_path.read_text()) if history_path.exists() else []
     interruptions = [session['interruption'] for session in session_history if session.get('interruption')]
+    stop_path = run_dir / 'execution_stop.json'
+    execution_stop = json.loads(stop_path.read_text()) if stop_path.exists() else None
+    if execution_stop and execution_stop.get('interruption'):
+        interruptions.append(execution_stop['interruption'])
+    summary['executionStop'] = execution_stop
     summary['recordingCompleteness'] = {
         'allPhysicalRequestsKnown': not interruptions,
         'interruptionNotices': interruptions,
+        'possibleUnrecordedRequestsUpperBound': sum(x['possibleUnrecordedRequestsUpperBound'] for x in interruptions),
         'tokensScope': 'Observed returned generations only; actual billing and unrecorded interrupted requests remain unknown.'}
     summary['fencedPayloads'] = {
         'responses': sum(r['fencedPayloadSemanticCorrect'] is not None for r in responses),
@@ -153,7 +175,9 @@ def export(run_dir, target=PACK / 'evidence'):
         (target / 'session_history.json').write_text(history.read_text())
     transport_events = run_dir / 'transport_events.jsonl'
     if transport_events.exists():
-        (target / 'transport_events.jsonl').write_text(transport_events.read_text())
+        public_events = [{k: v for k, v in event.items() if k != 'headers'}
+                         for event in read_journal(transport_events)]
+        (target / 'transport_events.jsonl').write_text(''.join(canonical(event) + '\n' for event in public_events))
     manifest = {'freezeSha256': config['freezeSha256'], 'rawJournalSha256': sha(run_dir / 'runs.jsonl'),
                 'files': {path.name: sha(path) for path in sorted(target.iterdir()) if path.name != 'manifest.json'},
                 'notice': 'Only new public-source task responses. Exact final content and usage preserved; reasoning and HTTP headers omitted. Raw private traces stay in ignored results/. No previous private archives published.'}

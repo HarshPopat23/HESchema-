@@ -1,0 +1,699 @@
+{
+  "plannedSlots": 540,
+  "completedSlots": 424,
+  "matchedPairs": 211,
+  "tasks": 30,
+  "sourceClusters": 6,
+  "arms": {
+    "full": {
+      "matchedSlots": 211,
+      "firstCorrect": 206,
+      "finalCorrect": 211,
+      "wrongAcceptedResponses": 0,
+      "correctRejectedResponses": 0,
+      "schemaOnlyWrongAcceptedResponses": 5,
+      "returnedResponses": 216,
+      "totalTokensIncludingEarlierCheckpoints": 103997,
+      "medianCoordinatorMs": 6269.872378000173,
+      "byModel": {
+        "openai/gpt-oss-120b": {
+          "slots": 68,
+          "firstCorrect": 68,
+          "finalCorrect": 68
+        },
+        "openai/gpt-oss-20b": {
+          "slots": 69,
+          "firstCorrect": 64,
+          "finalCorrect": 69
+        },
+        "qwen/qwen3.8-27b": {
+          "slots": 74,
+          "firstCorrect": 74,
+          "finalCorrect": 74
+        }
+      },
+      "byFamily": {
+        "date_ordering": {
+          "slots": 68,
+          "firstCorrect": 68,
+          "finalCorrect": 68
+        },
+        "identifier_matching": {
+          "slots": 74,
+          "firstCorrect": 74,
+          "finalCorrect": 74
+        },
+        "list_membership": {
+          "slots": 69,
+          "firstCorrect": 64,
+          "finalCorrect": 69
+        }
+      }
+    },
+    "compact": {
+      "matchedSlots": 211,
+      "firstCorrect": 187,
+      "finalCorrect": 198,
+      "wrongAcceptedResponses": 0,
+      "correctRejectedResponses": 0,
+      "schemaOnlyWrongAcceptedResponses": 3,
+      "returnedResponses": 235,
+      "totalTokensIncludingEarlierCheckpoints": 109563,
+      "medianCoordinatorMs": 6323.978663999924,
+      "byModel": {
+        "openai/gpt-oss-120b": {
+          "slots": 68,
+          "firstCorrect": 68,
+          "finalCorrect": 68
+        },
+        "openai/gpt-oss-20b": {
+          "slots": 69,
+          "firstCorrect": 66,
+          "finalCorrect": 69
+        },
+        "qwen/qwen3.8-27b": {
+          "slots": 74,
+          "firstCorrect": 53,
+          "finalCorrect": 61
+        }
+      },
+      "byFamily": {
+        "date_ordering": {
+          "slots": 68,
+          "firstCorrect": 49,
+          "finalCorrect": 55
+        },
+        "identifier_matching": {
+          "slots": 74,
+          "firstCorrect": 74,
+          "finalCorrect": 74
+        },
+        "list_membership": {
+          "slots": 69,
+          "firstCorrect": 64,
+          "finalCorrect": 69
+        }
+      }
+    }
+  },
+  "providerRequestsAttempted": 462,
+  "returnedResponses": 453,
+  "billingVerified": false,
+  "notice": "Repeats are not independent tasks. Six project clusters limit generalization. Both arms retain contract validation; this is not a schema-only generation comparison.",
+  "audit": {
+    "tasks": 30,
+    "clusters": 6,
+    "controls": 190,
+    "schemaOnlyAcceptedInvalidControls": 60
+  },
+  "paired": {
+    "outcomes": {
+      "firstCorrect": {
+        "matchedPairs": 211,
+        "compactWins": 3,
+        "fullWins": 22,
+        "ties": 186,
+        "meanTaskDifferencePp": -9.25,
+        "clusterBootstrap95Pp": [
+          -21.083333333333332,
+          0.0
+        ],
+        "sourceClusters": 6,
+        "byTaskDifferencePp": {
+          "confirmation-30": 0,
+          "confirmation-10": -42.857142857142854,
+          "confirmation-02": -33.33333333333333,
+          "confirmation-03": -37.5,
+          "confirmation-14": 0,
+          "confirmation-20": 0,
+          "confirmation-25": 0,
+          "confirmation-23": 0,
+          "confirmation-18": 0,
+          "confirmation-09": -28.57142857142857,
+          "confirmation-08": 0,
+          "confirmation-27": 0,
+          "confirmation-28": 0,
+          "confirmation-06": -28.57142857142857,
+          "confirmation-15": 0,
+          "confirmation-11": 0,
+          "confirmation-17": 0,
+          "confirmation-04": -33.33333333333333,
+          "confirmation-24": 0,
+          "confirmation-07": 0,
+          "confirmation-01": -33.33333333333333,
+          "confirmation-13": 0,
+          "confirmation-22": 42.857142857142854,
+          "confirmation-26": 0,
+          "confirmation-21": -42.857142857142854,
+          "confirmation-16": 0,
+          "confirmation-29": 0,
+          "confirmation-19": 0,
+          "confirmation-12": 0,
+          "confirmation-05": -40.0
+        }
+      },
+      "finalCorrect": {
+        "matchedPairs": 211,
+        "compactWins": 0,
+        "fullWins": 13,
+        "ties": 198,
+        "meanTaskDifferencePp": -6.223544973544973,
+        "clusterBootstrap95Pp": [
+          -13.90873015873016,
+          0
+        ],
+        "sourceClusters": 6,
+        "byTaskDifferencePp": {
+          "confirmation-30": 0,
+          "confirmation-10": -42.857142857142854,
+          "confirmation-02": -33.33333333333333,
+          "confirmation-03": -37.5,
+          "confirmation-14": 0,
+          "confirmation-20": 0,
+          "confirmation-25": 0,
+          "confirmation-23": 0,
+          "confirmation-18": 0,
+          "confirmation-09": 0,
+          "confirmation-08": 0,
+          "confirmation-27": 0,
+          "confirmation-28": 0,
+          "confirmation-06": -28.57142857142857,
+          "confirmation-15": 0,
+          "confirmation-11": 0,
+          "confirmation-17": 0,
+          "confirmation-04": -33.33333333333333,
+          "confirmation-24": 0,
+          "confirmation-07": 0,
+          "confirmation-01": -11.11111111111111,
+          "confirmation-13": 0,
+          "confirmation-22": 0,
+          "confirmation-26": 0,
+          "confirmation-21": 0,
+          "confirmation-16": 0,
+          "confirmation-29": 0,
+          "confirmation-19": 0,
+          "confirmation-12": 0,
+          "confirmation-05": 0
+        }
+      }
+    },
+    "notice": "Resamples entire source projects, preserving within-project repeats and models. Six clusters and shared templates limit precision. A zero-width empirical bootstrap interval in a ceiling-effect sample does not prove zero population error."
+  },
+  "timing": {
+    "version": "latency-v1",
+    "scope": "repair_coordinator",
+    "allOutcomes": {
+      "totalMs": {
+        "measured": 433,
+        "missing": 0,
+        "totalMs": 2508965.004528999,
+        "meanMs": 5794.376453877596,
+        "p50Ms": 6290.144642999849,
+        "p95Ms": 7390.903787600018
+      },
+      "requestWallMs": {
+        "measured": 433,
+        "missing": 0,
+        "totalMs": 2505413.448698001,
+        "meanMs": 5786.174246415707,
+        "p50Ms": 6286.019549999992,
+        "p95Ms": 7385.471619800046
+      },
+      "localEvaluationMs": {
+        "measured": 433,
+        "missing": 0,
+        "totalMs": 3508.487277999393,
+        "meanMs": 8.102741981522847,
+        "p50Ms": 5.27131900025779,
+        "p95Ms": 13.545501000044167
+      },
+      "localValidationMs": {
+        "measured": 433,
+        "missing": 0,
+        "totalMs": 3508.487277999393,
+        "meanMs": 8.102741981522847,
+        "p50Ms": 5.27131900025779,
+        "p95Ms": 13.545501000044167
+      },
+      "applicationCalculationMs": {
+        "measured": 433,
+        "missing": 0,
+        "totalMs": 0.0,
+        "meanMs": 0.0,
+        "p50Ms": 0.0,
+        "p95Ms": 0.0
+      },
+      "coordinatorOtherMs": {
+        "measured": 433,
+        "missing": 0,
+        "totalMs": 43.06855299818562,
+        "meanMs": 0.09946548036532477,
+        "p50Ms": 0.05256299982647761,
+        "p95Ms": 0.21956380010124119
+      },
+      "providerResponseMs": {
+        "measured": 433,
+        "missing": 0,
+        "totalMs": 2429590.5999090043,
+        "meanMs": 5611.06374112934,
+        "p50Ms": 6285.437080000065,
+        "p95Ms": 7384.437763000187
+      },
+      "queueWaitMs": {
+        "measured": 433,
+        "missing": 0,
+        "totalMs": 1.7293879955104785,
+        "meanMs": 0.00399396765706808,
+        "p50Ms": 0.0025140002435364295,
+        "p95Ms": 0.004423199970915447
+      },
+      "pacingWaitMs": {
+        "measured": 433,
+        "missing": 0,
+        "totalMs": 71926.8700460002,
+        "meanMs": 166.1128638475755,
+        "p50Ms": 0.0,
+        "p95Ms": 0.0
+      },
+      "retryWaitMs": {
+        "measured": 433,
+        "missing": 0,
+        "totalMs": 0.0,
+        "meanMs": 0.0,
+        "p50Ms": 0.0,
+        "p95Ms": 0.0
+      },
+      "adapterOtherMs": {
+        "measured": 433,
+        "missing": 0,
+        "totalMs": 129.9027409993414,
+        "meanMs": 0.30000633025252055,
+        "p50Ms": 0.17323400015811785,
+        "p95Ms": 0.5709361998924577
+      }
+    },
+    "byOutcome": {
+      "exhausted": {
+        "totalMs": {
+          "measured": 13,
+          "missing": 0,
+          "totalMs": 140106.55993500017,
+          "meanMs": 10777.427687307705,
+          "p50Ms": 6872.706587000266,
+          "p95Ms": 36923.85554899984
+        },
+        "requestWallMs": {
+          "measured": 13,
+          "missing": 0,
+          "totalMs": 140083.24017399922,
+          "meanMs": 10775.633859538402,
+          "p50Ms": 6871.808812999916,
+          "p95Ms": 36922.767067399946
+        },
+        "localEvaluationMs": {
+          "measured": 13,
+          "missing": 0,
+          "totalMs": 20.101447999195443,
+          "meanMs": 1.5462652307073417,
+          "p50Ms": 0.9972709999601648,
+          "p95Ms": 3.6644925999098605
+        },
+        "localValidationMs": {
+          "measured": 13,
+          "missing": 0,
+          "totalMs": 20.101447999195443,
+          "meanMs": 1.5462652307073417,
+          "p50Ms": 0.9972709999601648,
+          "p95Ms": 3.6644925999098605
+        },
+        "applicationCalculationMs": {
+          "measured": 13,
+          "missing": 0,
+          "totalMs": 0.0,
+          "meanMs": 0.0,
+          "p50Ms": 0.0,
+          "p95Ms": 0.0
+        },
+        "coordinatorOtherMs": {
+          "measured": 13,
+          "missing": 0,
+          "totalMs": 3.218313001749266,
+          "meanMs": 0.24756253859609736,
+          "p50Ms": 0.1738700002533733,
+          "p95Ms": 0.6363652001709845
+        },
+        "providerResponseMs": {
+          "measured": 13,
+          "missing": 0,
+          "totalMs": 92451.45125400109,
+          "meanMs": 7111.6500964616225,
+          "p50Ms": 6866.431605000344,
+          "p95Ms": 13151.009198599968
+        },
+        "queueWaitMs": {
+          "measured": 13,
+          "missing": 0,
+          "totalMs": 0.06139399965832126,
+          "meanMs": 0.004722615358332405,
+          "p50Ms": 0.004577999789034948,
+          "p95Ms": 0.006107199806137939
+        },
+        "pacingWaitMs": {
+          "measured": 13,
+          "missing": 0,
+          "totalMs": 47536.58048900025,
+          "meanMs": 3656.660037615404,
+          "p50Ms": 0.0,
+          "p95Ms": 23767.20369600007
+        },
+        "retryWaitMs": {
+          "measured": 13,
+          "missing": 0,
+          "totalMs": 0.0,
+          "meanMs": 0.0,
+          "p50Ms": 0.0,
+          "p95Ms": 0.0
+        },
+        "adapterOtherMs": {
+          "measured": 13,
+          "missing": 0,
+          "totalMs": 8.879245999651175,
+          "meanMs": 0.6830189230500904,
+          "p50Ms": 0.3994730000158597,
+          "p95Ms": 1.9625036000434142
+        }
+      },
+      "provider_error": {
+        "totalMs": {
+          "measured": 9,
+          "missing": 0,
+          "totalMs": 48512.648496999645,
+          "meanMs": 5390.294277444405,
+          "p50Ms": 6470.685168000273,
+          "p95Ms": 6704.4311632000245
+        },
+        "requestWallMs": {
+          "measured": 9,
+          "missing": 0,
+          "totalMs": 48504.709304000244,
+          "meanMs": 5389.412144888916,
+          "p50Ms": 6469.83464799996,
+          "p95Ms": 6703.883659399889
+        },
+        "localEvaluationMs": {
+          "measured": 9,
+          "missing": 0,
+          "totalMs": 7.638769998720818,
+          "meanMs": 0.8487522220800909,
+          "p50Ms": 0.4762419998769474,
+          "p95Ms": 2.299039599893148
+        },
+        "localValidationMs": {
+          "measured": 9,
+          "missing": 0,
+          "totalMs": 7.638769998720818,
+          "meanMs": 0.8487522220800909,
+          "p50Ms": 0.4762419998769474,
+          "p95Ms": 2.299039599893148
+        },
+        "applicationCalculationMs": {
+          "measured": 9,
+          "missing": 0,
+          "totalMs": 0.0,
+          "meanMs": 0.0,
+          "p50Ms": 0.0,
+          "p95Ms": 0.0
+        },
+        "coordinatorOtherMs": {
+          "measured": 9,
+          "missing": 0,
+          "totalMs": 0.3004230006808939,
+          "meanMs": 0.03338033340898821,
+          "p50Ms": 0.02723800071180449,
+          "p95Ms": 0.05316079978001653
+        },
+        "providerResponseMs": {
+          "measured": 9,
+          "missing": 0,
+          "totalMs": 48487.680359000704,
+          "meanMs": 5387.520039888967,
+          "p50Ms": 6461.665747000097,
+          "p95Ms": 6703.536758200153
+        },
+        "queueWaitMs": {
+          "measured": 9,
+          "missing": 0,
+          "totalMs": 0.02539299953241425,
+          "meanMs": 0.002821444392490472,
+          "p50Ms": 0.002782999672490405,
+          "p95Ms": 0.0040564000300946645
+        },
+        "pacingWaitMs": {
+          "measured": 9,
+          "missing": 0,
+          "totalMs": 0.0,
+          "meanMs": 0.0,
+          "p50Ms": 0.0,
+          "p95Ms": 0.0
+        },
+        "retryWaitMs": {
+          "measured": 9,
+          "missing": 0,
+          "totalMs": 0.0,
+          "meanMs": 0.0,
+          "p50Ms": 0.0,
+          "p95Ms": 0.0
+        },
+        "adapterOtherMs": {
+          "measured": 9,
+          "missing": 0,
+          "totalMs": 0.8468109995192208,
+          "meanMs": 0.0940901110576912,
+          "p50Ms": 0.08182700003089849,
+          "p95Ms": 0.17600879964447808
+        }
+      },
+      "valid": {
+        "totalMs": {
+          "measured": 411,
+          "missing": 0,
+          "totalMs": 2320345.7960969987,
+          "meanMs": 5645.610209481749,
+          "p50Ms": 6275.815587999887,
+          "p95Ms": 7368.1798004997745
+        },
+        "requestWallMs": {
+          "measured": 411,
+          "missing": 0,
+          "totalMs": 2316825.4992200015,
+          "meanMs": 5637.045010267643,
+          "p50Ms": 6272.431823000034,
+          "p95Ms": 7364.12448599981
+        },
+        "localEvaluationMs": {
+          "measured": 411,
+          "missing": 0,
+          "totalMs": 3480.7470600014767,
+          "meanMs": 8.468970948908703,
+          "p50Ms": 5.376275000116948,
+          "p95Ms": 13.654550499950346
+        },
+        "localValidationMs": {
+          "measured": 411,
+          "missing": 0,
+          "totalMs": 3480.7470600014767,
+          "meanMs": 8.468970948908703,
+          "p50Ms": 5.376275000116948,
+          "p95Ms": 13.654550499950346
+        },
+        "applicationCalculationMs": {
+          "measured": 411,
+          "missing": 0,
+          "totalMs": 0.0,
+          "meanMs": 0.0,
+          "p50Ms": 0.0,
+          "p95Ms": 0.0
+        },
+        "coordinatorOtherMs": {
+          "measured": 411,
+          "missing": 0,
+          "totalMs": 39.549816995755464,
+          "meanMs": 0.09622826519648531,
+          "p50Ms": 0.05246500040811952,
+          "p95Ms": 0.1998735001507157
+        },
+        "providerResponseMs": {
+          "measured": 411,
+          "missing": 0,
+          "totalMs": 2288651.4682960026,
+          "meanMs": 5568.495056681271,
+          "p50Ms": 6263.9221639999505,
+          "p95Ms": 7356.911809999929
+        },
+        "queueWaitMs": {
+          "measured": 411,
+          "missing": 0,
+          "totalMs": 1.642600996319743,
+          "meanMs": 0.003996596098101564,
+          "p50Ms": 0.002477000180078903,
+          "p95Ms": 0.003972499825977138
+        },
+        "pacingWaitMs": {
+          "measured": 411,
+          "missing": 0,
+          "totalMs": 24390.28955699996,
+          "meanMs": 59.34377021167874,
+          "p50Ms": 0.0,
+          "p95Ms": 0.0
+        },
+        "retryWaitMs": {
+          "measured": 411,
+          "missing": 0,
+          "totalMs": 0.0,
+          "meanMs": 0.0,
+          "p50Ms": 0.0,
+          "p95Ms": 0.0
+        },
+        "adapterOtherMs": {
+          "measured": 411,
+          "missing": 0,
+          "totalMs": 120.17668400017101,
+          "meanMs": 0.292400690997983,
+          "p50Ms": 0.17226299951289548,
+          "p95Ms": 0.5712999998195301
+        }
+      }
+    },
+    "notice": "Provider subphases are inside requestWallMs; validation/calculation are inside localEvaluationMs. Unknown/legacy phases stay missing. Replayed initial provider latency is excluded. Client-observed response time is not inference time."
+  },
+  "dispatchWaitTotalMs": 4165314.1129510025,
+  "quotaEvents": [
+    {
+      "event": "quota_wait",
+      "retry": 1,
+      "seconds": 120,
+      "slot": {
+        "arm": "compact",
+        "caseId": "confirmation-17",
+        "model": "qwen/qwen3.8-27b",
+        "repeat": 1
+      },
+      "worker": 0
+    },
+    {
+      "event": "quota_wait",
+      "retry": 1,
+      "seconds": 120,
+      "slot": {
+        "arm": "compact",
+        "caseId": "confirmation-19",
+        "model": "qwen/qwen3.8-27b",
+        "repeat": 2
+      },
+      "worker": 3
+    },
+    {
+      "event": "quota_wait",
+      "retry": 1,
+      "seconds": 120,
+      "slot": {
+        "arm": "full",
+        "caseId": "confirmation-11",
+        "model": "qwen/qwen3.8-27b",
+        "repeat": 2
+      },
+      "worker": 3
+    },
+    {
+      "event": "quota_wait",
+      "retry": 1,
+      "seconds": 120,
+      "slot": {
+        "arm": "full",
+        "caseId": "confirmation-09",
+        "model": "qwen/qwen3.8-27b",
+        "repeat": 2
+      },
+      "worker": 0
+    },
+    {
+      "event": "quota_wait",
+      "retry": 1,
+      "seconds": 120,
+      "slot": {
+        "arm": "full",
+        "caseId": "confirmation-10",
+        "model": "qwen/qwen3.8-27b",
+        "repeat": 1
+      },
+      "worker": 1
+    },
+    {
+      "event": "quota_wait",
+      "retry": 1,
+      "seconds": 120,
+      "slot": {
+        "arm": "compact",
+        "caseId": "confirmation-03",
+        "model": "qwen/qwen3.8-27b",
+        "repeat": 0
+      },
+      "worker": 0
+    },
+    {
+      "event": "quota_wait",
+      "retry": 1,
+      "seconds": 120,
+      "slot": {
+        "arm": "full",
+        "caseId": "confirmation-03",
+        "model": "qwen/qwen3.8-27b",
+        "repeat": 0
+      },
+      "worker": 2
+    }
+  ],
+  "failureCategories": {
+    "json_syntax": 32,
+    "output_empty": 2,
+    "relationship_violation": 8,
+    "trusted_membership": 8
+  },
+  "sessionWallMs": null,
+  "executionStop": {
+    "recordedAt": "2026-10-21T04:16:08.267517+00:00",
+    "reason": "Execution process cannot be resumed: tool reports network policy blocks https://api.groq.com:443. No credential change or network bypass attempted.",
+    "lastSavedCompletedSlots": 424,
+    "remainingSlots": 116,
+    "interruption": {
+      "lastSavedCompletedSlots": 424,
+      "unrecordedRequests": "unknown",
+      "possibleUnrecordedRequestsUpperBound": 8,
+      "basis": "Four workers with slot-level checkpoints and at most two calls per in-flight slot. The execution transport was blocked while resuming the process; whether any in-flight requests returned without durable slot records is unknown."
+    }
+  },
+  "recordingCompleteness": {
+    "allPhysicalRequestsKnown": false,
+    "interruptionNotices": [
+      {
+        "lastSavedCompletedSlots": 198,
+        "unrecordedRequests": "unknown",
+        "possibleUnrecordedRequestsUpperBound": 8,
+        "basis": "Four workers, at most two physical calls per in-flight slot; results are committed per slot, so an interrupted slot may have lost a completed initial response. Exact total usage and full response preservation cannot be claimed."
+      },
+      {
+        "lastSavedCompletedSlots": 424,
+        "unrecordedRequests": "unknown",
+        "possibleUnrecordedRequestsUpperBound": 8,
+        "basis": "Four workers with slot-level checkpoints and at most two calls per in-flight slot. The execution transport was blocked while resuming the process; whether any in-flight requests returned without durable slot records is unknown."
+      }
+    ],
+    "possibleUnrecordedRequestsUpperBound": 16,
+    "tokensScope": "Observed returned generations only; actual billing and unrecorded interrupted requests remain unknown."
+  },
+  "fencedPayloads": {
+    "responses": 32,
+    "semanticallyCorrectInsideFence": 32,
+    "notice": "Post-hoc diagnostic only. Markdown-wrapped outputs remain invalid JSON and failures; content is never cleaned for scoring or repair."
+  }
+}

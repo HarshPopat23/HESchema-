@@ -1,0 +1,22 @@
+{
+  "codeHash": "60f429156c0789e19ab86ad6455ec3833dccd6db3f23c531b573cefb3b824de1",
+  "revision": "ab363ae4931542db402beaa383da09b08d6dc927",
+  "dependencies": {
+    "heschema": "0.1.0",
+    "jsonschema": "4.26.0",
+    "httpx": "0.28.1",
+    "fastapi": "0.156.4",
+    "numpy": "2.3.5",
+    "scipy": "1.17.0",
+    "PyYAML": "6.0.3"
+  },
+  "pythonVersion": "3.12.14",
+  "hardware": {
+    "machine": "x86_64",
+    "processor": "x86_64"
+  },
+  "backendVersion": null,
+  "modelDigest": null,
+  "capturedAt": "2026-10-21T03:47:45.664801+00:00",
+  "notice": "Session 3 environment restored after workspace interruption; relevant HTTP/JSON Schema/PyYAML versions match prior session. FastAPI changed but is not used in this runner."
+}

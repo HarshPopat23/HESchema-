@@ -30,9 +30,9 @@ def quota_record(response, model):
                         if key.startswith('x-ratelimit-') or key == 'retry-after'}}
 
 
-def observed_provider_factory(out):
+def observed_provider_factory(out, request_interval=0):
     def factory(name, model, interval):
-        provider = Provider(name, model=model, interval=interval)
+        provider = Provider(name, model=model, interval=max(interval, request_interval))
 
         async def observe(response):
             if response.status_code == 429:

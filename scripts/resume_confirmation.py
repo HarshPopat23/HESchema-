@@ -29,17 +29,25 @@ def prepare_resume(previous, target, interval):
     if target.exists():
         raise ValueError('Use a new destination; never overwrite evidence')
     target.mkdir(parents=True)
-    for name in ('runs.jsonl', 'events.jsonl', 'environment.json'):
+    for name in ('runs.jsonl', 'events.jsonl', 'environment.json', 'environment-prior.json', 'transport_events.jsonl'):
         if (previous / name).exists():
             shutil.copyfile(previous / name, target / name)
     history_path = previous / 'session_history.json'
     history = json.loads(history_path.read_text()) if history_path.exists() else []
     history.append({'priorConfig': config,
+                    'priorEnvironment': json.loads((previous / 'environment.json').read_text()) if (previous / 'environment.json').exists() else None,
                     'priorSummary': json.loads((previous / 'summary.json').read_text()),
                     'priorJournalSha256': sha(previous / 'runs.jsonl'),
                     'recordedBeforeResumeAt': datetime.now(timezone.utc).isoformat(),
                     'nextWorkerIntervalSeconds': interval,
                     'reason': 'Quota stop; slower pacing after cooldown. Same frozen tasks, model settings and authorized credential pool. Completed slots are retained, pending repair replays its saved initial output.'})
+    stop_path = previous / 'execution_stop.json'
+    if stop_path.exists():
+        stop = json.loads(stop_path.read_text())
+        history[-1]['priorExecutionStop'] = stop
+        history[-1]['reason'] = 'Resume after documented execution stop; preserve incomplete request accounting.'
+        if stop.get('interruption'):
+            history[-1]['interruption'] = stop['interruption']
     (target / 'session_history.json').write_text(json.dumps(history, indent=2) + '\n')
     return target
 

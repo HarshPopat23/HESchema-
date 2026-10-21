@@ -112,6 +112,13 @@ tables use complete matched pairs and state their denominators. Usage includes
 all returned attempts, including prior checkpoints. Provider errors may lack
 usage, so recorded tokens cannot establish actual billing.
 
+Checkpoint durability is **per slot**, after its initial generation and any
+repair return. An abrupt process/workspace interruption can therefore lose
+in-flight responses before the slot is saved. Such calls cannot be reconstructed
+from the journal. Session histories disclose that uncertainty; observed usage
+must not be described as the total for every physical request. Per-request
+durability is a follow-up engineering improvement, not a guarantee of this runner.
+
 The runner uses previously authorized credentials described as free-tier; it
 cannot inspect account billing or independently enforce the account's billing
 configuration. It requests no paid provider or paid-tier change. Reported token
@@ -131,6 +138,8 @@ python -m pytest -q tests/test_confirmation.py tests/test_confirmation_analysis.
 # GROQ_API_KEYS accepts a comma-separated list; GROQ_API_KEY accepts one.
 python -m heschema.confirmation_run --execute --out results/confirmation-v1
 python scripts/analyze_confirmation.py results/confirmation-v1
+python scripts/verify_confirmation_evidence.py
+python scripts/write_confirmation_report.py
 ```
 
 After provider quotas recover, `scripts/resume_confirmation.py` can copy a

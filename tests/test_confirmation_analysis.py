@@ -94,9 +94,13 @@ def test_export_is_scoped_and_does_not_publish_reasoning_or_headers(tmp_path):
     (tmp_path / 'config.json').write_text(json.dumps({'freezeSha256': row['freezeSha256'], 'protocol': protocol}))
     (tmp_path / 'runs.jsonl').write_text(canonical(row) + '\n')
     (tmp_path / 'summary.json').write_text('{}')
+    (tmp_path / 'execution_stop.json').write_text(json.dumps({'reason': 'interruption', 'interruption': {
+        'possibleUnrecordedRequestsUpperBound': 8}}))
     target = tmp_path / 'export'
     result = EXPORT(tmp_path, target)
     assert result['completedSlots'] == 1
+    assert result['recordingCompleteness']['allPhysicalRequestsKnown'] is False
+    assert result['recordingCompleteness']['possibleUnrecordedRequestsUpperBound'] == 8
     public = '\n'.join(p.read_text() for p in target.iterdir())
     assert 'PRIVATE_REASONING_TEST_MARKER' not in public
     assert 'PRIVATE_HEADER_TEST_MARKER' not in public
@@ -104,6 +108,12 @@ def test_export_is_scoped_and_does_not_publish_reasoning_or_headers(tmp_path):
     assert response['text'] == canonical(valid_outputs(case)[0])
     assert response['correct'] is True
     assert 'textSha256' in response
+
+    wrong = copy.deepcopy(row)
+    wrong['firstCorrect'] = False
+    (tmp_path / 'runs.jsonl').write_text(canonical(wrong) + '\n')
+    with pytest.raises(ValueError, match='slot outcome'):
+        EXPORT(tmp_path, tmp_path / 'no-export')
 
     wrong = copy.deepcopy(row)
     wrong['result']['attempts'][0]['generation']['model'] = 'offline-stub'
@@ -129,6 +139,8 @@ def test_slower_resume_preserves_original_evidence_and_protocol(tmp_path):
     (previous / 'summary.json').write_text('{"completedSlots": 12}')
     original = '{"opaque": "preserved evidence"}\n'
     (previous / 'runs.jsonl').write_text(original)
+    (previous / 'execution_stop.json').write_text(json.dumps({'reason': 'interruption', 'interruption': {
+        'possibleUnrecordedRequestsUpperBound': 8}}))
     target = tmp_path / 'resumed'
     RESUME(previous, target, 20)
     assert (previous / 'runs.jsonl').read_text() == original
@@ -137,6 +149,7 @@ def test_slower_resume_preserves_original_evidence_and_protocol(tmp_path):
     history = json.loads((target / 'session_history.json').read_text())
     assert history[0]['priorConfig'] == config
     assert history[0]['nextWorkerIntervalSeconds'] == 20
+    assert history[0]['interruption']['possibleUnrecordedRequestsUpperBound'] == 8
     with pytest.raises(ValueError, match='new destination'):
         RESUME(previous, target, 20)
     with pytest.raises(ValueError, match='slower pacing'):
