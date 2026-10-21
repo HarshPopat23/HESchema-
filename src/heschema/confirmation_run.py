@@ -21,6 +21,8 @@ from .jsonio import canonical
 from .providers import Generation, Provider
 from .repair import RepairLimits, coordinate, request_generation
 from .schema import SchemaEngine
+from .study_evidence import VERSION as EVIDENCE_VERSION
+from .study_evidence import StudyEvidence, atomic_json
 from .validation import validate_contract
 
 
@@ -55,7 +57,7 @@ def read_journal(path):
     return [json.loads(line) for line in path.read_text().splitlines()]
 
 
-async def run_slot(provider, case, slot, protocol, previous=None):
+async def run_slot(provider, case, slot, protocol, previous=None, evidence=None):
     contract = Contract(**case['contract'])
     engine = SchemaEngine()
 
@@ -73,7 +75,7 @@ async def run_slot(provider, case, slot, protocol, previous=None):
                               limits=RepairLimits(repairs=protocol['repairs'], max_requests=2,
                                                   max_tokens=protocol['maxTokens'], feedback_chars=1000,
                                                   deadline_seconds=180),
-                              first_generation=replay)
+                              first_generation=replay, evidence=evidence)
     # Oracle is called only after repair and cannot affect prompts or retries.
     attempts = result['attempts']
     first_correct = oracle(case, attempts[0]['generation']['text']) if attempts else None
@@ -149,16 +151,20 @@ async def execute(out, *, pack=PACK, keys=None, interval=10, provider_factory=Pr
     out.mkdir(parents=True, exist_ok=True)
     code_paths = ('src/heschema/confirmation.py', 'src/heschema/confirmation_run.py', 'src/heschema/contract_prompt.py',
                   'src/heschema/providers.py', 'src/heschema/repair.py', 'src/heschema/validation.py',
-                  'src/heschema/rules.py', 'src/heschema/context_schema.py', 'src/heschema/repair_feedback.py')
+                  'src/heschema/rules.py', 'src/heschema/context_schema.py', 'src/heschema/repair_feedback.py',
+                  'src/heschema/study_evidence.py')
     root = Path(__file__).resolve().parents[2]
     config = {'freezeSha256': sha(pack / 'freeze.json'), 'protocol': protocol,
+              'evidenceVersion': EVIDENCE_VERSION,
               'codeHashes': {p: sha(root / p) for p in code_paths}, 'workers': len(keys), 'interval': interval}
     target = out / 'config.json'
     if target.exists() and json.loads(target.read_text()) != config:
         raise ValueError('Resume configuration differs')
     target.write_text(json.dumps(config, indent=2) + '\n')
     (out / 'schedule.json').write_text(json.dumps(slots, indent=2) + '\n')
-    rows = read_journal(out / 'runs.jsonl')
+    evidence = StudyEvidence(out)
+    rows = evidence.load_rows()
+    evidence.set_schedule(slots)
     latest = {slot_key(row): row for row in rows}
     pending = [slot for slot in slots if not latest.get(slot_key(slot), {}).get('complete')]
     queue = asyncio.Queue()
@@ -200,16 +206,18 @@ async def execute(out, *, pack=PACK, keys=None, interval=10, provider_factory=Pr
                     # Pacing is outside coordinator latency, explicitly recorded here.
                     await asyncio.sleep(wait)
                     last_start = time.monotonic()
+                    session = evidence.session(slot)
                     row = await run_slot(providers[slot['model']], by_id[slot['caseId']], slot, protocol,
-                                         previous=latest.get(slot_key(slot)))
+                                         previous=latest.get(slot_key(slot)), evidence=session)
                     row.update(worker=index, dispatchWaitMs=wait * 1000,
                                recordedAt=datetime.now(timezone.utc).isoformat(),
                                freezeSha256=config['freezeSha256'])
                     request_count += row['result']['requestsAttempted']
+                    row = session.commit(row, row['result'])
                     journal(out / 'runs.jsonl', row)
                     rows.append(row)
                     latest[slot_key(slot)] = row
-                    (out / 'summary.json').write_text(json.dumps(summarize(rows, slots), indent=2) + '\n')
+                    atomic_json(out / 'summary.json', summarize(rows, slots) | {'evidence': evidence.audit()})
                     done = sum(r['complete'] for r in latest.values())
                     print(f'completed={done}/{len(slots)} requests={request_count}', flush=True)
                     failure = row['result']['failure']
@@ -228,11 +236,15 @@ async def execute(out, *, pack=PACK, keys=None, interval=10, provider_factory=Pr
             for provider in providers.values():
                 await provider.close()
 
-    await asyncio.gather(*(worker(i, key) for i, key in enumerate(keys)))
+    try:
+        await asyncio.gather(*(worker(i, key) for i, key in enumerate(keys)))
+    finally:
+        evidence.audit()
     summary = summarize(rows, slots)
     summary.update(runWallMs=(time.perf_counter() - run_started) * 1000,
                    freezeCreatedAt=freeze['frozenAt'], stoppedAfterFailure=stopped.is_set())
-    (out / 'summary.json').write_text(json.dumps(summary, indent=2) + '\n')
+    summary['evidence'] = evidence.audit()
+    atomic_json(out / 'summary.json', summary)
     return summary
 
 

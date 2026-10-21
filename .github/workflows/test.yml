@@ -19,6 +19,7 @@ jobs:
       - run: python -m heschema.confirmation_run
       - run: python scripts/verify_confirmation_evidence.py
       - run: heschema benchmark --provider mock --limit 8 --repeats 1 --out results/ci
+      - run: heschema evidence-audit results/ci
       - uses: actions/setup-node@v4
         with:
           node-version: '22'

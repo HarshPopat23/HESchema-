@@ -21,6 +21,8 @@ from heschema.failure_categories import classify
 from heschema.jsonio import canonical
 from heschema.providers import Generation
 from heschema.schema import SchemaEngine
+from heschema.study_evidence import VERSION as EVIDENCE_VERSION
+from heschema.study_evidence import EvidenceError, StudyEvidence
 from heschema.timing import summarize_timing
 from heschema.validation import validate_contract
 
@@ -82,6 +84,11 @@ def export(run_dir, target=PACK / 'evidence'):
     if any(sha(root / path) != expected for path, expected in config.get('codeHashes', {}).items()):
         raise ValueError('Measured runtime changed; revalidate using its preserved implementation')
     rows = read_journal(run_dir / 'runs.jsonl')
+    request_evidence = None
+    if config.get('evidenceVersion') == EVIDENCE_VERSION:
+        request_evidence = StudyEvidence(run_dir).audit()
+        if not request_evidence['recordsVerified']:
+            raise EvidenceError('Cannot export results with missing request evidence')
     slots = schedule(cases, protocol)
     allowed_slots = {slot_key(s) for s in slots}
     responses, checkpoints, failures = [], [], []
@@ -134,6 +141,8 @@ def export(run_dir, target=PACK / 'evidence'):
                               'failure': result['failure'], 'timing': result['timing'],
                               'requestsAttempted': result['requestsAttempted']})
     summary = summarize(rows, slots)
+    if request_evidence is not None:
+        summary['requestEvidence'] = request_evidence
     summary.update(audit=freeze['audit'], paired=paired_analysis(rows),
                    timing=summarize_timing([{'timing': row['result']['timing'],
                                              'status': row['result']['stopReason']} for row in rows]),

@@ -21,6 +21,8 @@ from .schema import SchemaEngine
 def main():
     parser = argparse.ArgumentParser(prog="heschema")
     commands = parser.add_subparsers(dest="command", required=True)
+    evidence = commands.add_parser('evidence-audit', help='Check saved study evidence without model calls')
+    evidence.add_argument('path')
     research = commands.add_parser('research-audit', help='Audit prospective category cases without initializing providers')
     research.add_argument('--dataset', default=str(ROOT / 'research/relationship-categories-v1/cases.jsonl'))
     research.add_argument('--sources', default=str(ROOT / 'research/relationship-categories-v1/sources.json'))
@@ -88,7 +90,13 @@ def main():
     serve.add_argument("--host", default="127.0.0.1")
     serve.add_argument("--port", default=8000, type=int)
     args = parser.parse_args()
-    if args.command == 'research-audit':
+    if args.command == 'evidence-audit':
+        from .study_evidence import StudyEvidence
+        report = StudyEvidence(args.path).audit()
+        print(json.dumps(report, indent=2))
+        if not report['evidenceComplete'] or report.get('scheduleComplete') is False:
+            raise SystemExit(1)
+    elif args.command == 'research-audit':
         from .research_cases import audit_cases
         report = audit_cases(args.dataset, args.sources, backend=args.engine)
         if args.out:

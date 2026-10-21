@@ -32,6 +32,10 @@ def prepare_resume(previous, target, interval):
     for name in ('runs.jsonl', 'events.jsonl', 'environment.json', 'environment-prior.json', 'transport_events.jsonl'):
         if (previous / name).exists():
             shutil.copyfile(previous / name, target / name)
+    if (previous / 'request-evidence').exists():
+        shutil.copytree(previous / 'request-evidence', target / 'request-evidence')
+    if (previous / 'evidence_schedule.json').exists():
+        shutil.copyfile(previous / 'evidence_schedule.json', target / 'evidence_schedule.json')
     history_path = previous / 'session_history.json'
     history = json.loads(history_path.read_text()) if history_path.exists() else []
     history.append({'priorConfig': config,
