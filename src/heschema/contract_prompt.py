@@ -35,4 +35,15 @@ def contract_messages(contract, snapshot, evidence, output_schema, prompt, *, st
                     + canonical([rule['target'] for rule in plan])
                     + '. Omit these fields from the document/tool arguments. '
                     'The application calculates them from validated inputs; return all other fields normally.')
+    # Format dynamic list boundaries/enums to prevent LLM selection hallucination
+    list_choices = []
+    for binding in evidence.get('activeBindings', []):
+        val = binding.get('value')
+        loc = binding.get('instanceLocation', '')
+        if (binding.get('keyword') == 'enum' or isinstance(val, list)) and isinstance(val, list) and val:
+            formatted_items = ", ".join(f"`{item}`" if isinstance(item, str) else str(item) for item in val[:50])
+            suffix = f" ... ({len(val)} options total)" if len(val) > 50 else ""
+            list_choices.append(f"- Permitted choices for `{loc}`: [{formatted_items}{suffix}]")
+    if list_choices:
+        content += '\nDynamic list boundaries:\n' + '\n'.join(list_choices)
     return [{'role': 'system', 'content': content}, {'role': 'user', 'content': prompt}]

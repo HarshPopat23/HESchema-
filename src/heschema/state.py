@@ -29,6 +29,20 @@ class StateStore:
         finally:
             db.close()
 
+    @contextmanager
+    def transaction(self, mode="IMMEDIATE"):
+        db = sqlite3.connect(self.path, timeout=10, isolation_level=None)
+        db.row_factory = sqlite3.Row
+        db.execute(f"BEGIN {mode}")
+        try:
+            yield db
+            db.execute("COMMIT")
+        except Exception:
+            db.execute("ROLLBACK")
+            raise
+        finally:
+            db.close()
+
     def create(self, owner, prompt, state):
         state_id = secrets.token_urlsafe(24)
         with self.connect() as db:
@@ -47,20 +61,32 @@ class StateStore:
         return result
 
     def confirm(self, state_id, owner, version):
-        with self.connect() as db:
+        with self.transaction("IMMEDIATE") as db:
             cursor = db.execute("UPDATE states SET confirmed=1 WHERE id=? AND owner=? AND version=?",
                                 (state_id, owner, version))
             if cursor.rowcount != 1:
                 raise ValueError("State ownership/version mismatch")
-        return self.get(state_id, owner)
+            row = db.execute("SELECT * FROM states WHERE id=? AND owner=?", (state_id, owner)).fetchone()
+            if row is None:
+                raise KeyError("State not found")
+            result = dict(row)
+            result["state"] = loads(result.pop("payload"))
+            result["confirmed"] = bool(result["confirmed"])
+            return result
 
     def replace(self, state_id, owner, version, state):
-        with self.connect() as db:
+        with self.transaction("IMMEDIATE") as db:
             cursor = db.execute("UPDATE states SET payload=?,version=version+1,confirmed=0 WHERE id=? AND owner=? AND version=?",
                                 (canonical(state), state_id, owner, version))
             if cursor.rowcount != 1:
                 raise ValueError("Stale state or unknown owner")
-        return self.get(state_id, owner)
+            row = db.execute("SELECT * FROM states WHERE id=? AND owner=?", (state_id, owner)).fetchone()
+            if row is None:
+                raise KeyError("State not found")
+            result = dict(row)
+            result["state"] = loads(result.pop("payload"))
+            result["confirmed"] = bool(result["confirmed"])
+            return result
 
     def create_context(self, owner, contract, data, approved_pointers, facts=None, expires_at=None):
         from datetime import datetime, timezone
@@ -100,17 +126,26 @@ class StateStore:
 
     def confirm_context(self, context_id, owner, version):
         from .context_schema import check_context
-        proposed = self.get_context(context_id, owner)
-        check_context({**proposed, 'confirmed': True}, version=version)
-        with self.connect() as db:
+        with self.transaction("IMMEDIATE") as db:
+            db.execute('CREATE TABLE IF NOT EXISTS contexts (id TEXT PRIMARY KEY, owner TEXT NOT NULL, version INTEGER NOT NULL, confirmed INTEGER NOT NULL, payload TEXT NOT NULL)')
+            row = db.execute('SELECT * FROM contexts WHERE id=? AND owner=?', (context_id, owner)).fetchone()
+            if row is None:
+                raise KeyError('Context not found')
+            proposed = {'id': row['id'], 'version': row['version'], 'confirmed': bool(row['confirmed']), **loads(row['payload'])}
+            check_context({**proposed, 'confirmed': True}, version=version)
             cursor = db.execute('UPDATE contexts SET confirmed=1 WHERE id=? AND owner=? AND version=?', (context_id, owner, version))
             if cursor.rowcount != 1:
                 raise ValueError('Stale context version')
-        return self.get_context(context_id, owner)
+            row = db.execute('SELECT * FROM contexts WHERE id=? AND owner=?', (context_id, owner)).fetchone()
+            return {'id': row['id'], 'version': row['version'], 'confirmed': bool(row['confirmed']), **loads(row['payload'])}
 
     def invalidate_context(self, context_id, owner, version):
-        with self.connect() as db:
+        with self.transaction("IMMEDIATE") as db:
+            db.execute('CREATE TABLE IF NOT EXISTS contexts (id TEXT PRIMARY KEY, owner TEXT NOT NULL, version INTEGER NOT NULL, confirmed INTEGER NOT NULL, payload TEXT NOT NULL)')
             cursor = db.execute('UPDATE contexts SET confirmed=0, version=version+1 WHERE id=? AND owner=? AND version=?', (context_id, owner, version))
             if cursor.rowcount != 1:
                 raise ValueError('Stale context version')
-        return self.get_context(context_id, owner)
+            row = db.execute('SELECT * FROM contexts WHERE id=? AND owner=?', (context_id, owner)).fetchone()
+            if row is None:
+                raise KeyError('Context not found')
+            return {'id': row['id'], 'version': row['version'], 'confirmed': bool(row['confirmed']), **loads(row['payload'])}

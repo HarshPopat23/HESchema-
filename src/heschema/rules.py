@@ -8,6 +8,7 @@ from .diagnostics import diagnostic, parts, resolve
 
 RULE_POINTERS = {
     'product_equals': ('target',), 'sum_equals': ('target',),
+    'division_equals': ('target',), 'percentage_of': ('target',),
     'date_before': ('left', 'right'), 'equals': ('left', 'right'),
     'reference_member': ('target', 'contextLocation'),
     'member_of': ('target', 'arrayLocation'),
@@ -16,7 +17,7 @@ RULE_POINTERS = {
     'unique_by': ('arrayLocation', 'itemLocation'),
 }
 KINDS = set(RULE_POINTERS)
-CALCULABLE_KINDS = {'product_equals', 'sum_equals', 'count_equals', 'sum_items_equals'}
+CALCULABLE_KINDS = {'product_equals', 'sum_equals', 'division_equals', 'percentage_of', 'count_equals', 'sum_items_equals'}
 
 
 def json_equal(left, right):
@@ -46,18 +47,23 @@ def check_rules(rules):
             raise ValueError('Relationship rules require distinct IDs and a supported kind')
         ids.add(rule_id)
         required = set(RULE_POINTERS[kind])
-        if kind in {'product_equals', 'sum_equals'}:
+        if kind in {'product_equals', 'sum_equals', 'division_equals', 'percentage_of'}:
             required.add('operands')
-        options = {'compute'} if kind in CALCULABLE_KINDS else set()
+        options = {'compute', 'precision'} if kind in CALCULABLE_KINDS else set()
         if set(rule) - options != {'id', 'kind'} | required:
             raise ValueError(f'{kind} requires exactly these options: {sorted(required)}')
         if 'compute' in rule and rule['compute'] not in ('model', 'application'):
             raise ValueError('compute must be model or application')
+        if 'precision' in rule:
+            if not isinstance(rule['precision'], int) or rule['precision'] < 0:
+                raise ValueError('precision must be a non-negative integer')
         for key in RULE_POINTERS[kind]:
             parts(rule[key])
-        if kind in {'product_equals', 'sum_equals'}:
+        if kind in {'product_equals', 'sum_equals', 'division_equals', 'percentage_of'}:
             if not isinstance(rule.get('operands'), list) or not rule['operands']:
                 raise ValueError('Arithmetic rule requires nonempty operand pointers')
+            if kind in {'division_equals', 'percentage_of'} and len(rule['operands']) != 2:
+                raise ValueError(f'{kind} requires exactly two operand pointers')
             for p in rule['operands']:
                 parts(p)
 
@@ -78,19 +84,59 @@ def _integer(value):
     raise ValueError('Expected exact integer minor units; booleans, fractions and unsafe reals are not operands')
 
 
+def _number(value):
+    if type(value) is bool:
+        raise ValueError('Expected number; booleans are not numeric operands')
+    if type(value) in {int, float} and isfinite(value):
+        return value
+    raise ValueError('Expected finite number; fractions, booleans or non-numeric values are not operands')
+
+
 def calculation_value(document, rule):
     """One arithmetic implementation shared by checking and opted-in calculation."""
     kind = rule['kind']
+    precision = rule.get('precision')
+    is_float_mode = (precision is not None) or (kind in {'division_equals', 'percentage_of'})
+    parser = _number if is_float_mode else _integer
+
     if kind in {'product_equals', 'sum_equals'}:
-        operands = [_integer(resolve(document, p)) for p in rule['operands']]
-        return prod(operands) if kind == 'product_equals' else sum(operands)
+        raw_ops = [resolve(document, p) for p in rule['operands']]
+        operands = [parser(x) for x in raw_ops]
+        val = prod(operands) if kind == 'product_equals' else sum(operands)
+        if precision is not None:
+            return round(float(val), precision)
+        if is_float_mode:
+            return float(val) if any(type(x) is float for x in operands) else int(val)
+        return int(val)
+    if kind == 'division_equals':
+        raw_a = resolve(document, rule['operands'][0])
+        raw_b = resolve(document, rule['operands'][1])
+        a, b = _number(raw_a), _number(raw_b)
+        if b == 0:
+            raise ValueError('Division by zero in calculation rule')
+        val = a / b
+        return round(float(val), precision) if precision is not None else val
+    if kind == 'percentage_of':
+        raw_rate = resolve(document, rule['operands'][0])
+        raw_total = resolve(document, rule['operands'][1])
+        rate, total = _number(raw_rate), _number(raw_total)
+        val = (rate * total) / 100.0
+        return round(float(val), precision) if precision is not None else val
     if kind not in {'count_equals', 'sum_items_equals'}:
         raise ValueError('Unsupported calculation kind')
     items = resolve(document, rule['arrayLocation'])
     if not isinstance(items, list):
         raise ValueError(f'{kind} requires an array at {rule["arrayLocation"]}')
-    return len(items) if kind == 'count_equals' else sum(
-        _integer(resolve(item, rule['itemLocation'])) for item in items)
+    if kind == 'count_equals':
+        return len(items)
+    raw_vals = [resolve(item, rule['itemLocation']) for item in items]
+    operands = [parser(x) for x in raw_vals]
+    val = sum(operands)
+    if precision is not None:
+        return round(float(val), precision)
+    if is_float_mode:
+        return float(val) if any(type(x) is float for x in operands) else int(val)
+    return int(val)
 
 
 def evaluate_rules(document, rules, context=None, trusted_locations=None):
@@ -99,15 +145,23 @@ def evaluate_rules(document, rules, context=None, trusted_locations=None):
         kind, rule_id = rule['kind'], rule['id']
         location = rule.get('target', rule.get('left', rule.get('arrayLocation', '')))
         input_locations = [rule[k] for k in RULE_POINTERS[kind]] + rule.get('operands', [])
+        precision = rule.get('precision')
+        is_float_mode = (precision is not None) or (kind in {'division_equals', 'percentage_of'})
+        parser = _number if is_float_mode else _integer
         try:
-            if kind in {'product_equals', 'sum_equals'}:
+            if kind in {'product_equals', 'sum_equals', 'division_equals', 'percentage_of'}:
                 # Preserve existing missing-evidence precedence before type checks.
                 for source in rule['operands']:
                     resolve(document, source)
                 raw_actual = resolve(document, rule['target'])
                 expected = calculation_value(document, rule)
-                actual = _integer(raw_actual)
-                valid = actual == expected
+                actual = parser(raw_actual)
+                if precision is not None:
+                    valid = round(float(actual), precision) == round(float(expected), precision)
+                elif type(actual) is int and type(expected) is int:
+                    valid = actual == expected
+                else:
+                    valid = abs(float(actual) - float(expected)) < 1e-9
             elif kind == 'date_before':
                 actual, expected = resolve(document, rule['left']), resolve(document, rule['right'])
                 valid = _date(actual) < _date(expected)
@@ -129,10 +183,19 @@ def evaluate_rules(document, rules, context=None, trusted_locations=None):
                 if kind == 'member_of':
                     actual, expected = resolve(document, rule['target']), items
                     valid = any(json_equal(actual, item) for item in items)
-                elif kind in {'count_equals', 'sum_items_equals'}:
+                elif kind == 'count_equals':
                     actual = _integer(resolve(document, rule['target']))
                     expected = calculation_value(document, rule)
                     valid = actual == expected
+                elif kind == 'sum_items_equals':
+                    actual = parser(resolve(document, rule['target']))
+                    expected = calculation_value(document, rule)
+                    if precision is not None:
+                        valid = round(float(actual), precision) == round(float(expected), precision)
+                    elif type(actual) is int and type(expected) is int:
+                        valid = actual == expected
+                    else:
+                        valid = abs(float(actual) - float(expected)) < 1e-9
                 elif kind == 'unique_by':
                     actual = [resolve(item, rule['itemLocation']) for item in items]
                     expected = 'distinct values at the declared item pointer'

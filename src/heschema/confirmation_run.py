@@ -229,6 +229,13 @@ async def execute(out, *, pack=PACK, keys=None, interval=10, provider_factory=Pr
                                                           'slot': slot, 'retry': quota_retries})
                             await asyncio.sleep(protocol['quotaWaitSeconds'])
                             continue
+                        if failure.get('code') in {'network_error', 'timeout'} and quota_retries < protocol.get('maximumQuotaRetries', 3):
+                            quota_retries += 1
+                            journal(out / 'events.jsonl', {'worker': index, 'event': 'network_wait',
+                                                          'seconds': 5 * quota_retries,
+                                                          'slot': slot, 'retry': quota_retries})
+                            await asyncio.sleep(5 * quota_retries)
+                            continue
                         stopped.set()
                         print('Stopped after provider failure; preserved partial results.', flush=True)
                     break

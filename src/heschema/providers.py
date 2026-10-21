@@ -220,15 +220,20 @@ class Provider:
                         response = await self.client.post(url, headers=headers, json=payload)
                         attempt['httpStatus'] = response.status_code
                 except httpx.TimeoutException:
-                    raise ProviderError(f"{self.name}: request timed out after {int(self.timeout)}s", code="timeout", requests=attempts + 1, elapsed_ms=(time.perf_counter() - start) * 1000) from None
-                except httpx.RequestError:
-                    if not retry or attempts >= 2:
-                        raise ProviderError(f"{self.name}: network request failed", code="network_error", requests=attempts + 1) from None
+                    if not retry or attempts >= 3:
+                        raise ProviderError(f"{self.name}: request timed out after {int(self.timeout)}s", code="timeout", requests=attempts + 1, elapsed_ms=(time.perf_counter() - start) * 1000) from None
                     attempts += 1
                     with timing.phase('retryWaitMs'):
-                        await asyncio.sleep(min(2 ** attempts, 8))
+                        await asyncio.sleep(min(2 ** attempts, 16))
                     continue
-                if response.status_code in {429, 500, 502, 503, 504} and retry and attempts < 2:
+                except (httpx.RequestError, httpx.TransportError) as exc:
+                    if not retry or attempts >= 3:
+                        raise ProviderError(f"{self.name}: network request failed: {str(exc)[:200]}", code="network_error", requests=attempts + 1) from None
+                    attempts += 1
+                    with timing.phase('retryWaitMs'):
+                        await asyncio.sleep(min(2 ** attempts, 16))
+                    continue
+                if response.status_code in {429, 500, 502, 503, 504} and retry and attempts < 3:
                     attempts += 1
                     try:
                         retry_after = float(response.headers.get("retry-after", 2 ** attempts))

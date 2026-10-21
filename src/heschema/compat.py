@@ -68,9 +68,7 @@ async def handle_chat_completion(raw_body: dict[str, Any], operator_identity: st
     if raw_body.get("stream") is True:
         return make_error_response(400, "Streaming is not supported by this endpoint; set stream to false or omit it.", param="stream", code="streaming_not_supported")
 
-    if raw_body.get("tools") or raw_body.get("tool_choice"):
-        return make_error_response(400, "Tools and tool calls are not supported by this endpoint.", param="tools", code="tools_not_supported")
-
+    tools = raw_body.get("tools")
     if raw_body.get("n") is not None and raw_body.get("n") > 1:
         return make_error_response(400, "Multiple completions (n > 1) are not supported.", param="n", code="n_not_supported")
 
@@ -111,9 +109,92 @@ async def handle_chat_completion(raw_body: dict[str, Any], operator_identity: st
     if mode not in {"native_schema", "prompt_only"}:
         return make_error_response(400, f"Invalid heschema_mode '{mode}'. Supported modes: 'native_schema', 'prompt_only'.", param="heschema_mode", code="invalid_mode")
 
+    if tools:
+        # Tool call proxy handling
+        tools_map = {}
+        for t in tools:
+            if isinstance(t, dict) and t.get("type") == "function" and "function" in t:
+                fn = t["function"]
+                tools_map[fn["name"]] = fn.get("parameters", {"type": "object"})
+
+        tool_schemas_text = "\n".join(f"- Tool `{name}`: {canonical(schema)}" for name, schema in tools_map.items())
+        grounding_content = (
+            "[TOOL INVOCATION INSTRUCTION]\n"
+            "You have access to the following tools:\n" + tool_schemas_text +
+            "\nTo call a tool, reply ONLY with a JSON object in this format:\n"
+            '{"action": "call_tool", "tool": "<tool_name>", "arguments": {<arguments>}}'
+        )
+        messages_payload = [{"role": m.role, "content": m.content} for m in req.messages]
+        messages_payload.append({"role": "system", "content": grounding_content})
+
+        provider_name = "mock" if (req.model.startswith("mock") or req.model == "offline-stub") else "ollama"
+        try:
+            provider = Provider(provider_name, model=req.model)
+        except Exception as exc:
+            return make_error_response(400, f"Failed to initialize provider: {exc}", code="provider_init_failed")
+
+        try:
+            result = await provider.generate(
+                messages=messages_payload,
+                seed=req.seed if req.seed is not None else 0,
+                max_tokens=max_tokens,
+                temperature=req.temperature,
+                retry=False,
+            )
+        except ProviderError as exc:
+            return make_error_response(502, f"Upstream generation failed: {exc}", error_type="api_error", code="bad_gateway")
+        finally:
+            await provider.close()
+
+        tool_calls = []
+        try:
+            from .jsonio import loads
+            parsed = loads(result.text)
+            if isinstance(parsed, dict) and parsed.get("action") == "call_tool" and parsed.get("tool") in tools_map:
+                tname = parsed["tool"]
+                targs = parsed.get("arguments", {})
+                from .guard import guard
+                contract = Contract(id=tname, version="1.0", outputKind="tool_envelope", tool=tname, schema=tools_map[tname])
+                val = guard.validate(parsed, contract)
+                calc_info = val.get("calculation", {})
+                if calc_info.get("status") == "applied" and calc_info.get("values"):
+                    for item in calc_info["values"]:
+                        key = item["target"].lstrip("/").split("/")[0]
+                        targs[key] = item["value"]
+                tool_calls.append({
+                    "id": f"call_{secrets.token_hex(8)}",
+                    "type": "function",
+                    "function": {
+                        "name": tname,
+                        "arguments": canonical(targs),
+                    }
+                })
+        except Exception:
+            pass
+
+        envelope = {
+            "id": f"chatcmpl-{secrets.token_hex(12)}",
+            "object": "chat.completion",
+            "created": int(time.time()),
+            "model": result.model or req.model,
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {
+                        "role": "assistant",
+                        "content": None if tool_calls else result.text,
+                        "tool_calls": tool_calls if tool_calls else None,
+                    },
+                    "finish_reason": "tool_calls" if tool_calls else "stop",
+                }
+            ],
+            "heschema": {"generation": result.diagnostic(), "executionAuthorized": False},
+        }
+        return JSONResponse(status_code=200, content=envelope)
+
     # Response format checking
     if not req.response_format or req.response_format.type != "json_schema" or not req.response_format.json_schema:
-        return make_error_response(400, "Endpoint requires response_format of type 'json_schema' with nested 'json_schema' object.", param="response_format", code="unsupported_response_format")
+        return make_error_response(400, "Endpoint requires response_format of type 'json_schema' with nested 'json_schema' object or tools parameter.", param="response_format", code="unsupported_response_format")
 
     json_schema_obj = req.response_format.json_schema
     schema_dict = json_schema_obj.schema_

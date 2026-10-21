@@ -641,6 +641,13 @@ def create_app(db_path=None, contract_registry=None):
             return make_error_response(400, "Invalid JSON body in completion request", code="parse_error")
         return await handle_chat_completion(raw, "operator" if token else "local-operator")
 
+    @app.get("/v1/models")
+    async def openai_list_models():
+        models = []
+        for name, conf in registry().items():
+            models.append({"id": conf["model"], "object": "model", "created": 1700000000, "owned_by": name})
+        return {"object": "list", "data": models}
+
     @app.get("/ui/cli-integration/status")
     async def cli_integration_status(identity=Depends(owner)):
         cli_info = await probe_cli_support()

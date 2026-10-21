@@ -49,6 +49,9 @@ def check_schema(schema):
     if isinstance(schema, dict) and any(required and uri not in known_vocabularies for uri, required in schema.get('$vocabulary', {}).items()):
         raise ValueError('Required custom vocabulary is not implemented; use declared application rules')
 
+    from .security import check_schema_complexity
+    check_schema_complexity(schema)
+
     def walk(node):
         if isinstance(node, dict):
             for key in ("$ref", "$dynamicRef"):
