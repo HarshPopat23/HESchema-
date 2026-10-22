@@ -15,6 +15,74 @@ A runnable **schema-effect experiment harness + state-aware tool-argument valida
 
 **Important:** `PASS` means the implemented checks passed. It is not universal safety certification, proof that an extracted state is true, or permission to book/pay. This project never executes flight bookings, payments, calendar writes, or inventory changes.
 
+## System Architecture
+
+```mermaid
+flowchart TD
+    Client["Client / SPA / Agent UI"] -->|OpenAI SDK / SSE Stream / REST| Proxy["JHSchema Proxy & API<br/>• CORS & Correlation Middleware (X-Request-ID, Server-Timing)<br/>• Multitenant Tenant-Isolated Authentication"]
+    
+    Proxy --> StateStore["StateStore<br/>• SQLite (WAL Mode) / PostgreSQL<br/>• Versioning & Optimistic Locking"]
+    Proxy --> Registry["ContractRegistry<br/>• Immutable Schemas<br/>• Relationship Rules"]
+    
+    StateStore --> Transport["Pipelined Provider Transport<br/>• Decoupled Pacing Reservation Lock<br/>• Exponential Backoff & Network Resilience"]
+    Registry --> Transport
+    
+    Transport --> LLM["Remote LLM Provider<br/>(Groq / Anthropic / Ollama / etc.)"]
+    LLM -->|Raw Model Generation| Engine["SchemaEngine & Relational Rule Validator<br/>• JSON Schema 2020-12 / Blaze Native Validation<br/>• Deterministic Arithmetic & Epsilon Tolerance Engine"]
+    
+    Engine -->|PASS| Out["Accepted Output / SSE Stream"]
+    Engine -->|FAIL| Repair["Repair Coordinator<br/>• Structured JSON Pointer Diffs (RFC 6901)<br/>• Targeted Diagnostic Feedback Loop"]
+    Repair -.->|Feedback Prompt| LLM
+```
+
+```text
+ [Client / SPA / Agent UI]
+             │
+             ▼  (OpenAI SDK / SSE Stream / REST)
+ ┌──────────────────────────────────────────────────────────────┐
+ │                      JHSchema Proxy & API                    │
+ │  • CORS & Correlation Middleware (X-Request-ID, Server-Timing)│
+ │  • Multitenant Tenant-Isolated Authentication                 │
+ └──────────────┬───────────────────────────────┬───────────────┘
+                │                               │
+                ▼                               ▼
+    ┌──────────────────────┐        ┌──────────────────────┐
+    │     StateStore       │        │   ContractRegistry   │
+    │  • SQLite (WAL Mode) │        │  • Immutable Schemas │
+    │  • Versioning/Owners │        │  • Relationship Rules│
+    └──────────────────────┘        └──────────────────────┘
+                │                               │
+                └───────────────┬───────────────┘
+                                ▼
+ ┌──────────────────────────────────────────────────────────────┐
+ │                Pipelined Provider Transport                  │
+ │  • Decoupled Pacing Reservation Lock                         │
+ │  • Exponential Backoff & Transient Network Resilience        │
+ └──────────────────────────────┬───────────────────────────────┘
+                                │
+                                ▼
+                       [Remote LLM Provider]
+                  (Groq / Anthropic / Ollama / etc.)
+                                │
+                                ▼  (Raw Model Generation)
+ ┌──────────────────────────────────────────────────────────────┐
+ │             SchemaEngine & Relational Rule Validator         │
+ │  • JSON Schema 2020-12 / Blaze Native Validation            │
+ │  • Deterministic Arithmetic & Epsilon Tolerance Engine       │
+ └──────────────────────────────┬───────────────────────────────┘
+                │
+                ├─── PASS ──────────────► [Accepted Output / SSE Stream]
+                │
+                └─── FAIL (Repair Mode)
+                        │
+                        ▼
+ ┌──────────────────────────────────────────────────────────────┐
+ │                    Repair Coordinator                        │
+ │  • Structured JSON Pointer Diffs (RFC 6901)                  │
+ │  • Targeted Diagnostic Feedback Loop                         │
+ └──────────────────────────────────────────────────────────────┘
+```
+
 ## What's included
 
 - **480 distinct, reproducible synthetic benchmark cases**: six domains × 80 tasks, with hidden evaluation oracles.
