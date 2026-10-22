@@ -1,8 +1,10 @@
 """Checked schema registration and bounded evaluator caches."""
 
+import concurrent.futures
 import copy
 import os
 import subprocess
+import sys
 import tempfile
 import threading
 import time
@@ -94,6 +96,7 @@ class BlazeWorker:
             env=child_environment(),
         )
         self.lock = threading.Lock()
+        self._executor = concurrent.futures.ThreadPoolExecutor(max_workers=1) if sys.platform == "win32" else None
 
     def request(self, request):
         # The worker handles only local data and never receives model/API credentials.
@@ -102,18 +105,29 @@ class BlazeWorker:
                 raise RuntimeError("Blaze worker unavailable; install native dependencies")
             self.process.stdin.write(canonical(request) + "\n")
             self.process.stdin.flush()
-            import select
-            # POSIX service support; Windows users can use the default Python engine.
-            ready, _, _ = select.select([self.process.stdout], [], [], 30)
-            if not ready:
-                self.process.kill()
-                raise TimeoutError("Blaze evaluator timed out")
-            result = loads(self.process.stdout.readline())
+            if sys.platform == "win32":
+                future = self._executor.submit(self.process.stdout.readline)
+                try:
+                    line = future.result(timeout=30)
+                except concurrent.futures.TimeoutError:
+                    self.process.kill()
+                    raise TimeoutError("Blaze evaluator timed out") from None
+            else:
+                import select
+                # POSIX service support
+                ready, _, _ = select.select([self.process.stdout], [], [], 30)
+                if not ready:
+                    self.process.kill()
+                    raise TimeoutError("Blaze evaluator timed out")
+                line = self.process.stdout.readline()
+            result = loads(line)
             if "error" in result:
                 raise RuntimeError(result["error"])
             return result
 
     def close(self):
+        if self._executor is not None:
+            self._executor.shutdown(wait=False)
         if self.process.poll() is None:
             self.process.terminate()
             self.process.wait(timeout=5)

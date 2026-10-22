@@ -5,6 +5,7 @@ import os
 import time
 from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Header, HTTPException, Request
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from .contracts import Contract
@@ -71,8 +72,6 @@ async def chat_completions(
     authorization: Optional[str] = Header(None),
 ):
     """Transparently intercept tool calls, validate against contracts, and repair calculated fields."""
-    if body.stream:
-        raise HTTPException(status_code=400, detail="Streaming is not supported in proxy validation mode.")
 
     # Extract API key if supplied in Authorization header
     api_key = None
@@ -80,9 +79,6 @@ async def chat_completions(
         api_key = authorization.split("Bearer ", 1)[1].strip()
 
     provider_name = _detect_provider(body.model)
-    env_key_name = registry().get(provider_name, {}).get("key_env")
-    if api_key and env_key_name:
-        os.environ[env_key_name] = api_key
 
     # Build tools lookup by name
     tools_by_name = {}
@@ -92,7 +88,7 @@ async def chat_completions(
                 fn = t["function"]
                 tools_by_name[fn["name"]] = fn.get("parameters", {"type": "object"})
 
-    provider = Provider(provider_name, model=body.model, interval=0)
+    provider = Provider(provider_name, model=body.model, interval=0, key=api_key)
     try:
         # Generate completion via provider
         gen = await provider.generate(
@@ -148,6 +144,107 @@ async def chat_completions(
         pass
 
     content = None if tool_calls else raw_text
+
+    if body.stream:
+        async def event_generator():
+            cmpl_id = f"chatcmpl-{int(time.time()*1000)}"
+            created_ts = int(time.time())
+
+            # 1. Initial role announcement chunk
+            chunk_init = {
+                "id": cmpl_id,
+                "object": "chat.completion.chunk",
+                "created": created_ts,
+                "model": body.model,
+                "choices": [
+                    {
+                        "index": 0,
+                        "delta": {"role": "assistant"},
+                        "finish_reason": None,
+                    }
+                ],
+            }
+            yield f"data: {json.dumps(chunk_init)}\n\n"
+
+            # 2. Yield tool_calls or text content delta
+            if tool_calls:
+                for idx, tc in enumerate(tool_calls):
+                    chunk_tc = {
+                        "id": cmpl_id,
+                        "object": "chat.completion.chunk",
+                        "created": created_ts,
+                        "model": body.model,
+                        "choices": [
+                            {
+                                "index": 0,
+                                "delta": {
+                                    "tool_calls": [
+                                        {
+                                            "index": idx,
+                                            "id": tc["id"],
+                                            "type": "function",
+                                            "function": {
+                                                "name": tc["function"]["name"],
+                                                "arguments": tc["function"]["arguments"],
+                                            },
+                                        }
+                                    ]
+                                },
+                                "finish_reason": None,
+                            }
+                        ],
+                    }
+                    yield f"data: {json.dumps(chunk_tc)}\n\n"
+
+                chunk_final = {
+                    "id": cmpl_id,
+                    "object": "chat.completion.chunk",
+                    "created": created_ts,
+                    "model": body.model,
+                    "choices": [
+                        {
+                            "index": 0,
+                            "delta": {},
+                            "finish_reason": "tool_calls",
+                        }
+                    ],
+                }
+                yield f"data: {json.dumps(chunk_final)}\n\n"
+            else:
+                chunk_content = {
+                    "id": cmpl_id,
+                    "object": "chat.completion.chunk",
+                    "created": created_ts,
+                    "model": body.model,
+                    "choices": [
+                        {
+                            "index": 0,
+                            "delta": {"content": content or ""},
+                            "finish_reason": None,
+                        }
+                    ],
+                }
+                yield f"data: {json.dumps(chunk_content)}\n\n"
+
+                chunk_final = {
+                    "id": cmpl_id,
+                    "object": "chat.completion.chunk",
+                    "created": created_ts,
+                    "model": body.model,
+                    "choices": [
+                        {
+                            "index": 0,
+                            "delta": {},
+                            "finish_reason": "stop",
+                        }
+                    ],
+                }
+                yield f"data: {json.dumps(chunk_final)}\n\n"
+
+            yield "data: [DONE]\n\n"
+
+        return StreamingResponse(event_generator(), media_type="text/event-stream")
+
     response_payload = {
         "id": f"chatcmpl-{int(time.time()*1000)}",
         "object": "chat.completion",

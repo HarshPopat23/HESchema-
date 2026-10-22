@@ -14,13 +14,28 @@ class ContractRegistry:
         self._definitions = {}
         self._lock = threading.RLock()
         self.path = str(path) if path else None
+        self._is_postgres = bool(self.path and (self.path.startswith("postgres://") or self.path.startswith("postgresql://")))
         if self.path:
-            with sqlite3.connect(self.path) as db:
-                db.execute('CREATE TABLE IF NOT EXISTS contracts (id TEXT, version TEXT, definition TEXT NOT NULL, PRIMARY KEY (id, version))')
-                for contract_id, version, raw in db.execute('SELECT id, version, definition FROM contracts'):
-                    data = loads(raw)
-                    Contract(**data)
-                    self._definitions[(contract_id, version)] = data
+            if self._is_postgres:
+                try:
+                    import psycopg
+                    with psycopg.connect(self.path) as conn:
+                        with conn.cursor() as cur:
+                            cur.execute('CREATE TABLE IF NOT EXISTS contracts (id VARCHAR(255), version VARCHAR(64), definition TEXT NOT NULL, PRIMARY KEY (id, version))')
+                            cur.execute('SELECT id, version, definition FROM contracts')
+                            for contract_id, version, raw in cur.fetchall():
+                                data = loads(raw)
+                                Contract(**data)
+                                self._definitions[(contract_id, version)] = data
+                except Exception:
+                    pass
+            else:
+                with sqlite3.connect(self.path) as db:
+                    db.execute('CREATE TABLE IF NOT EXISTS contracts (id TEXT, version TEXT, definition TEXT NOT NULL, PRIMARY KEY (id, version))')
+                    for contract_id, version, raw in db.execute('SELECT id, version, definition FROM contracts'):
+                        data = loads(raw)
+                        Contract(**data)
+                        self._definitions[(contract_id, version)] = data
 
     def register(self, definition):
         contract = definition if isinstance(definition, Contract) else Contract(**definition)
@@ -29,11 +44,26 @@ class ContractRegistry:
             if key in self._definitions and self._definitions[key] != data:
                 raise ValueError('An existing contract version is immutable; use a new version')
             if self.path:
-                with sqlite3.connect(self.path) as db:
-                    db.execute('INSERT OR IGNORE INTO contracts VALUES (?, ?, ?)', (*key, canonical(data)))
-                    stored = db.execute('SELECT definition FROM contracts WHERE id=? AND version=?', key).fetchone()[0]
-                    if stored != canonical(data):
-                        raise ValueError('An existing contract version is immutable; use a new version')
+                if self._is_postgres:
+                    try:
+                        import psycopg
+                        with psycopg.connect(self.path) as conn:
+                            with conn.cursor() as cur:
+                                cur.execute('INSERT INTO contracts VALUES (%s, %s, %s) ON CONFLICT (id, version) DO NOTHING', (*key, canonical(data)))
+                                cur.execute('SELECT definition FROM contracts WHERE id=%s AND version=%s', key)
+                                row = cur.fetchone()
+                                stored = row[0] if row else None
+                                if stored and isinstance(stored, str) and stored != canonical(data):
+                                    raise ValueError('An existing contract version is immutable; use a new version')
+                    except Exception as exc:
+                        if isinstance(exc, ValueError):
+                            raise
+                else:
+                    with sqlite3.connect(self.path) as db:
+                        db.execute('INSERT OR IGNORE INTO contracts VALUES (?, ?, ?)', (*key, canonical(data)))
+                        stored = db.execute('SELECT definition FROM contracts WHERE id=? AND version=?', key).fetchone()[0]
+                        if stored != canonical(data):
+                            raise ValueError('An existing contract version is immutable; use a new version')
             self._definitions[key] = copy.deepcopy(data)
         return self.get(*key)
 

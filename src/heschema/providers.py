@@ -92,7 +92,7 @@ def registry():
 
 
 class Provider:
-    def __init__(self, name, model=None, interval=None, transport=None):
+    def __init__(self, name, model=None, interval=None, key=None, transport=None):
         load_dotenv(ROOT / ".env", override=False)
         configs = registry()
         if name not in configs:
@@ -103,7 +103,7 @@ class Provider:
         self.interval = float(os.getenv("HESCHEMA_REQUEST_INTERVAL", "3")) if interval is None else interval
         self.last_request = 0
         self.lock = asyncio.Lock()
-        self.key = os.getenv(self.config.get("key_env", ""), "")
+        self.key = key or os.getenv(self.config.get("key_env", ""), "")
         if self.config["kind"] not in {"mock", "ollama"} and not self.key:
             raise ProviderError(f"Set {self.config['key_env']} in the backend .env")
         if self.interval < 0:
@@ -206,108 +206,109 @@ class Provider:
                                          "missingFields": [], "reason": "Offline stub"}),
                               0, 0, "offline-stub", metadata={"synthetic": True, "finish_reason": "stop"})
         async with timing.lock(self.lock):
-            delay = self.interval - (time.monotonic() - self.last_request)
-            if delay > 0:
-                with timing.phase('pacingWaitMs'):
-                    await asyncio.sleep(delay)
-            start = time.perf_counter()
-            url, headers, payload = self.request(messages, seed, max_tokens, temperature, format_schema=format_schema)
-            attempts = 0
-            while True:
-                self.last_request = time.monotonic()
+            now = time.monotonic()
+            delay = max(0.0, self.interval - (now - self.last_request))
+            self.last_request = now + delay
+        if delay > 0:
+            with timing.phase('pacingWaitMs'):
+                await asyncio.sleep(delay)
+        start = time.perf_counter()
+        url, headers, payload = self.request(messages, seed, max_tokens, temperature, format_schema=format_schema)
+        attempts = 0
+        while True:
+            try:
+                with timing.http_attempt() as attempt:
+                    response = await self.client.post(url, headers=headers, json=payload)
+                    attempt['httpStatus'] = response.status_code
+            except httpx.TimeoutException:
+                if not retry or attempts >= 3:
+                    raise ProviderError(f"{self.name}: request timed out after {int(self.timeout)}s", code="timeout", requests=attempts + 1, elapsed_ms=(time.perf_counter() - start) * 1000) from None
+                attempts += 1
+                with timing.phase('retryWaitMs'):
+                    await asyncio.sleep(min(2 ** attempts, 16))
+                continue
+            except (httpx.RequestError, httpx.TransportError):
+                if not retry or attempts >= 3:
+                    raise ProviderError(f"{self.name}: network request failed", code="network_error", requests=attempts + 1) from None
+                attempts += 1
+                with timing.phase('retryWaitMs'):
+                    await asyncio.sleep(min(2 ** attempts, 16))
+                continue
+            if response.status_code in {429, 500, 502, 503, 504} and retry and attempts < 3:
+                attempts += 1
                 try:
-                    with timing.http_attempt() as attempt:
-                        response = await self.client.post(url, headers=headers, json=payload)
-                        attempt['httpStatus'] = response.status_code
-                except httpx.TimeoutException:
-                    if not retry or attempts >= 3:
-                        raise ProviderError(f"{self.name}: request timed out after {int(self.timeout)}s", code="timeout", requests=attempts + 1, elapsed_ms=(time.perf_counter() - start) * 1000) from None
-                    attempts += 1
-                    with timing.phase('retryWaitMs'):
-                        await asyncio.sleep(min(2 ** attempts, 16))
-                    continue
-                except (httpx.RequestError, httpx.TransportError):
-                    if not retry or attempts >= 3:
-                        raise ProviderError(f"{self.name}: network request failed", code="network_error", requests=attempts + 1) from None
-                    attempts += 1
-                    with timing.phase('retryWaitMs'):
-                        await asyncio.sleep(min(2 ** attempts, 16))
-                    continue
-                if response.status_code in {429, 500, 502, 503, 504} and retry and attempts < 3:
-                    attempts += 1
-                    try:
-                        retry_after = float(response.headers.get("retry-after", 2 ** attempts))
-                    except ValueError:
-                        retry_after = 2 ** attempts
-                    if retry_after > 30:
-                        raise ProviderError(f"{self.name}: rate limited; resume later")
-                    with timing.phase('retryWaitMs'):
-                        await asyncio.sleep(max(self.interval, retry_after))
-                    continue
-                if response.is_error:
-                    code = "request_rejected" if response.status_code in {400, 422} else "authentication_error" if response.status_code in {401, 403} else "provider_error"
-                    raise ProviderError(f"{self.name}: HTTP {response.status_code}; check credentials, model and account limits", code=code, status=response.status_code, requests=attempts + 1, elapsed_ms=(time.perf_counter() - start) * 1000)
-                try:
-                    data = response.json()
-                    kind = self.config["kind"]
-                    finish_reason = None
-                    reasoning = None
-                    if kind == "responses":
-                        text = "".join(c["text"] for item in data.get("output", []) for c in item.get("content", []) if c.get("type") == "output_text")
-                        usage = data.get("usage", {})
-                        inp, out = usage.get("input_tokens"), usage.get("output_tokens")
-                        finish_reason = "completed" if data.get("status") == "completed" else (data.get("incomplete_details") or {}).get("reason")
-                    elif kind == "anthropic":
-                        text = "".join(c["text"] for c in data["content"] if c["type"] == "text")
-                        usage = data.get("usage", {})
-                        # Include cache token reads/writes in usage; precise cache pricing
-                        # needs user-supplied effective rates and is explicitly approximate.
-                        inp = sum(usage.get(k, 0) for k in ("input_tokens", "cache_read_input_tokens", "cache_creation_input_tokens")) if "input_tokens" in usage else None
-                        out = usage.get("output_tokens")
-                        finish_reason = data.get("stop_reason")
-                    elif kind == "ollama":
-                        text = data["message"]["content"]
-                        reasoning = data["message"].get("thinking")
-                        inp, out = data.get("prompt_eval_count"), data.get("eval_count")
-                        finish_reason = data.get("done_reason")
-                    else:
-                        text = data["choices"][0]["message"]["content"]
-                        if self.name == "groq":
-                            reasoning = data["choices"][0]["message"].get("reasoning")
-                        usage = data.get("usage", {})
-                        inp, out = usage.get("prompt_tokens"), usage.get("completion_tokens")
-                        finish_reason = data["choices"][0].get("finish_reason")
-                    if not isinstance(text, str):
-                        raise ValueError("Missing text")
-                except (ValueError, TypeError, KeyError, IndexError, AttributeError):
-                    raise ProviderError(f"{self.name}: unexpected response structure") from None
-                meta = {"resolvedModelConfirmed": bool(data.get("model"))}
-                # Fingerprint exactly the submitted body; never include headers or credentials.
-                meta['requestControls'] = {**self.control_config(), 'payloadHash': digest(payload),
-                                           'messagesHash': digest(messages),
-                                           'schemaHash': digest(format_schema) if format_schema is not None else None,
-                                           'seedSent': payload.get('options', {}).get('seed', payload.get('seed')),
-                                           'maxTokens': max_tokens, 'temperature': temperature}
-                meta['contentReasoningMarkers'] = content_has_reasoning_markers(text)
-                inp = inp if type(inp) is int and inp >= 0 else None
-                out = out if type(out) is int and out >= 0 else None
-                if kind == "ollama":
-                    meta["durationsMs"] = {key: data[source] / 1e6 for key, source in
-                                           (("total", "total_duration"), ("load", "load_duration"),
-                                            ("promptEvaluation", "prompt_eval_duration"), ("generation", "eval_duration"))
-                                           if isinstance(data.get(source), (int, float))}
-                if finish_reason is not None:
-                    meta["finish_reason"] = finish_reason
-                if self.name == "groq":
-                    meta["nativeStrictRequested"] = format_schema is not None
-                    meta["reasoningEffortRequested"] = "low" if self.model in {"openai/gpt-oss-20b", "openai/gpt-oss-120b"} else None
-                    meta["seedRequested"] = False
-                    meta["responseId"] = data.get("id")
-                    meta["systemFingerprint"] = data.get("system_fingerprint")
-                    meta["rateLimitHeaders"] = {k: v for k, v in response.headers.items() if k.startswith("x-ratelimit-")}
-                return Generation(text, inp, out, data.get("model", self.model), attempts,
-                                  (time.perf_counter() - start) * 1000,
-                                  meta, reasoning)
+                    retry_after = float(response.headers.get("retry-after", 2 ** attempts))
+                except ValueError:
+                    retry_after = 2 ** attempts
+                if retry_after > 30:
+                    raise ProviderError(f"{self.name}: rate limited; resume later")
+                with timing.phase('retryWaitMs'):
+                    await asyncio.sleep(max(self.interval, retry_after))
+                continue
+            if response.is_error:
+                code = "request_rejected" if response.status_code in {400, 422} else "authentication_error" if response.status_code in {401, 403} else "provider_error"
+                raise ProviderError(f"{self.name}: HTTP {response.status_code}; check credentials, model and account limits", code=code, status=response.status_code, requests=attempts + 1, elapsed_ms=(time.perf_counter() - start) * 1000)
+            try:
+                data = response.json()
+                kind = self.config["kind"]
+                finish_reason = None
+                reasoning = None
+                if kind == "responses":
+                    text = "".join(c["text"] for item in data.get("output", []) for c in item.get("content", []) if c.get("type") == "output_text")
+                    usage = data.get("usage", {})
+                    inp, out = usage.get("input_tokens"), usage.get("output_tokens")
+                    finish_reason = "completed" if data.get("status") == "completed" else (data.get("incomplete_details") or {}).get("reason")
+                elif kind == "anthropic":
+                    text = "".join(c["text"] for c in data["content"] if c["type"] == "text")
+                    usage = data.get("usage", {})
+                    # Include cache token reads/writes in usage; precise cache pricing
+                    # needs user-supplied effective rates and is explicitly approximate.
+                    inp = sum(usage.get(k, 0) for k in ("input_tokens", "cache_read_input_tokens", "cache_creation_input_tokens")) if "input_tokens" in usage else None
+                    out = usage.get("output_tokens")
+                    finish_reason = data.get("stop_reason")
+                elif kind == "ollama":
+                    text = data["message"]["content"]
+                    reasoning = data["message"].get("thinking")
+                    inp, out = data.get("prompt_eval_count"), data.get("eval_count")
+                    finish_reason = data.get("done_reason")
+                else:
+                    text = data["choices"][0]["message"]["content"]
+                    if self.name == "groq":
+                        reasoning = data["choices"][0]["message"].get("reasoning")
+                    usage = data.get("usage", {})
+                    inp, out = usage.get("prompt_tokens"), usage.get("completion_tokens")
+                    finish_reason = data["choices"][0].get("finish_reason")
+                if not isinstance(text, str):
+                    raise ValueError("Missing text")
+            except (ValueError, TypeError, KeyError, IndexError, AttributeError):
+                raise ProviderError(f"{self.name}: unexpected response structure") from None
+            meta = {"resolvedModelConfirmed": bool(data.get("model"))}
+            # Fingerprint exactly the submitted body; never include headers or credentials.
+            meta['requestControls'] = {**self.control_config(), 'payloadHash': digest(payload),
+                                       'messagesHash': digest(messages),
+                                       'schemaHash': digest(format_schema) if format_schema is not None else None,
+                                       'seedSent': payload.get('options', {}).get('seed', payload.get('seed')),
+                                       'maxTokens': max_tokens, 'temperature': temperature}
+            meta['contentReasoningMarkers'] = content_has_reasoning_markers(text)
+            inp = inp if type(inp) is int and inp >= 0 else None
+            out = out if type(out) is int and out >= 0 else None
+            if kind == "ollama":
+                meta["durationsMs"] = {key: data[source] / 1e6 for key, source in
+                                       (("total", "total_duration"), ("load", "load_duration"),
+                                        ("promptEvaluation", "prompt_eval_duration"), ("generation", "eval_duration"))
+                                       if isinstance(data.get(source), (int, float))}
+            if finish_reason is not None:
+                meta["finish_reason"] = finish_reason
+            if self.name == "groq":
+                meta["nativeStrictRequested"] = format_schema is not None
+                meta["reasoningEffortRequested"] = "low" if self.model in {"openai/gpt-oss-20b", "openai/gpt-oss-120b"} else None
+                meta["seedRequested"] = False
+                meta["responseId"] = data.get("id")
+                meta["systemFingerprint"] = data.get("system_fingerprint")
+                meta["rateLimitHeaders"] = {k: v for k, v in response.headers.items() if k.startswith("x-ratelimit-")}
+            return Generation(text, inp, out, data.get("model", self.model), attempts,
+                              (time.perf_counter() - start) * 1000,
+                              meta, reasoning)
 
 
 async def tavily_search(query, max_results=5, transport=None):

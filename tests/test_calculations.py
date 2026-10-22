@@ -356,3 +356,34 @@ def test_invalidation_while_generating_prevents_calculation_and_acceptance(tmp_p
     assert not result['validation']['accepted']
     assert result['repair']['requestsAttempted'] == 1
     assert result['repair']['requestLedger'][0]['generation']['outputPresent']
+
+
+def test_tolerance_calculation_rules():
+    from heschema.rules import check_rules
+
+    # check_rules rejects negative tolerance or non-numeric tolerance
+    with pytest.raises(ValueError, match="tolerance"):
+        check_rules([{"id": "r1", "kind": "sum_equals", "target": "/c", "operands": ["/a", "/b"], "tolerance": -0.01}])
+    with pytest.raises(ValueError, match="tolerance"):
+        check_rules([{"id": "r1", "kind": "sum_equals", "target": "/c", "operands": ["/a", "/b"], "tolerance": "tight"}])
+
+    # sum_equals with tolerance
+    rules = [{"id": "sum", "kind": "sum_equals", "target": "/total", "operands": ["/a", "/b"], "tolerance": 0.05}]
+    check_rules(rules)
+
+    # 10.0 + 20.0 = 30.0; actual = 30.04 (within 0.05 tolerance) -> valid
+    doc_ok = {"a": 10.0, "b": 20.0, "total": 30.04}
+    res_ok = evaluate_rules(doc_ok, rules)
+    assert res_ok["status"] == "valid"
+
+    # actual = 30.06 (exceeds 0.05 tolerance) -> invalid
+    doc_fail = {"a": 10.0, "b": 20.0, "total": 30.06}
+    res_fail = evaluate_rules(doc_fail, rules)
+    assert res_fail["status"] == "invalid"
+
+    # sum_items_equals with tolerance
+    item_rules = [{"id": "item_sum", "kind": "sum_items_equals", "arrayLocation": "/items", "itemLocation": "/price", "target": "/total", "tolerance": 0.02}]
+    check_rules(item_rules)
+    assert evaluate_rules({"items": [{"price": 1.255}, {"price": 2.341}], "total": 3.60}, item_rules)["status"] == "valid"
+    assert evaluate_rules({"items": [{"price": 1.255}, {"price": 2.341}], "total": 3.65}, item_rules)["status"] == "invalid"
+

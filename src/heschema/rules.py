@@ -49,7 +49,7 @@ def check_rules(rules):
         required = set(RULE_POINTERS[kind])
         if kind in {'product_equals', 'sum_equals', 'division_equals', 'percentage_of'}:
             required.add('operands')
-        options = {'compute', 'precision'} if kind in CALCULABLE_KINDS else set()
+        options = {'compute', 'precision', 'tolerance'} if kind in CALCULABLE_KINDS else set()
         if set(rule) - options != {'id', 'kind'} | required:
             raise ValueError(f'{kind} requires exactly these options: {sorted(required)}')
         if 'compute' in rule and rule['compute'] not in ('model', 'application'):
@@ -57,6 +57,9 @@ def check_rules(rules):
         if 'precision' in rule:
             if not isinstance(rule['precision'], int) or rule['precision'] < 0:
                 raise ValueError('precision must be a non-negative integer')
+        if 'tolerance' in rule:
+            if not isinstance(rule['tolerance'], (int, float)) or rule['tolerance'] < 0:
+                raise ValueError('tolerance must be a non-negative number')
         for key in RULE_POINTERS[kind]:
             parts(rule[key])
         if kind in {'product_equals', 'sum_equals', 'division_equals', 'percentage_of'}:
@@ -96,7 +99,8 @@ def calculation_value(document, rule):
     """One arithmetic implementation shared by checking and opted-in calculation."""
     kind = rule['kind']
     precision = rule.get('precision')
-    is_float_mode = (precision is not None) or (kind in {'division_equals', 'percentage_of'})
+    tolerance = rule.get('tolerance')
+    is_float_mode = (precision is not None) or (tolerance is not None) or (kind in {'division_equals', 'percentage_of'})
     parser = _number if is_float_mode else _integer
 
     if kind in {'product_equals', 'sum_equals'}:
@@ -146,7 +150,8 @@ def evaluate_rules(document, rules, context=None, trusted_locations=None):
         location = rule.get('target', rule.get('left', rule.get('arrayLocation', '')))
         input_locations = [rule[k] for k in RULE_POINTERS[kind]] + rule.get('operands', [])
         precision = rule.get('precision')
-        is_float_mode = (precision is not None) or (kind in {'division_equals', 'percentage_of'})
+        tolerance = rule.get('tolerance')
+        is_float_mode = (precision is not None) or (tolerance is not None) or (kind in {'division_equals', 'percentage_of'})
         parser = _number if is_float_mode else _integer
         try:
             if kind in {'product_equals', 'sum_equals', 'division_equals', 'percentage_of'}:
@@ -156,7 +161,9 @@ def evaluate_rules(document, rules, context=None, trusted_locations=None):
                 raw_actual = resolve(document, rule['target'])
                 expected = calculation_value(document, rule)
                 actual = parser(raw_actual)
-                if precision is not None:
+                if tolerance is not None:
+                    valid = abs(float(actual) - float(expected)) <= float(tolerance)
+                elif precision is not None:
                     valid = round(float(actual), precision) == round(float(expected), precision)
                 elif type(actual) is int and type(expected) is int:
                     valid = actual == expected
@@ -190,7 +197,9 @@ def evaluate_rules(document, rules, context=None, trusted_locations=None):
                 elif kind == 'sum_items_equals':
                     actual = parser(resolve(document, rule['target']))
                     expected = calculation_value(document, rule)
-                    if precision is not None:
+                    if tolerance is not None:
+                        valid = abs(float(actual) - float(expected)) <= float(tolerance)
+                    elif precision is not None:
                         valid = round(float(actual), precision) == round(float(expected), precision)
                     elif type(actual) is int and type(expected) is int:
                         valid = actual == expected

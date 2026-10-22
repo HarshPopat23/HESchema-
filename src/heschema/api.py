@@ -2,15 +2,19 @@
 
 import os
 import secrets
+import time
 from contextlib import asynccontextmanager
 from typing import Any
 
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request, Response
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
+
+from .telemetry import generate_metrics, record_request, record_validation_latency, set_active_jobs
 
 from .benchmark import ARMS, messages_for
 from .cli_integration import (
@@ -214,7 +218,8 @@ EXAMPLES = {
 
 def create_app(db_path=None, contract_registry=None):
     load_dotenv(ROOT / ".env", override=False)
-    store = StateStore(db_path or os.getenv("HESCHEMA_DB", str(ROOT / "data/state.sqlite3")))
+    db_target = db_path or os.getenv("HESCHEMA_DATABASE_URL") or os.getenv("HESCHEMA_DB", str(ROOT / "data/state.sqlite3"))
+    store = StateStore(db_target)
     engine = SchemaEngine(os.getenv("HESCHEMA_ENGINE", "jsonschema"))
     job_manager = JobManager()
 
@@ -224,6 +229,25 @@ def create_app(db_path=None, contract_registry=None):
         engine.close()
 
     app = FastAPI(title="HESchema", version="0.1.0", lifespan=lifespan)
+
+    allowed_origins = os.getenv("HESCHEMA_ALLOWED_ORIGINS", "*").split(",")
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=allowed_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    @app.middleware("http")
+    async def trace_and_timing_middleware(request: Request, call_next):
+        request_id = request.headers.get("X-Request-ID", secrets.token_hex(8))
+        start = time.perf_counter()
+        response = await call_next(request)
+        duration_ms = (time.perf_counter() - start) * 1000
+        response.headers["X-Request-ID"] = request_id
+        response.headers["Server-Timing"] = f"total;dur={duration_ms:.2f}"
+        return response
 
     bearer = HTTPBearer(auto_error=False)
 
@@ -274,6 +298,11 @@ def create_app(db_path=None, contract_registry=None):
     @app.get("/health")
     def health():
         return {"status": "ok", "engine": engine.backend, "executionEnabled": False}
+
+    @app.get("/metrics")
+    def metrics_endpoint():
+        content, media_type = generate_metrics()
+        return Response(content=content, media_type=media_type)
 
     @app.get("/providers")
     def providers(identity=Depends(owner)):
