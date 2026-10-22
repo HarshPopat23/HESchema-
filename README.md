@@ -35,53 +35,7 @@ flowchart TD
     Repair -.->|Feedback Prompt| LLM
 ```
 
-```text
- [Client / SPA / Agent UI]
-             │
-             ▼  (OpenAI SDK / SSE Stream / REST)
- ┌──────────────────────────────────────────────────────────────┐
- │                      JHSchema Proxy & API                    │
- │  • CORS & Correlation Middleware (X-Request-ID, Server-Timing)│
- │  • Multitenant Tenant-Isolated Authentication                 │
- └──────────────┬───────────────────────────────┬───────────────┘
-                │                               │
-                ▼                               ▼
-    ┌──────────────────────┐        ┌──────────────────────┐
-    │     StateStore       │        │   ContractRegistry   │
-    │  • SQLite (WAL Mode) │        │  • Immutable Schemas │
-    │  • Versioning/Owners │        │  • Relationship Rules│
-    └──────────────────────┘        └──────────────────────┘
-                │                               │
-                └───────────────┬───────────────┘
-                                ▼
- ┌──────────────────────────────────────────────────────────────┐
- │                Pipelined Provider Transport                  │
- │  • Decoupled Pacing Reservation Lock                         │
- │  • Exponential Backoff & Transient Network Resilience        │
- └──────────────────────────────┬───────────────────────────────┘
-                                │
-                                ▼
-                       [Remote LLM Provider]
-                  (Groq / Anthropic / Ollama / etc.)
-                                │
-                                ▼  (Raw Model Generation)
- ┌──────────────────────────────────────────────────────────────┐
- │             SchemaEngine & Relational Rule Validator         │
- │  • JSON Schema 2020-12 / Blaze Native Validation            │
- │  • Deterministic Arithmetic & Epsilon Tolerance Engine       │
- └──────────────────────────────┬───────────────────────────────┘
-                │
-                ├─── PASS ──────────────► [Accepted Output / SSE Stream]
-                │
-                └─── FAIL (Repair Mode)
-                        │
-                        ▼
- ┌──────────────────────────────────────────────────────────────┐
- │                    Repair Coordinator                        │
- │  • Structured JSON Pointer Diffs (RFC 6901)                  │
- │  • Targeted Diagnostic Feedback Loop                         │
- └──────────────────────────────────────────────────────────────┘
-```
+
 
 ## What's included
 
