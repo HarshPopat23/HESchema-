@@ -1,15 +1,60 @@
+# Environment and Secrets
 .env
 .env.*
 !.env.example
-.venv/
+*.pem
+*.key
+
+# Python Bytecode and Distributions
 __pycache__/
-*.pyc
-.pytest_cache/
-.ruff_cache/
+*.py[cod]
+*$py.class
 *.egg-info/
+.eggs/
 build/
 dist/
-node_modules/
+wheels/
+*.egg
+
+# Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+
+# Testing, Linting & Coverage
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Local Databases & State
+*.sqlite
+*.sqlite3
+*.sqlite-shm
+*.sqlite-wal
+*.db
 data/*.sqlite*
+temp_state*
+
+# Benchmark Run Outputs & Logs
 results/
+*.log
+scratch/
+temp/
 .cache/
+
+# OS and Editor Artifacts
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*~
+
+# Frontend / Node
+node_modules/
+frontend/.next/
+frontend/out/

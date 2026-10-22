@@ -30,7 +30,7 @@ This workspace houses the implementation, validation, execution artifacts, and a
   - `MAIN_REPORT.md`: Comprehensive academic-grade report.
   - `EXECUTIVE_SUMMARY.md`: 8th-grade reading level plain language summary.
   - `LIMITATIONS.md`: Evidence boundaries and non-claims.
-  - `JUAN_MESSAGE.md`: Concise status message for Juan.
+  - `STUDY_STATUS_SUMMARY.md`: Concise executive summary of results.
 
 ---
 

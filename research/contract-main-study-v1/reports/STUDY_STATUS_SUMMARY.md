@@ -1,8 +1,6 @@
-# Update for Juan: HESchema Controlled Evaluation Results
+# Executive Brief: HESchema Controlled Evaluation Results
 
-Hi Juan,
-
-We have completed the controlled benchmark comparing ordinary JSON Schema (Arm A) against HESchema contracts with approved context (Arm B) across the frozen 100-input study pack.
+This document summarizes the controlled benchmark comparing ordinary JSON Schema (Arm A) against HESchema contracts with approved context (Arm B) across the frozen 100-input study pack.
 
 ### Key Measured Outcomes:
 - **First-Pass Correctness:** Arm A achieved **89.78%**, while Arm B achieved **87.44%** (-2.34% delta).

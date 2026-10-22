@@ -2,14 +2,14 @@
   "datasetVersion": "1.0.0",
   "implementationReference": "a044e3911fc84c0a4b2684797566b7c370fce40c",
   "dataset": {
-    "file": "juan_report_cases_65.jsonl",
+    "file": "controlled_report_cases_65.jsonl",
     "records": 65,
-    "sha256": "565ff46aa05e75ae583ef9e2431ca930e03bde540db4d40bf406a4f7037e8c08"
+    "sha256": "cff4f62a73f9085b5cb4150929e27b2f38129de3fdca64fb0bbe53b55ff5f2e9"
   },
   "probes": {
-    "file": "juan_validator_probes_77.jsonl",
+    "file": "controlled_validator_probes_77.jsonl",
     "records": 77,
-    "sha256": "70a65d5b2762a604c1f7309546f247987d7360b0a9f772133e377ab696f98f9f"
+    "sha256": "3774336d29098bd8cdb3e9d2856f36255231323716217c614bf5be1c100a07ba"
   },
   "families": {
     "source_interpretation": 5,

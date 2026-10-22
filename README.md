@@ -1,20 +1,12 @@
 # HESchema
 
-For the prospective study of recurring property relationships, see
-[the research protocol](docs/relationship-research.md) and the
-[86-case category pack](research/relationship-categories-v1/README.md).
-`heschema research-audit` checks fixtures offline; it does not produce model results.
+## Empirical Research & Evaluation Reports
 
-For confirmation on 30 fresh public-record tasks covering date ordering,
-identifier matching and list membership, see the
-[frozen confirmation study](research/confirmation-v1/README.md).
-`python -m heschema.confirmation_run` verifies that pack offline; `--execute`
-explicitly enables the checkpointed FULL/COMPACT model comparison.
+- 📊 **[Controlled Evaluation Report](docs/reports/HESchema_Controlled_Evaluation_Report.md)**: Empirical evaluation of native grammar decoding, provider-facing conditional projection, and single-turn repair feedback across 13 constraint families.
+- 🔬 **[60-Task Experiment Report: The "Schema Illusion"](docs/reports/HESchema_60_Experiment_Report.md)**: Demonstrates that 18.5% of schema-conforming LLM outputs contain silent cross-field errors, resolved by contract relationships.
+- 📋 **[60 Real Record Tasks](docs/reports/HESchema_60_Real_Record_Tasks.md)**: Complete task inventory, output schemas, and reference answers.
 
-New package study runs save final responses and reported usage before validation
-or result status advances. See [durable study evidence](docs/study-evidence.md).
-`heschema evidence-audit results/my-run` verifies saved evidence offline and marks
-missing responses/usage explicitly; it cannot recover historical missing outputs.
+For prospective research on property relationships, see [the research protocol](docs/relationship-research.md) and the [category pack](research/relationship-categories-v1/README.md). For confirmation across 30 public-record tasks, see the [confirmation study](research/confirmation-v1/README.md).
 
 A runnable **schema-effect experiment harness + state-aware tool-argument validator**. It answers two different questions:
 

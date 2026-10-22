@@ -222,9 +222,9 @@ def run_differential_projection_audit(cases_path):
 
 def main():
     base = Path(__file__).resolve().parent.parent
-    cases_path = base / "research" / "juan-report-v1" / "juan_report_cases_65.jsonl"
-    probes_path = base / "research" / "juan-report-v1" / "juan_validator_probes_77.jsonl"
-    out_dir = base / "results" / "juan-report-v1"
+    cases_path = base / "research" / "controlled-eval-v1" / "controlled_report_cases_65.jsonl"
+    probes_path = base / "research" / "controlled-eval-v1" / "controlled_validator_probes_77.jsonl"
+    out_dir = base / "results" / "controlled-report-v1"
     out_dir.mkdir(parents=True, exist_ok=True)
 
     print("Evaluating 77 validator probes...")

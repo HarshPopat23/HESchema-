@@ -24,8 +24,8 @@ def main():
     parser.add_argument('--out', type=Path)
     args = parser.parse_args()
     pack = args.pack
-    cases = read_rows(pack / 'juan_report_cases_65.jsonl')
-    probes = read_rows(pack / 'juan_validator_probes_77.jsonl')
+    cases = read_rows(pack / 'controlled_report_cases_65.jsonl')
+    probes = read_rows(pack / 'controlled_validator_probes_77.jsonl')
     manifest = json.loads((pack / 'manifest.json').read_text(encoding='utf-8'))
     failures, rows, projection_checks = [], [], 0
     by_id = {case['id']: case for case in cases}

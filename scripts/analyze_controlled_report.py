@@ -1,4 +1,4 @@
-"""Reproducible analysis script for HESchema Juan Report.
+"""Reproducible analysis script for HESchema Controlled Evaluation Report.
 Processes first-pass decoding and repair runs to build summary.csv, contrast tables, and statistical summaries.
 """
 
@@ -109,18 +109,18 @@ def analyze(first_dir, repair_dir, out_csv_path, report_stats_path=None):
             out_toks = [r["attempts"][0]["generation"]["output_tokens"] for r in rows if r["attempts"] and r["attempts"][0]["generation"].get("output_tokens") is not None]
             new_requests = sum(r.get("requestsAttempted", 1) for r in rows)
         else:
-            accepted = sum(1 for r in rows if r["status"] == "ok")
+            accepted = sum(1 for r in rows if r.get("status") == "ok")
             rejected = 0
-            json_valid = sum(1 for r in rows if r["finalEvaluation"]["stages"]["json"] == "valid")
-            orig_valid = sum(1 for r in rows if r["finalEvaluation"]["stages"]["originalSchema"] == "valid")
-            eff_valid = sum(1 for r in rows if r["finalEvaluation"]["stages"]["context"] == "valid")
-            rel_valid = sum(1 for r in rows if r["finalEvaluation"]["stages"]["relationships"] == "valid")
-            success = sum(1 for r in rows if r["finalSuccess"])
-            agreement = sum(1 for r in rows if r["finalEvaluation"]["intentAgreement"] is True)
+            json_valid = sum(1 for r in rows if (r.get("finalEvaluation") or {}).get("stages", {}).get("json") == "valid")
+            orig_valid = sum(1 for r in rows if (r.get("finalEvaluation") or {}).get("stages", {}).get("originalSchema") == "valid")
+            eff_valid = sum(1 for r in rows if (r.get("finalEvaluation") or {}).get("stages", {}).get("context") == "valid")
+            rel_valid = sum(1 for r in rows if (r.get("finalEvaluation") or {}).get("stages", {}).get("relationships") == "valid")
+            success = sum(1 for r in rows if r.get("finalSuccess"))
+            agreement = sum(1 for r in rows if (r.get("finalEvaluation") or {}).get("intentAgreement") is True)
             
             latencies = [r["latencyMs"] for r in rows if r.get("latencyMs")]
-            in_toks = [r["attempts"][-1]["generation"]["input_tokens"] for r in rows if r["attempts"] and r["attempts"][-1]["generation"].get("input_tokens") is not None]
-            out_toks = [r["attempts"][-1]["generation"]["output_tokens"] for r in rows if r["attempts"] and r["attempts"][-1]["generation"].get("output_tokens") is not None]
+            in_toks = [r["attempts"][-1]["generation"]["input_tokens"] for r in rows if r.get("attempts") and r["attempts"][-1].get("generation", {}).get("input_tokens") is not None]
+            out_toks = [r["attempts"][-1]["generation"]["output_tokens"] for r in rows if r.get("attempts") and r["attempts"][-1].get("generation", {}).get("output_tokens") is not None]
             new_requests = sum(r.get("requestsAttempted", 0) for r in rows)
 
         l_stats = calculate_stats(latencies)
@@ -167,8 +167,8 @@ def analyze(first_dir, repair_dir, out_csv_path, report_stats_path=None):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--first", default="results/juan-report-v1/exploratory/qwen3_4b_instruct/first")
-    parser.add_argument("--repair", default="results/juan-report-v1/exploratory/qwen3_4b_instruct/repair")
-    parser.add_argument("--out-csv", default="results/juan-report-v1/summary.csv")
+    parser.add_argument("--first", default="results/controlled-report-v1/exploratory/qwen3_4b_instruct/first")
+    parser.add_argument("--repair", default="results/controlled-report-v1/exploratory/qwen3_4b_instruct/repair")
+    parser.add_argument("--out-csv", default="results/controlled-report-v1/summary.csv")
     args = parser.parse_args()
     analyze(args.first, args.repair, args.out_csv)

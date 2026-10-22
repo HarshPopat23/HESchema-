@@ -1,6 +1,6 @@
 # Prospective relationship-category study
 
-This pack prepares Juan's proposed research; it contains **no new model results**.
+This pack prepares the proposed relationship-category evaluation; it contains **no new model results**.
 All 86 cases are authored, synthetic and unreviewed, including six adaptations of
 public MCP tool schemas/implementation constraints. Public implementation evidence
 is different from a naturally observed user task or LLM failure.

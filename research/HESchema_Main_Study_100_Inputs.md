@@ -4,7 +4,7 @@ Prepared for comparing ordinary JSON Schema with HESchema contracts and approved
 
 **What you have:** 100 complete, reproducible test inputs with real public source values, task prompts, ordinary output schemas, contracts, study-approved context, provenance and computed reference answers. A separate audit examines **20 public configuration schemas**. The final appendix preserves the original downloaded source bytes inside this single Markdown file.
 
-**What you do not have yet:** results from running three models, 100 original user conversations, production LLM responses, or a representative survey of the whole internet. No synthetic source records or fabricated model outputs are included. The prompts, selected field projections, output schemas and contracts are researcher-authored adaptations. The reference answers are derived from the public records. Those distinctions are essential when explaining the study to Juan.
+**What you do not have yet:** results from running three models, 100 original user conversations, production LLM responses, or a representative survey of the whole internet. No synthetic source records or fabricated model outputs are included. The prompts, selected field projections, output schemas and contracts are researcher-authored adaptations. The reference answers are derived from the public records. Those distinctions are essential when explaining the study.
 
 ## 1. Research question and boundaries
 

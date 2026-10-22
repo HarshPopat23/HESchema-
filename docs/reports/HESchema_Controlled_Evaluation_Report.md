@@ -1,19 +1,19 @@
 # Empirical Evaluation of the HESchema Contract, Projection, and Repair Pipeline
 
-**Prepared for**: Juan Cruz Viotti  
+**Audience**: JSON Schema Community & AI Engineers  
 **Repository**: [HarshPopat23/HESchema-](https://github.com/HarshPopat23/HESchema-)  
 **Evaluated Commit**: `3329b864c8bda90807a30d029b1d8d4dc603a5ea` (Merge PR #1: `feat/context-validation-repair`)  
 **Tested Model**: `qwen3:4b-instruct` (Digest: `359d7dd4bcdab3d86b87d73ac27966f4dbb9f5efdfcc75d34a8764a09474fae7`)  
 **Backend**: Ollama `0.32.0` on local AMD64 workstation (`AMD64 Family 25 Model 68 Stepping 1`, 16 GB RAM)  
 **Date**: October 13, 2026  
-**Dataset Version**: 1.0.0 (`juan_report_cases_65.jsonl`, SHA-256: `565ff46aa05e75ae583ef9e2431ca930e03bde540db4d40bf406a4f7037e8c08`)  
+**Dataset Version**: 1.0.0 (`controlled_report_cases_65.jsonl`, SHA-256: `cff4f62a73f9085b5cb4150929e27b2f38129de3fdca64fb0bbe53b55ff5f2e9`)  
 **Status**: Reduced Exploratory Study (1 repeat across 65 cases and 3 decoding modes; replayed repairs at Budgets 0 and 1)
 
 ---
 
 ## Executive Summary & Answers to Research Questions
 
-This evaluation assesses the HESchema contract, projection, and repair pipeline using Juan Cruz Viotti’s 65 synthetic evaluation cases across 13 families and 77 offline validator probes. The study adheres strictly to preregistered isolation principles: hidden scoring oracles (`expected`) were never exposed to inference or repair prompts, and negative/inconclusive findings are fully reported.
+This evaluation assesses the HESchema contract, projection, and repair pipeline using 65 synthetic evaluation cases across 13 families and 77 offline validator probes. The study adheres strictly to preregistered isolation principles: hidden scoring oracles (`expected`) were never exposed to inference or repair prompts, and negative/inconclusive findings are fully reported.
 
 ### Q1. Contrast Across Decoding Modes (`prompt_only`, `native_original`, `native_projected`)
 - **Request Acceptance**: 100% (65/65) across all three modes. Ollama accepted all submitted schemas and prompts without transport failure.
@@ -170,7 +170,7 @@ The 195 first-pass outputs were replayed across 3 feedback styles (`generic`, `r
 
 ## 5. Offline Validator Probes Evaluation
 
-The 77 offline validator probes (`juan_validator_probes_77.jsonl`) verify runtime contract enforcement without calling an LLM:
+The 77 offline validator probes (`controlled_validator_probes_77.jsonl`) verify runtime contract enforcement without calling an LLM:
 - **Total Probes**: 77 (65 counterexamples + 12 context/control probes).
 - **Execution**: 100% passed all declared expectations.
 - **Wrong-Source Probes (Counterexamples)**: Intentionally constructed instances where output is schema-valid but source-wrong passed runtime schema validation and failed the scoring oracle, confirming the strict isolation between runtime validation and scoring gold.
@@ -191,11 +191,11 @@ The 77 offline validator probes (`juan_validator_probes_77.jsonl`) verify runtim
 
 ## 7. Artifact Manifest & Verification
 
-- **Summary Dataset (CSV)**: [`results/juan-report-v1/summary.csv`](file:///d:/20+pro/JHSchema/HESchema-/results/juan-report-v1/summary.csv)
-- **Report Statistical Ledger (JSON)**: [`results/juan-report-v1/report_statistics.json`](file:///d:/20+pro/JHSchema/HESchema-/results/juan-report-v1/report_statistics.json)
-- **Validator Probe Results**: [`results/juan-report-v1/validator_probe_results.json`](file:///d:/20+pro/JHSchema/HESchema-/results/juan-report-v1/validator_probe_results.json)
-- **Differential Projection Audit**: [`results/juan-report-v1/projection_audit.json`](file:///d:/20+pro/JHSchema/HESchema-/results/juan-report-v1/projection_audit.json)
-- **Analysis Script**: [`scripts/analyze_juan_report.py`](file:///d:/20+pro/JHSchema/HESchema-/scripts/analyze_juan_report.py)
+- **Summary Dataset (CSV)**: [`results/controlled-report-v1/summary.csv`](file:///d:/20+pro/JHSchema/HESchema-/results/controlled-report-v1/summary.csv)
+- **Report Statistical Ledger (JSON)**: [`results/controlled-report-v1/report_statistics.json`](file:///d:/20+pro/JHSchema/HESchema-/results/controlled-report-v1/report_statistics.json)
+- **Validator Probe Results**: [`results/controlled-report-v1/validator_probe_results.json`](file:///d:/20+pro/JHSchema/HESchema-/results/controlled-report-v1/validator_probe_results.json)
+- **Differential Projection Audit**: [`results/controlled-report-v1/projection_audit.json`](file:///d:/20+pro/JHSchema/HESchema-/results/controlled-report-v1/projection_audit.json)
+- **Analysis Script**: [`scripts/analyze_controlled_report.py`](file:///d:/20+pro/JHSchema/HESchema-/scripts/analyze_controlled_report.py)
 - **Raw Inference Ledgers**:
-  - First-pass runs: [`results/juan-report-v1/exploratory/qwen3_4b_instruct/first/runs.jsonl`](file:///d:/20+pro/JHSchema/HESchema-/results/juan-report-v1/exploratory/qwen3_4b_instruct/first/runs.jsonl)
-  - Repair runs: [`results/juan-report-v1/exploratory/qwen3_4b_instruct/repair/runs.jsonl`](file:///d:/20+pro/JHSchema/HESchema-/results/juan-report-v1/exploratory/qwen3_4b_instruct/repair/runs.jsonl)
+  - First-pass runs: [`results/controlled-report-v1/exploratory/qwen3_4b_instruct/first/runs.jsonl`](file:///d:/20+pro/JHSchema/HESchema-/results/controlled-report-v1/exploratory/qwen3_4b_instruct/first/runs.jsonl)
+  - Repair runs: [`results/controlled-report-v1/exploratory/qwen3_4b_instruct/repair/runs.jsonl`](file:///d:/20+pro/JHSchema/HESchema-/results/controlled-report-v1/exploratory/qwen3_4b_instruct/repair/runs.jsonl)

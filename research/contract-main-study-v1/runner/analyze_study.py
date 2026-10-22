@@ -11,7 +11,7 @@ Generates:
 - reports/MAIN_REPORT.md
 - reports/EXECUTIVE_SUMMARY.md
 - reports/LIMITATIONS.md
-- reports/JUAN_MESSAGE.md
+- reports/STUDY_STATUS_SUMMARY.md
 - run_manifest.json
 """
 
@@ -529,12 +529,10 @@ This evaluation adheres strictly to the evidence boundaries defined in the study
 """
     (REPORTS_DIR / "LIMITATIONS.md").write_text(limitations_md, encoding="utf-8")
 
-    # --- 4. JUAN_MESSAGE.md ---
-    juan_message = f"""# Update for Juan: HESchema Controlled Evaluation Results
+    # --- 4. STUDY_STATUS_SUMMARY.md ---
+    status_summary = f"""# Executive Brief: HESchema Controlled Evaluation Results
 
-Hi Juan,
-
-We have completed the controlled benchmark comparing ordinary JSON Schema (Arm A) against HESchema contracts with approved context (Arm B) across the frozen 100-input study pack.
+This document summarizes the controlled benchmark comparing ordinary JSON Schema (Arm A) against HESchema contracts with approved context (Arm B) across the frozen 100-input study pack.
 
 ### Key Measured Outcomes:
 - **First-Pass Correctness:** Arm A achieved **{pct_a_first}%**, while Arm B achieved **{pct_b_first}%** ({round(pct_b_first - pct_a_first, 2):+}% delta).
@@ -550,7 +548,7 @@ We have completed the controlled benchmark comparing ordinary JSON Schema (Arm A
 
 Please let me know if you would like to review the paired case breakdowns or examine specific failure modes.
 """
-    (REPORTS_DIR / "JUAN_MESSAGE.md").write_text(juan_message, encoding="utf-8")
+    (REPORTS_DIR / "STUDY_STATUS_SUMMARY.md").write_text(status_summary, encoding="utf-8")
 
 
 if __name__ == "__main__":
