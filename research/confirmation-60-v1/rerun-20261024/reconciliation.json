@@ -1,0 +1,67 @@
+{
+  "limitations": "Root cause of missing writes is not established; original artifacts retained. No successful original slot was selectively regenerated.",
+  "originalRowsSha256": "6be4ce384b80a0e7473f45466bcd654d66254670d50aae3873e66943071862ec",
+  "primaryExclusionGroups": [
+    [
+      "H60-04",
+      "openai/gpt-oss-120b",
+      0
+    ]
+  ],
+  "recoveredRows": [
+    {
+      "arm": "A",
+      "caseId": "H60-38",
+      "model": "openai/gpt-oss-20b",
+      "repeat": 0
+    },
+    {
+      "arm": "C",
+      "caseId": "H60-46",
+      "model": "openai/gpt-oss-120b",
+      "repeat": 1
+    },
+    {
+      "arm": "B",
+      "caseId": "H60-46",
+      "model": "openai/gpt-oss-120b",
+      "repeat": 1
+    }
+  ],
+  "replacementSlots": [
+    {
+      "incompleteReceipt": "8520220ad1184d8e8ac000d674ad471f",
+      "slot": {
+        "arm": "C",
+        "caseId": "H60-04",
+        "model": "openai/gpt-oss-120b",
+        "repeat": 0
+      },
+      "originalRowSha256": "dd1511b24c00e13867c9b680c86ee661b8c67ba2cef72809d4530e68a7c8108d",
+      "originalRowSummary": {
+        "firstCorrect": false,
+        "finalCorrect": false,
+        "repairAttempted": true,
+        "totalInputTokens": 587,
+        "totalOutputTokens": 531
+      }
+    },
+    {
+      "incompleteReceipt": "14389173ed374a34a4f57ecbf5000b8e",
+      "slot": {
+        "arm": "B",
+        "caseId": "H60-04",
+        "model": "openai/gpt-oss-120b",
+        "repeat": 0
+      },
+      "originalRowSha256": "0f81e2ca3b138f9aa4281967abe14da9c2bc78830761181156285a9b32d297e2",
+      "originalRowSummary": {
+        "firstCorrect": false,
+        "finalCorrect": false,
+        "repairAttempted": true,
+        "totalInputTokens": 532,
+        "totalOutputTokens": 552
+      }
+    }
+  ]
+}

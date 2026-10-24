@@ -10,11 +10,15 @@ spec = importlib.util.spec_from_file_location('rescore60', ROOT / 'scripts/resco
 oracle = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(oracle)
 CASES = json.loads((ROOT / 'research/confirmation-60-v1/cases.json').read_text())
+baseline_spec = importlib.util.spec_from_file_location('conventional60', ROOT / 'scripts/conventional_confirmation60.py')
+baseline = importlib.util.module_from_spec(baseline_spec)
+baseline_spec.loader.exec_module(baseline)
 
 
 @pytest.mark.parametrize('case', CASES, ids=lambda c: c['id'])
 def test_reference_and_negative_control(case):
     assert oracle.correct(json.dumps(case['expected']), case)
+    assert baseline.conventional(json.dumps(case['expected']), case)
     assert not oracle.correct('{}', case)
     bad = copy.deepcopy(case['expected'])
     family = case['family']
@@ -32,11 +36,13 @@ def test_reference_and_negative_control(case):
         target = case['contract']['relationships'][0]['target'][1:]
         bad[target] += 1
     assert not oracle.correct(json.dumps(bad), case)
+    assert not baseline.conventional(json.dumps(bad), case)
     if case.get('d_calc'):
         inputs = copy.deepcopy(case['expected'])
         for rule in case['d_calc']:
             inputs.pop(rule['target'][1:])
         assert oracle.correct(json.dumps(inputs), case, 'D')
+        assert baseline.conventional(json.dumps(inputs), case, 'D')
         assert not oracle.correct('{}', case, 'D')
 
 
