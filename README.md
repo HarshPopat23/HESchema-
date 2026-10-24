@@ -2,6 +2,8 @@
 
 ## Empirical Research & Evaluation Reports
 
+- **[Latest latency replication](docs/reports/HESchema_Latency_Report.md)**: 2,160 completed results across three sessions; 2,128 primary results. COMPACT used 17.42% fewer tokens than FULL; no latency or aggregate accuracy improvement was demonstrated. Contract checks accepted zero observed wrong answers versus 42 for ordinary schema validation. Raw evidence publication remains limited.
+
 - 📊 **[Controlled Evaluation Report](docs/reports/HESchema_Controlled_Evaluation_Report.md)**: Empirical evaluation of native grammar decoding, provider-facing conditional projection, and single-turn repair feedback across 13 constraint families.
 - 🔬 **[60-Task Results Correction](docs/reports/HESchema_60_Experiment_Report.md)**: Independent rescoring corrects a membership-scoring defect. A new 2,160-slot replication reports 2,156 matched primary slots after evidence exclusions, scoped token savings and conventional-check replay; general accuracy, speed and vocabulary claims remain unestablished.
 - 📋 **[60 Real Record Tasks](docs/reports/HESchema_60_Real_Record_Tasks.md)**: Complete task inventory, output schemas, and reference answers.

@@ -1,5 +1,7 @@
 # Controlled measurements
 
+For the completed three-session latency study and its evidence limits, see the [latest report](reports/HESchema_Latency_Report.md). It observed token savings without a demonstrated speedup; interrupted physical requests remain explicitly unknown.
+
 For category-labelled cases, relationship-check outcomes, explicit reasoning
 controls and compatible cross-model category tables, see
 [relationship research](relationship-research.md). Use fresh result directories:

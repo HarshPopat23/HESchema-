@@ -1,5 +1,7 @@
 # Durable response evidence for new studies
 
+For the completed three-session latency study and its evidence limits, see the [latest report](reports/HESchema_Latency_Report.md). It observed token savings without a demonstrated speedup; interrupted physical requests remain explicitly unknown.
+
 The earlier pilot reported one planned result that could not be verified. The
 subsequent confirmation runner exposed another durability gap: a whole slot was
 saved only after generation, validation and any repair finished. A process exit

@@ -1,3 +1,5 @@
+> **Historical study:** the [completed latency replication](HESchema_Latency_Report.md) is a separate experiment: 17.42% fewer COMPACT tokens than FULL, without a demonstrated speedup. This report retains its own dataset, results and limitations; do not merge its numbers with the newer study.
+
 # Empirical Evaluation of the HESchema Contract, Projection, and Repair Pipeline
 
 **Audience**: JSON Schema Community & AI Engineers  
@@ -24,7 +26,7 @@ This evaluation assesses the HESchema contract, projection, and repair pipeline 
 - **Latency & Token Efficiency**:
   - `prompt_only`: Median latency **24.4s** (mean 30.1s, p90 54.5s); median generated output **460.0 tokens** (mean 545.0).
   - `native_original`: Median latency **1.24s** (mean 1.51s, p90 2.42s); median generated output **14.0 tokens** (mean 19.2).
-  - **Key Finding**: Native grammar-constrained decoding achieved a **~20x latency reduction** and **~96% output token reduction** compared to prompt-only generation. This speedup is driven entirely by early termination on structured JSON completion rather than rambling text generation.
+  - **Scoped observation**: In this local synthetic decoding comparison, reported medians differed by **~20x** and output tokens by **~96%**, alongside substantially different output lengths and validity. This does not isolate contract-checking overhead, prove the causal contribution of early termination, or establish a general HESchema latency benefit.
 
 ### Q2. Impact of Provider-Facing Projection (Negative Result)
 - **Did projection improve model success?** **No.**

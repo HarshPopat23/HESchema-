@@ -1,3 +1,5 @@
+> **Historical study:** the [completed latency replication](../../../docs/reports/HESchema_Latency_Report.md) is a separate experiment: 17.42% fewer COMPACT tokens than FULL, without a demonstrated speedup. This report retains its own dataset, results and limitations; do not merge its numbers with the newer study.
+
 # Executive Brief: HESchema Controlled Evaluation Results
 
 This document summarizes the controlled benchmark comparing ordinary JSON Schema (Arm A) against HESchema contracts with approved context (Arm B) across the frozen 100-input study pack.

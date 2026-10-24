@@ -1,3 +1,5 @@
+> **Historical study:** the [completed latency replication](../../docs/reports/HESchema_Latency_Report.md) is a separate experiment: 17.42% fewer COMPACT tokens than FULL, without a demonstrated speedup. This report retains its own dataset, results and limitations; do not merge its numbers with the newer study.
+
 # Non-arithmetic confirmation on fresh public records
 
 **The scheduled study is incomplete.** There are **424/540 completed slots**, **211 matched pairs**, **30 tasks** and **6 source projects**.

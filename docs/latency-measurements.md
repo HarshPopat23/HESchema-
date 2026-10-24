@@ -1,8 +1,14 @@
 # Latency measurement boundaries
 
-Timing protocol: `latency-v1`. This instruments future runs. It does not rerun
+Timing protocol: `latency-v1`. This describes application instrumentation; it does not itself rerun
 models, change retry policy or establish that HESchema speeds up generation.
 Historical logs and frozen study packs remain unchanged.
+
+## Completed latency replication
+
+The [24 October report](reports/HESchema_Latency_Report.md) measures 2,160 selected results across three sessions, with 2,128 primary results. COMPACT reduced total tokens by 17.42% versus FULL without demonstrating a latency improvement. Median HTTP totals were 6.064s (COMPACT) and 5.907s (FULL); service medians were 15.189s and 15.157s and include pacing.
+
+That study uses `scripts/latency_study.py` and explicit continuation wrappers, not a retrospective extraction of `latency-v1` application telemetry. Its `providerRoundTripMs`, `queueWaitMs` and `serviceTotalMs` are study-harness boundaries defined in its [protocol](../research/latency-20261024/PROTOCOL.md). Do not treat its batch queue as a single-user application queue or substitute adapter field names without checking their boundaries.
 
 ## Why the old measurements were insufficient
 

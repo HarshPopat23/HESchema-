@@ -1,3 +1,5 @@
+> **Historical study:** the [completed latency replication](../../../docs/reports/HESchema_Latency_Report.md) is a separate experiment: 17.42% fewer COMPACT tokens than FULL, without a demonstrated speedup. This report retains its own dataset, results and limitations; do not merge its numbers with the newer study.
+
 # Study Boundaries and Limitations
 
 This evaluation adheres strictly to the evidence boundaries defined in the study protocol:

@@ -1,0 +1,57 @@
+{
+  "contentPublished": false,
+  "hashRule": "SHA-256 of UTF-8 JSON mapping relative paths to sha256/bytes; sort_keys=True, separators=(comma,colon). Full per-file index remains in the private archive.",
+  "artifactSets": {
+    "main": {
+      "manifest": {
+        "files": 1,
+        "bytes": 157424,
+        "canonicalIndexSha256": "c90a4a3efca868bcf53ef3c7a8549fe69a3284d2376ec78234f53f87aca4d030"
+      },
+      "requests": {
+        "files": 724,
+        "bytes": 1958433,
+        "canonicalIndexSha256": "84ef855e9d3f8dce4f44dbdbe351e250613470d192e8847421ebbd304efce7de"
+      },
+      "slots": {
+        "files": 635,
+        "bytes": 353474,
+        "canonicalIndexSha256": "495529f4461f1b7b8115ba22d0b5bc60fc2e96a980f88921c7b2381b8b63ff5c"
+      }
+    },
+    "continuation": {
+      "manifest": {
+        "files": 1,
+        "bytes": 113442,
+        "canonicalIndexSha256": "4c1355a87c3427be81631085ce3105f65c4716cef0cf00598f93b575bd31068e"
+      },
+      "requests": {
+        "files": 812,
+        "bytes": 2216545,
+        "canonicalIndexSha256": "474484222591610bf15d0c72fbca48a032eb2f0c9306a7c7c4da4183e959fcbb"
+      },
+      "slots": {
+        "files": 680,
+        "bytes": 377938,
+        "canonicalIndexSha256": "d41093b11834e64eec901e8d3e60811c3076dcada2d929c080c3edfb656a1567"
+      }
+    },
+    "completion": {
+      "manifest": {
+        "files": 1,
+        "bytes": 66214,
+        "canonicalIndexSha256": "d5ac99c5b331f32f3dfc004c8406bfd94063940ef32766f90a69928e8f39f454"
+      },
+      "requests": {
+        "files": 980,
+        "bytes": 2695208,
+        "canonicalIndexSha256": "df9a4bb5fc3c32bc19cb952ebb3f41168eeda5cd15ec94007862251698289005"
+      },
+      "slots": {
+        "files": 845,
+        "bytes": 491276,
+        "canonicalIndexSha256": "fdd706ae5387544a538a26a7befb0afab4200eb8884adc5254ce91bf104aeede"
+      }
+    }
+  }
+}

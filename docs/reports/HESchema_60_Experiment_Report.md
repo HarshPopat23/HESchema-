@@ -1,3 +1,5 @@
+> **Historical study:** the [completed latency replication](HESchema_Latency_Report.md) is a separate experiment: 17.42% fewer COMPACT tokens than FULL, without a demonstrated speedup. This report retains its own dataset, results and limitations; do not merge its numbers with the newer study.
+
 > **Raw-evidence publication pending:** automatic approval review requires explicit authorization for four raw-response archives. They were verified locally but are not in this PR; independent replay from the PR alone is currently blocked. See `rerun-20261024/PUBLICATION_STATUS.md`.
 
 # H60 results correction: independent offline rescoring
