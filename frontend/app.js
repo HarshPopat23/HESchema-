@@ -144,8 +144,6 @@
     setupOllamaVal: document.getElementById("setup-ollama-val"),
     setupEndpointVal: document.getElementById("setup-endpoint-val"),
     cliCheckSetupBtn: document.getElementById("cli-check-setup-btn"),
-    cliPresetSelect: document.getElementById("cli-preset-select"),
-    cliPresetApplyBtn: document.getElementById("cli-preset-apply-btn"),
     cliPresetBtns: document.querySelectorAll(".cli-preset-btn"),
 
     cliModelInput: document.getElementById("cli-model-input"),
@@ -359,33 +357,6 @@
     el.tabBtnPrompt.addEventListener("click", () => switchTab("prompt"));
     el.tabBtnBenchmark.addEventListener("click", () => switchTab("benchmark"));
 
-    const tabsNav = document.querySelector(".tabs-nav");
-    if (tabsNav) {
-      tabsNav.addEventListener("keydown", (e) => {
-        const tabs = Array.from(tabsNav.querySelectorAll("[role='tab']"));
-        const currentIndex = tabs.findIndex((t) => t === document.activeElement);
-        if (currentIndex === -1) return;
-
-        let targetIndex = -1;
-        if (e.key === "ArrowRight" || e.key === "ArrowDown") {
-          targetIndex = (currentIndex + 1) % tabs.length;
-        } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
-          targetIndex = (currentIndex - 1 + tabs.length) % tabs.length;
-        } else if (e.key === "Home") {
-          targetIndex = 0;
-        } else if (e.key === "End") {
-          targetIndex = tabs.length - 1;
-        }
-
-        if (targetIndex !== -1) {
-          e.preventDefault();
-          const targetTab = tabs[targetIndex];
-          targetTab.focus();
-          targetTab.click();
-        }
-      });
-    }
-
     // Prompt Input change
     el.promptInput.addEventListener("input", () => {
       invalidateCurrentState("Prompt modified — previous state association reset");
@@ -440,34 +411,9 @@
 
     // Runs Filter & Modal
     el.runsArmFilter.addEventListener("change", renderRunsTable);
-    if (el.modalCloseBtn) {
-      el.modalCloseBtn.addEventListener("click", closeRunDetailModal);
-    }
-    if (el.runDetailModal) {
-      el.runDetailModal.addEventListener("click", (e) => {
-        if (e.target === el.runDetailModal) closeRunDetailModal();
-      });
-      el.runDetailModal.addEventListener("keydown", (e) => {
-        if (e.key !== "Tab") return;
-        const focusableElements = el.runDetailModal.querySelectorAll(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-        );
-        if (!focusableElements.length) return;
-        const first = focusableElements[0];
-        const last = focusableElements[focusableElements.length - 1];
-        if (e.shiftKey && document.activeElement === first) {
-          last.focus();
-          e.preventDefault();
-        } else if (!e.shiftKey && document.activeElement === last) {
-          first.focus();
-          e.preventDefault();
-        }
-      });
-    }
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && el.runDetailModal && !el.runDetailModal.classList.contains("hidden")) {
-        closeRunDetailModal();
-      }
+    el.modalCloseBtn.addEventListener("click", () => el.runDetailModal.classList.add("hidden"));
+    el.runDetailModal.addEventListener("click", (e) => {
+      if (e.target === el.runDetailModal) el.runDetailModal.classList.add("hidden");
     });
 
     // CLI Integration Listeners
@@ -479,19 +425,7 @@
     }
     if (el.cliPresetBtns) {
       el.cliPresetBtns.forEach((btn) => {
-        btn.addEventListener("click", () => {
-          if (el.cliPresetSelect && btn.dataset.preset) {
-            el.cliPresetSelect.value = btn.dataset.preset;
-          }
-          loadCliPreset(btn.dataset.preset);
-        });
-      });
-    }
-    if (el.cliPresetApplyBtn) {
-      el.cliPresetApplyBtn.addEventListener("click", () => {
-        if (el.cliPresetSelect) {
-          loadCliPreset(el.cliPresetSelect.value);
-        }
+        btn.addEventListener("click", () => loadCliPreset(btn.dataset.preset));
       });
     }
     if (el.cliPromptInput) {
@@ -581,32 +515,28 @@
   // --- Tabs Switcher ---
   function switchTab(tab) {
     activeTab = tab;
-    const tabItems = [
-      { id: "prompt", btn: el.tabBtnPrompt, panel: el.tabPrompt },
-      { id: "benchmark", btn: el.tabBtnBenchmark, panel: el.tabBenchmark },
-      { id: "contracts", btn: document.getElementById("tab-btn-contracts"), panel: document.getElementById("tab-contracts") },
-      { id: "cli", btn: el.tabBtnCli, panel: el.tabCli }
-    ];
+    [el.tabBtnPrompt, el.tabBtnBenchmark, el.tabBtnCli, document.getElementById("tab-btn-contracts")].forEach((b) => b && b.classList.remove("active"));
+    [el.tabPrompt, el.tabBenchmark, el.tabCli, document.getElementById("tab-contracts")].forEach((p) => p && p.classList.remove("active"));
 
-    tabItems.forEach(({ id, btn, panel }) => {
-      const isTarget = id === tab;
-      if (btn) {
-        btn.classList.toggle("active", isTarget);
-        btn.setAttribute("aria-selected", isTarget ? "true" : "false");
-        btn.setAttribute("tabindex", isTarget ? "0" : "-1");
-      }
-      if (panel) {
-        panel.classList.toggle("active", isTarget);
-      }
-    });
-
-    if (tab === "contracts" || tab === "cli") {
+    if (tab === "contracts") {
+      document.getElementById("tab-btn-contracts").classList.add("active");
+      document.getElementById("tab-contracts").classList.add("active");
       if (el.commonControls) el.commonControls.classList.add("hidden");
-      if (tab === "cli" && !cliSetupChecked) {
+    } else if (tab === "prompt") {
+      el.tabBtnPrompt.classList.add("active");
+      el.tabPrompt.classList.add("active");
+      if (el.commonControls) el.commonControls.classList.remove("hidden");
+    } else if (tab === "benchmark") {
+      el.tabBtnBenchmark.classList.add("active");
+      el.tabBenchmark.classList.add("active");
+      if (el.commonControls) el.commonControls.classList.remove("hidden");
+    } else if (tab === "cli") {
+      el.tabBtnCli.classList.add("active");
+      el.tabCli.classList.add("active");
+      if (el.commonControls) el.commonControls.classList.add("hidden");
+      if (!cliSetupChecked) {
         checkCliSetup();
       }
-    } else {
-      if (el.commonControls) el.commonControls.classList.remove("hidden");
     }
   }
 
@@ -663,9 +593,6 @@
   }
 
   function loadCliPreset(presetKey) {
-    if (el.cliPresetSelect) {
-      el.cliPresetSelect.value = presetKey;
-    }
     const preset = cliPresetsData[presetKey] || null;
     if (!preset) return;
     el.cliPromptInput.value = preset.prompt;
@@ -1712,7 +1639,6 @@
     const pct = Math.min(100, Math.round((completed / total) * 100));
 
     el.jobProgressBar.style.width = pct + "%";
-    el.jobProgressBar.setAttribute("aria-valuenow", pct);
     el.progCompleted.textContent = completed + " / " + total + " (" + pct + "%)";
     el.progRequests.textContent = p.requestsAttempted || 0;
     el.progErrors.textContent = p.providerErrors || 0;
@@ -1905,7 +1831,7 @@
       const btnInspect = document.createElement("button");
       btnInspect.className = "btn btn-sm btn-secondary";
       btnInspect.textContent = "Inspect";
-      btnInspect.onclick = () => openRunDetailModal(row, btnInspect);
+      btnInspect.onclick = () => openRunDetailModal(row);
       tdAct.appendChild(btnInspect);
       tr.appendChild(tdAct);
 
@@ -1949,20 +1875,7 @@
   }
 
   // --- Run Inspection Modal ---
-  let modalTriggerElement = null;
-
-  function closeRunDetailModal() {
-    if (!el.runDetailModal) return;
-    el.runDetailModal.classList.add("hidden");
-    document.body.style.overflow = "";
-    if (modalTriggerElement && typeof modalTriggerElement.focus === "function") {
-      modalTriggerElement.focus();
-    }
-    modalTriggerElement = null;
-  }
-
-  function openRunDetailModal(row, triggerEl) {
-    modalTriggerElement = triggerEl || document.activeElement;
+  function openRunDetailModal(row) {
     el.modalRunTitle.textContent = "Task: " + row.caseId + " (Arm: " + row.arm + ", Rep: " + row.repeat + ")";
 
     const firstAttempt = (row.attempts && row.attempts[0]) || {};
@@ -2024,10 +1937,6 @@
     addStat("Cost", row.costUsd !== null ? "$" + row.costUsd.toFixed(5) : "Not available");
 
     el.runDetailModal.classList.remove("hidden");
-    document.body.style.overflow = "hidden";
-    if (el.modalCloseBtn) {
-      el.modalCloseBtn.focus();
-    }
   }
 
   function setupContracts() {

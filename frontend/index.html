@@ -27,14 +27,6 @@
   </header>
 
   <main class="main-container">
-    <!-- Navigation Tabs -->
-    <nav class="tabs-nav" role="tablist" aria-label="Evaluation Suites">
-      <button id="tab-btn-prompt" class="tab-btn active" role="tab" aria-selected="true" aria-controls="tab-prompt" tabindex="0" type="button">Prompt Test</button>
-      <button id="tab-btn-benchmark" class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-benchmark" tabindex="-1" type="button">Schema Benchmark</button>
-      <button id="tab-btn-contracts" class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-contracts" tabindex="-1" type="button">Contracts &amp; Context</button>
-      <button id="tab-btn-cli" class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-cli" tabindex="-1" type="button">CLI Integration</button>
-    </nav>
-
     <!-- Common Configuration Bar -->
     <section class="common-controls card">
       <div class="control-row">
@@ -84,8 +76,60 @@
       </div>
     </section>
 
+    <!-- Navigation Tabs -->
+    <nav class="tabs-nav">
+      <button id="tab-btn-prompt" class="tab-btn active" type="button">Prompt Test</button>
+      <button id="tab-btn-benchmark" class="tab-btn" type="button">Schema Benchmark</button>
+      <button id="tab-btn-contracts" class="tab-btn" type="button">Contracts &amp; Context</button>
+      <button id="tab-btn-cli" class="tab-btn" type="button">CLI Integration</button>
+    </nav>
+
+    <div id="tab-contracts" class="tab-pane">
+      <section class="card">
+        <h2>Validate a declared contract</h2>
+        <p>Check the original schema, approved context, and relationships separately. A decision covers declared checks and never grants execution permission.</p>
+        <div class="control-row">
+          <div class="form-group"><label for="contract-example">Walkthrough</label><select id="contract-example"><option value="invoice">Invoice arithmetic</option><option value="trip">Confirmed destination / custom tool</option></select></div>
+          <button id="contract-load" class="btn btn-secondary" type="button">Load example</button>
+          <button id="contract-good" class="btn btn-secondary" type="button">Use valid output</button>
+          <button id="contract-bad" class="btn btn-secondary" type="button">Use invalid output</button>
+        </div>
+        <div class="contract-grid">
+          <div class="form-group"><label for="contract-definition">Versioned contract (edit ID/version for your tool)</label><textarea id="contract-definition" rows="14" spellcheck="false"></textarea><button id="contract-register" class="btn btn-secondary" type="button">Register contract</button></div>
+          <div class="form-group"><label for="contract-context">Context proposal: data and explicitly approved pointers</label><textarea id="contract-context" rows="9" spellcheck="false"></textarea><button id="contract-create-context" class="btn btn-secondary" type="button">Create unconfirmed context</button><button id="contract-confirm" class="btn btn-primary" type="button">Confirm these fields</button><button id="contract-invalidate" class="btn btn-secondary" type="button">Invalidate approval</button><p id="contract-context-status" aria-live="polite">No context</p></div>
+        </div>
+        <div class="form-group"><label for="contract-output">Existing whole JSON output</label><textarea id="contract-output" rows="7" spellcheck="false"></textarea><button id="contract-validate" class="btn btn-primary" type="button">Validate existing output</button></div>
+        <details>
+          <summary>Optional generation and bounded repair</summary>
+          <p>Runtime repairs default to zero. Selecting a real provider makes inference requests using your backend configuration. Schema acceptance does not establish enforcement.</p>
+          <div class="form-group"><label for="contract-prompt">Prompt</label><textarea id="contract-prompt" rows="3"></textarea></div>
+          <div class="control-row">
+            <div class="form-group"><label for="contract-provider">Provider</label><select id="contract-provider"><option value="mock">mock (offline, nonempirical)</option><option value="ollama">ollama</option></select></div>
+            <div class="form-group"><label for="contract-model">Model (optional)</label><input id="contract-model" type="text"></div>
+            <div class="form-group"><label for="contract-mode">Decoding</label><select id="contract-mode"><option value="prompt_only">Prompt only</option><option value="native_original">Native original</option><option value="native_projected">Native projected</option></select></div>
+            <div class="form-group"><label for="contract-prompt-style">Prompt style</label><select id="contract-prompt-style" aria-describedby="contract-prompt-style-help"><option value="full">Full (default)</option><option value="compact">Compact</option></select></div>
+            <div class="form-group"><label for="contract-repairs">Extra attempts</label><input id="contract-repairs" type="number" min="0" max="5" value="0"></div>
+            <div class="form-group"><label for="contract-feedback">Feedback</label><select id="contract-feedback"><option value="actionable">Actionable</option><option value="raw">Normalized raw errors</option><option value="generic">Generic</option></select></div>
+          </div>
+          <p id="contract-prompt-style-help" class="muted">Compact sends the original schema and approved facts without repeating values in projected constraints. Both styles keep full contract validation after generation.</p>
+          <p class="muted">To calculate a supported count, sum or product in the application, set <code>"compute": "application"</code> on that relationship in a new contract version. The model omits its target; validated inputs are used to assemble and fully validate the output. Other relationships remain model-generated.</p>
+          <button id="contract-generate" class="btn btn-primary" type="button">Generate and validate</button>
+        </details>
+        <p id="contract-notice" class="muted" aria-live="polite">Examples are synthetic, not evidence of company adoption.</p>
+        <div id="contract-error" class="error-msg hidden" role="alert"></div>
+      </section>
+      <section id="contract-results" class="card hidden" aria-live="polite">
+        <h3 id="contract-decision">Decision</h3>
+        <div class="table-container"><table><thead><tr><th>Check</th><th>Status</th></tr></thead><tbody id="contract-stages"></tbody></table></div>
+        <p id="contract-evidence"></p>
+        <h4>Diagnostics</h4><pre id="contract-diagnostics" class="code-block"></pre>
+        <details><summary>Projection, repair and evidence record</summary><pre id="contract-record" class="code-block"></pre></details>
+        <button id="contract-download" class="btn btn-secondary" type="button">Download evidence JSON</button>
+      </section>
+    </div>
+
     <!-- ==================== TAB 1: PROMPT TEST ==================== -->
-    <div id="tab-prompt" class="tab-pane active" role="tabpanel" aria-labelledby="tab-btn-prompt" tabindex="0">
+    <div id="tab-prompt" class="tab-pane active">
       <div class="card">
         <div class="pane-header">
           <h2>Test Single Prompt</h2>
@@ -132,7 +176,7 @@
         <div class="action-buttons-row">
           <button id="run-prompt-btn" class="btn btn-primary" type="button">Run Prompt</button>
           <button id="compare-arms-btn" class="btn btn-secondary" type="button">Compare Three Arms</button>
-          <span id="prompt-loading-indicator" class="loading-indicator hidden" role="status" aria-live="polite">Running generation &amp; validation...</span>
+          <span id="prompt-loading-indicator" class="loading-indicator hidden">Running generation &amp; validation...</span>
         </div>
       </div>
 
@@ -232,7 +276,7 @@
     </div>
 
     <!-- ==================== TAB 2: SCHEMA BENCHMARK ==================== -->
-    <div id="tab-benchmark" class="tab-pane" role="tabpanel" aria-labelledby="tab-btn-benchmark" tabindex="0">
+    <div id="tab-benchmark" class="tab-pane">
       <div class="card">
         <div class="pane-header">
           <h2>Run Schema-Effect Benchmark</h2>
@@ -307,7 +351,7 @@
         <div class="action-buttons-row">
           <button id="start-benchmark-btn" class="btn btn-primary" type="button">Run Benchmark</button>
           <button id="cancel-benchmark-btn" class="btn btn-danger hidden" type="button">Cancel Job</button>
-          <span id="bench-status-indicator" class="loading-indicator hidden" role="status" aria-live="polite">Job running...</span>
+          <span id="bench-status-indicator" class="loading-indicator hidden">Job running...</span>
         </div>
       </div>
 
@@ -318,7 +362,7 @@
           <span id="job-status-pill" class="status-pill status-running">Running</span>
         </div>
         <div class="progress-bar-container">
-          <div id="job-progress-bar" class="progress-bar-fill" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Experiment Progress" style="width: 0%;"></div>
+          <div id="job-progress-bar" class="progress-bar-fill" style="width: 0%;"></div>
         </div>
         <div class="progress-stats-grid">
           <div><strong>Completed Runs:</strong> <span id="prog-completed">0 / 0</span></div>
@@ -429,53 +473,8 @@
       </div>
     </div>
 
-    <!-- ==================== TAB 3: CONTRACTS & CONTEXT ==================== -->
-    <div id="tab-contracts" class="tab-pane" role="tabpanel" aria-labelledby="tab-btn-contracts" tabindex="0">
-      <section class="card">
-        <h2>Validate a declared contract</h2>
-        <p>Check the original schema, approved context, and relationships separately. A decision covers declared checks and never grants execution permission.</p>
-        <div class="control-row">
-          <div class="form-group"><label for="contract-example">Walkthrough</label><select id="contract-example"><option value="invoice">Invoice arithmetic</option><option value="trip">Confirmed destination / custom tool</option></select></div>
-          <button id="contract-load" class="btn btn-secondary btn-sm" type="button">Load example</button>
-          <button id="contract-good" class="btn btn-secondary btn-sm" type="button">Use valid output</button>
-          <button id="contract-bad" class="btn btn-secondary btn-sm" type="button">Use invalid output</button>
-        </div>
-        <div class="contract-grid">
-          <div class="form-group"><label for="contract-definition">Versioned contract (edit ID/version for your tool)</label><textarea id="contract-definition" rows="14" spellcheck="false"></textarea><button id="contract-register" class="btn btn-secondary btn-sm" type="button">Register contract</button></div>
-          <div class="form-group"><label for="contract-context">Context proposal: data and explicitly approved pointers</label><textarea id="contract-context" rows="9" spellcheck="false"></textarea><button id="contract-create-context" class="btn btn-secondary btn-sm" type="button">Create unconfirmed context</button><button id="contract-confirm" class="btn btn-secondary btn-sm" type="button">Confirm these fields</button><button id="contract-invalidate" class="btn btn-secondary btn-sm" type="button">Invalidate approval</button><p id="contract-context-status" aria-live="polite">No context</p></div>
-        </div>
-        <div class="form-group"><label for="contract-output">Existing whole JSON output</label><textarea id="contract-output" rows="7" spellcheck="false"></textarea><button id="contract-validate" class="btn btn-primary" type="button">Validate existing output</button></div>
-        <details>
-          <summary>Optional generation and bounded repair</summary>
-          <p>Runtime repairs default to zero. Selecting a real provider makes inference requests using your backend configuration. Schema acceptance does not establish enforcement.</p>
-          <div class="form-group"><label for="contract-prompt">Prompt</label><textarea id="contract-prompt" rows="3"></textarea></div>
-          <div class="control-row">
-            <div class="form-group"><label for="contract-provider">Provider</label><select id="contract-provider"><option value="mock">mock (offline, nonempirical)</option><option value="ollama">ollama</option></select></div>
-            <div class="form-group"><label for="contract-model">Model (optional)</label><input id="contract-model" type="text"></div>
-            <div class="form-group"><label for="contract-mode">Decoding</label><select id="contract-mode"><option value="prompt_only">Prompt only</option><option value="native_original">Native original</option><option value="native_projected">Native projected</option></select></div>
-            <div class="form-group"><label for="contract-prompt-style">Prompt style</label><select id="contract-prompt-style" aria-describedby="contract-prompt-style-help"><option value="full">Full (default)</option><option value="compact">Compact</option></select></div>
-            <div class="form-group"><label for="contract-repairs">Extra attempts</label><input id="contract-repairs" type="number" min="0" max="5" value="0"></div>
-            <div class="form-group"><label for="contract-feedback">Feedback</label><select id="contract-feedback"><option value="actionable">Actionable</option><option value="raw">Normalized raw errors</option><option value="generic">Generic</option></select></div>
-          </div>
-          <p id="contract-prompt-style-help" class="muted">Compact sends the original schema and approved facts without repeating values in projected constraints. Both styles keep full contract validation after generation.</p>
-          <p class="muted">To calculate a supported count, sum or product in the application, set <code>"compute": "application"</code> on that relationship in a new contract version. The model omits its target; validated inputs are used to assemble and fully validate the output. Other relationships remain model-generated.</p>
-          <button id="contract-generate" class="btn btn-secondary" type="button">Generate and validate</button>
-        </details>
-        <p id="contract-notice" class="muted" aria-live="polite">Examples are synthetic, not evidence of company adoption.</p>
-        <div id="contract-error" class="error-msg hidden" role="alert"></div>
-      </section>
-      <section id="contract-results" class="card hidden" aria-live="polite">
-        <h3 id="contract-decision">Decision</h3>
-        <div class="table-container"><table><thead><tr><th>Check</th><th>Status</th></tr></thead><tbody id="contract-stages"></tbody></table></div>
-        <p id="contract-evidence"></p>
-        <h4>Diagnostics</h4><pre id="contract-diagnostics" class="code-block"></pre>
-        <details><summary>Projection, repair and evidence record</summary><pre id="contract-record" class="code-block"></pre></details>
-        <button id="contract-download" class="btn btn-secondary btn-sm" type="button">Download evidence JSON</button>
-      </section>
-    </div>
-
-    <!-- ==================== TAB 4: CLI INTEGRATION ==================== -->
-    <div id="tab-cli" class="tab-pane" role="tabpanel" aria-labelledby="tab-btn-cli" tabindex="0">
+    <!-- ==================== TAB 3: CLI INTEGRATION ==================== -->
+    <div id="tab-cli" class="tab-pane">
       <div class="card">
         <div class="pane-header">
           <h2>Sourcemeta JSON Schema CLI Integration</h2>
@@ -502,22 +501,7 @@
 
         <!-- Presets Bar -->
         <div class="cli-presets-section">
-          <label class="section-sublabel" for="cli-preset-select">Select a Preset Experiment (C01 – C10):</label>
-          <div class="preset-select-group">
-            <select id="cli-preset-select" class="cli-preset-select">
-              <option value="C01">C01. Support Ticket (Simple Object)</option>
-              <option value="C02">C02. Invoice (Cents / Integer Math)</option>
-              <option value="C03">C03. Nullable Age (Type Array)</option>
-              <option value="C04">C04. Nested Order (Deep Hierarchy)</option>
-              <option value="C05">C05. oneOf Contact (Discriminated Union)</option>
-              <option value="C06">C06. if/then Delivery (Conditional Schema)</option>
-              <option value="C07">C07. $defs Item (Recursive/Reusable)</option>
-              <option value="C08">C08. Unique Tags (uniqueItems Array)</option>
-              <option value="C09">C09. Date &amp; Room (Format Strings)</option>
-              <option value="C10">C10. Missing Clarification (Required Fields)</option>
-            </select>
-            <button id="cli-preset-apply-btn" class="btn btn-secondary btn-sm" type="button">Apply Preset</button>
-          </div>
+          <label class="section-sublabel">Select a Preset Experiment (C01 – C10):</label>
           <div class="preset-buttons-row">
             <button class="btn btn-secondary btn-sm cli-preset-btn" data-preset="C01" type="button">C01. Support Ticket</button>
             <button class="btn btn-secondary btn-sm cli-preset-btn" data-preset="C02" type="button">C02. Invoice (Cents)</button>
@@ -592,11 +576,11 @@
         <!-- Action Buttons -->
         <div class="action-buttons-row">
           <button id="cli-preview-btn" class="btn btn-secondary" type="button">Preview Request &amp; Command</button>
-          <button id="cli-run-api-btn" class="btn btn-secondary" type="button">Run API Test (Browser POST)</button>
+          <button id="cli-run-api-btn" class="btn btn-primary" type="button">Run API Test (Browser POST)</button>
           <button id="cli-run-cmd-btn" class="btn btn-primary" type="button">Run CLI Test (Backend Subprocess)</button>
           <button id="cli-compare-btn" class="btn btn-secondary" type="button">Run Small Comparison (Both Modes)</button>
           <button id="cli-download-results-btn" class="btn btn-secondary hidden" type="button">Download Results (.json)</button>
-          <span id="cli-loading-indicator" class="loading-indicator hidden" role="status" aria-live="polite">Executing trial...</span>
+          <span id="cli-loading-indicator" class="loading-indicator hidden">Executing trial...</span>
         </div>
       </div>
 
@@ -711,11 +695,11 @@
   </main>
 
   <!-- Run Detail Modal / Drawer -->
-  <div id="run-detail-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-run-title">
+  <div id="run-detail-modal" class="modal-overlay hidden">
     <div class="modal-card">
       <div class="modal-header">
         <h3 id="modal-run-title">Run Details</h3>
-        <button id="modal-close-btn" class="btn btn-sm btn-secondary" type="button" aria-label="Close details dialog">&times;</button>
+        <button id="modal-close-btn" class="btn btn-sm btn-secondary" type="button">&times;</button>
       </div>
       <div class="modal-body">
         <div class="detail-section">
