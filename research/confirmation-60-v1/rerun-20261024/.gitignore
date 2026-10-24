@@ -1,0 +1,6 @@
+# Individual synced receipts remain available through the deterministic archive.
+request-evidence/
+runs.jsonl
+original-result-rows.jsonl
+original-receipts.jsonl
+reconciliation.private.json

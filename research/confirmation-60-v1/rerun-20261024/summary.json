@@ -1,0 +1,52 @@
+{
+  "updatedAt": "2026-10-24T05:47:29.271811+00:00",
+  "totalCompleted": 2160,
+  "totalPlanned": 2160,
+  "completionPct": 100.0,
+  "byArm": {
+    "A": {
+      "slots": 540,
+      "firstCorrect": 483,
+      "firstCorrectPct": 89.44,
+      "finalCorrect": 487,
+      "finalCorrectPct": 90.19,
+      "falseAcceptance": 49,
+      "falseAcceptancePct": 9.07,
+      "meanInputTokens": 349.3,
+      "meanOutputTokens": 277.8
+    },
+    "B": {
+      "slots": 540,
+      "firstCorrect": 450,
+      "firstCorrectPct": 83.33,
+      "finalCorrect": 488,
+      "finalCorrectPct": 90.37,
+      "falseAcceptance": 0,
+      "falseAcceptancePct": 0.0,
+      "meanInputTokens": 846.2,
+      "meanOutputTokens": 324.3
+    },
+    "C": {
+      "slots": 540,
+      "firstCorrect": 439,
+      "firstCorrectPct": 81.3,
+      "finalCorrect": 484,
+      "finalCorrectPct": 89.63,
+      "falseAcceptance": 0,
+      "falseAcceptancePct": 0.0,
+      "meanInputTokens": 639.1,
+      "meanOutputTokens": 303.3
+    },
+    "D": {
+      "slots": 540,
+      "firstCorrect": 423,
+      "firstCorrectPct": 78.33,
+      "finalCorrect": 477,
+      "finalCorrectPct": 88.33,
+      "falseAcceptance": 0,
+      "falseAcceptancePct": 0.0,
+      "meanInputTokens": 661.0,
+      "meanOutputTokens": 321.6
+    }
+  }
+}

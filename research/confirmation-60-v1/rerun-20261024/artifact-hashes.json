@@ -1,0 +1,15 @@
+{
+  ".gitignore": "c9d25fd6575cfbc76a1889b35f1f515f9d0d45a0d2e2244ff7328533843d1ed8",
+  "PUBLICATION_STATUS.md": "9409ea5bc188dfb6b682dc55d90e636bb3bc347441e00c945a2fc666fc12c4ae",
+  "REPORT.md": "20f578693d9fa6dc2d5a770e46ac3692c19b856c488dd7110294beda521cb8b6",
+  "VERIFICATION.md": "41a95cf550782f00c9264368ecab930571f638df22ed2cb0c73394738abbcc86",
+  "manifest.json": "03a83b3b4fde46d83978937a5c86d1bb8520d4d4bc77a93411762d0ba168b4a5",
+  "original-receipts.jsonl.gz": "6bfe734503fbf8138f09bcd1da88ad8aa61e6006158a818c92d4a0082592c1c6",
+  "original-result-rows.jsonl.gz": "be4cf165b841038440c9f7b03603f85a7e72399043d861091f995d27b227b956",
+  "original-summary.json": "dab0e790ea7ac0a47093bc7748a53063fc9fd73dab954cb986a0a7755684554c",
+  "reconciliation.json": "6cc5260b8d3126eb13bd0ab067afd54958ec1e4eee5159ce0354992edadf952f",
+  "request-evidence.jsonl.gz": "a5005e6223779e0a68614a06e46defa59ec63ed2a3a90c015a09d957e1c7735d",
+  "runs.jsonl.gz": "11143aebbf79eff19fab5a09f75f1fda9070a21a8c1c44025b3e7853a9c351f1",
+  "summary.json": "a2736900beae7cfa44b84e3821dd0687e60b5ac986c31ab1397e87801419be8d",
+  "verified-summary.json": "e8a681d1b3e94e2d2e4b8dd75cfbe71509c2aa653aeb01905184a3980a088a65"
+}

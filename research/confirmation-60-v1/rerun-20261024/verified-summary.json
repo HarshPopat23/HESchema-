@@ -1,0 +1,857 @@
+{
+  "selectedSlots": 2160,
+  "primaryMatchedSlots": 2156,
+  "excludedGroups": [
+    [
+      "H60-04",
+      "openai/gpt-oss-120b",
+      0
+    ]
+  ],
+  "recoveredRows": 3,
+  "replacementSlots": 2,
+  "arm": {
+    "A": {
+      "slots": 539,
+      "firstCorrect": 482,
+      "finalCorrect": 486,
+      "wrongAccepted": 49,
+      "correctRejected": 0,
+      "inputTokens": 188453,
+      "outputTokens": 149665
+    },
+    "B": {
+      "slots": 539,
+      "firstCorrect": 450,
+      "finalCorrect": 488,
+      "wrongAccepted": 0,
+      "correctRejected": 0,
+      "inputTokens": 456404,
+      "outputTokens": 174570
+    },
+    "C": {
+      "slots": 539,
+      "firstCorrect": 439,
+      "finalCorrect": 484,
+      "wrongAccepted": 0,
+      "correctRejected": 0,
+      "inputTokens": 344524,
+      "outputTokens": 163235
+    },
+    "D": {
+      "slots": 539,
+      "firstCorrect": 423,
+      "finalCorrect": 477,
+      "wrongAccepted": 0,
+      "correctRejected": 0,
+      "inputTokens": 356341,
+      "outputTokens": 172958
+    }
+  },
+  "model": {
+    "openai/gpt-oss-120b": {
+      "slots": 716,
+      "firstCorrect": 588,
+      "finalCorrect": 633,
+      "wrongAccepted": 20,
+      "correctRejected": 0,
+      "inputTokens": 444870,
+      "outputTokens": 264006
+    },
+    "openai/gpt-oss-20b": {
+      "slots": 720,
+      "firstCorrect": 517,
+      "finalCorrect": 600,
+      "wrongAccepted": 20,
+      "correctRejected": 0,
+      "inputTokens": 501256,
+      "outputTokens": 309824
+    },
+    "qwen/qwen3.8-27b": {
+      "slots": 720,
+      "firstCorrect": 689,
+      "finalCorrect": 702,
+      "wrongAccepted": 9,
+      "correctRejected": 0,
+      "inputTokens": 399596,
+      "outputTokens": 86598
+    }
+  },
+  "family": {
+    "Counts": {
+      "slots": 360,
+      "firstCorrect": 281,
+      "finalCorrect": 313,
+      "wrongAccepted": 11,
+      "correctRejected": 0,
+      "inputTokens": 320226,
+      "outputTokens": 192745
+    },
+    "Date ordering": {
+      "slots": 360,
+      "firstCorrect": 343,
+      "finalCorrect": 353,
+      "wrongAccepted": 0,
+      "correctRejected": 0,
+      "inputTokens": 162822,
+      "outputTokens": 54179
+    },
+    "Identifier matching": {
+      "slots": 360,
+      "firstCorrect": 348,
+      "finalCorrect": 348,
+      "wrongAccepted": 3,
+      "correctRejected": 0,
+      "inputTokens": 248436,
+      "outputTokens": 83403
+    },
+    "List membership": {
+      "slots": 356,
+      "firstCorrect": 211,
+      "finalCorrect": 235,
+      "wrongAccepted": 27,
+      "correctRejected": 0,
+      "inputTokens": 132199,
+      "outputTokens": 121675
+    },
+    "Sums / products": {
+      "slots": 360,
+      "firstCorrect": 330,
+      "finalCorrect": 354,
+      "wrongAccepted": 6,
+      "correctRejected": 0,
+      "inputTokens": 204984,
+      "outputTokens": 108968
+    },
+    "Uniqueness": {
+      "slots": 360,
+      "firstCorrect": 281,
+      "finalCorrect": 332,
+      "wrongAccepted": 2,
+      "correctRejected": 0,
+      "inputTokens": 277055,
+      "outputTokens": 99458
+    }
+  },
+  "project": {
+    "GBIF": {
+      "slots": 216,
+      "firstCorrect": 178,
+      "finalCorrect": 199,
+      "wrongAccepted": 3,
+      "correctRejected": 0,
+      "inputTokens": 205494,
+      "outputTokens": 99014
+    },
+    "Kysely / npm": {
+      "slots": 216,
+      "firstCorrect": 150,
+      "finalCorrect": 172,
+      "wrongAccepted": 12,
+      "correctRejected": 0,
+      "inputTokens": 150701,
+      "outputTokens": 72946
+    },
+    "NASA EONET": {
+      "slots": 212,
+      "firstCorrect": 177,
+      "finalCorrect": 183,
+      "wrongAccepted": 10,
+      "correctRejected": 0,
+      "inputTokens": 133005,
+      "outputTokens": 69546
+    },
+    "Open Library": {
+      "slots": 216,
+      "firstCorrect": 168,
+      "finalCorrect": 182,
+      "wrongAccepted": 3,
+      "correctRejected": 0,
+      "inputTokens": 131494,
+      "outputTokens": 77145
+    },
+    "RCSB PDB": {
+      "slots": 216,
+      "firstCorrect": 198,
+      "finalCorrect": 211,
+      "wrongAccepted": 2,
+      "correctRejected": 0,
+      "inputTokens": 81620,
+      "outputTokens": 39874
+    },
+    "Rails / RubyGems": {
+      "slots": 216,
+      "firstCorrect": 187,
+      "finalCorrect": 206,
+      "wrongAccepted": 0,
+      "correctRejected": 0,
+      "inputTokens": 151785,
+      "outputTokens": 51613
+    },
+    "U.S. Treasury DTS": {
+      "slots": 216,
+      "firstCorrect": 178,
+      "finalCorrect": 189,
+      "wrongAccepted": 4,
+      "correctRejected": 0,
+      "inputTokens": 155340,
+      "outputTokens": 70138
+    },
+    "UniProt": {
+      "slots": 216,
+      "firstCorrect": 186,
+      "finalCorrect": 189,
+      "wrongAccepted": 3,
+      "correctRejected": 0,
+      "inputTokens": 105957,
+      "outputTokens": 60405
+    },
+    "Wikimedia Pageviews": {
+      "slots": 216,
+      "firstCorrect": 194,
+      "finalCorrect": 205,
+      "wrongAccepted": 6,
+      "correctRejected": 0,
+      "inputTokens": 116306,
+      "outputTokens": 52862
+    },
+    "World Bank WDI": {
+      "slots": 216,
+      "firstCorrect": 178,
+      "finalCorrect": 199,
+      "wrongAccepted": 6,
+      "correctRejected": 0,
+      "inputTokens": 114020,
+      "outputTokens": 66885
+    }
+  },
+  "physicalRequestStates": {
+    "returned": 2470,
+    "started": 2,
+    "failed": 32
+  },
+  "finishReasons": {
+    "stop": 2456,
+    "length": 14,
+    "no_return": 34
+  },
+  "conventionalApplicationReplay": {
+    "A": {
+      "slots": 539,
+      "wrongAccepted": 0,
+      "correctRejected": 0,
+      "detectorDisagreements": 49,
+      "scope": "offline final-output replay, no feedback or inference rerun"
+    },
+    "B": {
+      "slots": 539,
+      "wrongAccepted": 0,
+      "correctRejected": 0,
+      "detectorDisagreements": 0,
+      "scope": "offline final-output replay, no feedback or inference rerun"
+    },
+    "C": {
+      "slots": 539,
+      "wrongAccepted": 0,
+      "correctRejected": 0,
+      "detectorDisagreements": 0,
+      "scope": "offline final-output replay, no feedback or inference rerun"
+    },
+    "D": {
+      "slots": 539,
+      "wrongAccepted": 0,
+      "correctRejected": 0,
+      "detectorDisagreements": 0,
+      "scope": "offline final-output replay, no feedback or inference rerun"
+    }
+  },
+  "stratified": {
+    "model": {
+      "openai/gpt-oss-120b": {
+        "A": {
+          "slots": 179,
+          "firstCorrect": 157,
+          "finalCorrect": 159,
+          "wrongAccepted": 20
+        },
+        "B": {
+          "slots": 179,
+          "firstCorrect": 150,
+          "finalCorrect": 160,
+          "wrongAccepted": 0
+        },
+        "C": {
+          "slots": 179,
+          "firstCorrect": 142,
+          "finalCorrect": 161,
+          "wrongAccepted": 0
+        },
+        "D": {
+          "slots": 179,
+          "firstCorrect": 139,
+          "finalCorrect": 153,
+          "wrongAccepted": 0
+        }
+      },
+      "openai/gpt-oss-20b": {
+        "A": {
+          "slots": 180,
+          "firstCorrect": 154,
+          "finalCorrect": 156,
+          "wrongAccepted": 20
+        },
+        "B": {
+          "slots": 180,
+          "firstCorrect": 126,
+          "finalCorrect": 148,
+          "wrongAccepted": 0
+        },
+        "C": {
+          "slots": 180,
+          "firstCorrect": 125,
+          "finalCorrect": 146,
+          "wrongAccepted": 0
+        },
+        "D": {
+          "slots": 180,
+          "firstCorrect": 112,
+          "finalCorrect": 150,
+          "wrongAccepted": 0
+        }
+      },
+      "qwen/qwen3.8-27b": {
+        "A": {
+          "slots": 180,
+          "firstCorrect": 171,
+          "finalCorrect": 171,
+          "wrongAccepted": 9
+        },
+        "B": {
+          "slots": 180,
+          "firstCorrect": 174,
+          "finalCorrect": 180,
+          "wrongAccepted": 0
+        },
+        "C": {
+          "slots": 180,
+          "firstCorrect": 172,
+          "finalCorrect": 177,
+          "wrongAccepted": 0
+        },
+        "D": {
+          "slots": 180,
+          "firstCorrect": 172,
+          "finalCorrect": 174,
+          "wrongAccepted": 0
+        }
+      }
+    },
+    "family": {
+      "Counts": {
+        "A": {
+          "slots": 90,
+          "firstCorrect": 76,
+          "finalCorrect": 76,
+          "wrongAccepted": 11
+        },
+        "B": {
+          "slots": 90,
+          "firstCorrect": 69,
+          "finalCorrect": 80,
+          "wrongAccepted": 0
+        },
+        "C": {
+          "slots": 90,
+          "firstCorrect": 70,
+          "finalCorrect": 81,
+          "wrongAccepted": 0
+        },
+        "D": {
+          "slots": 90,
+          "firstCorrect": 66,
+          "finalCorrect": 76,
+          "wrongAccepted": 0
+        }
+      },
+      "Date ordering": {
+        "A": {
+          "slots": 90,
+          "firstCorrect": 89,
+          "finalCorrect": 90,
+          "wrongAccepted": 0
+        },
+        "B": {
+          "slots": 90,
+          "firstCorrect": 84,
+          "finalCorrect": 87,
+          "wrongAccepted": 0
+        },
+        "C": {
+          "slots": 90,
+          "firstCorrect": 85,
+          "finalCorrect": 89,
+          "wrongAccepted": 0
+        },
+        "D": {
+          "slots": 90,
+          "firstCorrect": 85,
+          "finalCorrect": 87,
+          "wrongAccepted": 0
+        }
+      },
+      "Identifier matching": {
+        "A": {
+          "slots": 90,
+          "firstCorrect": 87,
+          "finalCorrect": 87,
+          "wrongAccepted": 3
+        },
+        "B": {
+          "slots": 90,
+          "firstCorrect": 87,
+          "finalCorrect": 87,
+          "wrongAccepted": 0
+        },
+        "C": {
+          "slots": 90,
+          "firstCorrect": 87,
+          "finalCorrect": 87,
+          "wrongAccepted": 0
+        },
+        "D": {
+          "slots": 90,
+          "firstCorrect": 87,
+          "finalCorrect": 87,
+          "wrongAccepted": 0
+        }
+      },
+      "List membership": {
+        "A": {
+          "slots": 89,
+          "firstCorrect": 62,
+          "finalCorrect": 62,
+          "wrongAccepted": 27
+        },
+        "B": {
+          "slots": 89,
+          "firstCorrect": 52,
+          "finalCorrect": 60,
+          "wrongAccepted": 0
+        },
+        "C": {
+          "slots": 89,
+          "firstCorrect": 48,
+          "finalCorrect": 57,
+          "wrongAccepted": 0
+        },
+        "D": {
+          "slots": 89,
+          "firstCorrect": 49,
+          "finalCorrect": 56,
+          "wrongAccepted": 0
+        }
+      },
+      "Sums / products": {
+        "A": {
+          "slots": 90,
+          "firstCorrect": 84,
+          "finalCorrect": 84,
+          "wrongAccepted": 6
+        },
+        "B": {
+          "slots": 90,
+          "firstCorrect": 84,
+          "finalCorrect": 90,
+          "wrongAccepted": 0
+        },
+        "C": {
+          "slots": 90,
+          "firstCorrect": 87,
+          "finalCorrect": 90,
+          "wrongAccepted": 0
+        },
+        "D": {
+          "slots": 90,
+          "firstCorrect": 75,
+          "finalCorrect": 90,
+          "wrongAccepted": 0
+        }
+      },
+      "Uniqueness": {
+        "A": {
+          "slots": 90,
+          "firstCorrect": 84,
+          "finalCorrect": 87,
+          "wrongAccepted": 2
+        },
+        "B": {
+          "slots": 90,
+          "firstCorrect": 74,
+          "finalCorrect": 84,
+          "wrongAccepted": 0
+        },
+        "C": {
+          "slots": 90,
+          "firstCorrect": 62,
+          "finalCorrect": 80,
+          "wrongAccepted": 0
+        },
+        "D": {
+          "slots": 90,
+          "firstCorrect": 61,
+          "finalCorrect": 81,
+          "wrongAccepted": 0
+        }
+      }
+    },
+    "project": {
+      "GBIF": {
+        "A": {
+          "slots": 54,
+          "firstCorrect": 48,
+          "finalCorrect": 48,
+          "wrongAccepted": 3
+        },
+        "B": {
+          "slots": 54,
+          "firstCorrect": 40,
+          "finalCorrect": 49,
+          "wrongAccepted": 0
+        },
+        "C": {
+          "slots": 54,
+          "firstCorrect": 45,
+          "finalCorrect": 51,
+          "wrongAccepted": 0
+        },
+        "D": {
+          "slots": 54,
+          "firstCorrect": 45,
+          "finalCorrect": 51,
+          "wrongAccepted": 0
+        }
+      },
+      "Kysely / npm": {
+        "A": {
+          "slots": 54,
+          "firstCorrect": 42,
+          "finalCorrect": 42,
+          "wrongAccepted": 12
+        },
+        "B": {
+          "slots": 54,
+          "firstCorrect": 39,
+          "finalCorrect": 46,
+          "wrongAccepted": 0
+        },
+        "C": {
+          "slots": 54,
+          "firstCorrect": 36,
+          "finalCorrect": 42,
+          "wrongAccepted": 0
+        },
+        "D": {
+          "slots": 54,
+          "firstCorrect": 33,
+          "finalCorrect": 42,
+          "wrongAccepted": 0
+        }
+      },
+      "NASA EONET": {
+        "A": {
+          "slots": 53,
+          "firstCorrect": 43,
+          "finalCorrect": 43,
+          "wrongAccepted": 10
+        },
+        "B": {
+          "slots": 53,
+          "firstCorrect": 41,
+          "finalCorrect": 44,
+          "wrongAccepted": 0
+        },
+        "C": {
+          "slots": 53,
+          "firstCorrect": 45,
+          "finalCorrect": 48,
+          "wrongAccepted": 0
+        },
+        "D": {
+          "slots": 53,
+          "firstCorrect": 48,
+          "finalCorrect": 48,
+          "wrongAccepted": 0
+        }
+      },
+      "Open Library": {
+        "A": {
+          "slots": 54,
+          "firstCorrect": 51,
+          "finalCorrect": 51,
+          "wrongAccepted": 3
+        },
+        "B": {
+          "slots": 54,
+          "firstCorrect": 42,
+          "finalCorrect": 45,
+          "wrongAccepted": 0
+        },
+        "C": {
+          "slots": 54,
+          "firstCorrect": 39,
+          "finalCorrect": 44,
+          "wrongAccepted": 0
+        },
+        "D": {
+          "slots": 54,
+          "firstCorrect": 36,
+          "finalCorrect": 42,
+          "wrongAccepted": 0
+        }
+      },
+      "RCSB PDB": {
+        "A": {
+          "slots": 54,
+          "firstCorrect": 52,
+          "finalCorrect": 52,
+          "wrongAccepted": 2
+        },
+        "B": {
+          "slots": 54,
+          "firstCorrect": 51,
+          "finalCorrect": 54,
+          "wrongAccepted": 0
+        },
+        "C": {
+          "slots": 54,
+          "firstCorrect": 49,
+          "finalCorrect": 54,
+          "wrongAccepted": 0
+        },
+        "D": {
+          "slots": 54,
+          "firstCorrect": 46,
+          "finalCorrect": 51,
+          "wrongAccepted": 0
+        }
+      },
+      "Rails / RubyGems": {
+        "A": {
+          "slots": 54,
+          "firstCorrect": 53,
+          "finalCorrect": 54,
+          "wrongAccepted": 0
+        },
+        "B": {
+          "slots": 54,
+          "firstCorrect": 48,
+          "finalCorrect": 51,
+          "wrongAccepted": 0
+        },
+        "C": {
+          "slots": 54,
+          "firstCorrect": 46,
+          "finalCorrect": 52,
+          "wrongAccepted": 0
+        },
+        "D": {
+          "slots": 54,
+          "firstCorrect": 40,
+          "finalCorrect": 49,
+          "wrongAccepted": 0
+        }
+      },
+      "U.S. Treasury DTS": {
+        "A": {
+          "slots": 54,
+          "firstCorrect": 46,
+          "finalCorrect": 49,
+          "wrongAccepted": 4
+        },
+        "B": {
+          "slots": 54,
+          "firstCorrect": 45,
+          "finalCorrect": 50,
+          "wrongAccepted": 0
+        },
+        "C": {
+          "slots": 54,
+          "firstCorrect": 45,
+          "finalCorrect": 45,
+          "wrongAccepted": 0
+        },
+        "D": {
+          "slots": 54,
+          "firstCorrect": 42,
+          "finalCorrect": 45,
+          "wrongAccepted": 0
+        }
+      },
+      "UniProt": {
+        "A": {
+          "slots": 54,
+          "firstCorrect": 51,
+          "finalCorrect": 51,
+          "wrongAccepted": 3
+        },
+        "B": {
+          "slots": 54,
+          "firstCorrect": 48,
+          "finalCorrect": 48,
+          "wrongAccepted": 0
+        },
+        "C": {
+          "slots": 54,
+          "firstCorrect": 45,
+          "finalCorrect": 45,
+          "wrongAccepted": 0
+        },
+        "D": {
+          "slots": 54,
+          "firstCorrect": 42,
+          "finalCorrect": 45,
+          "wrongAccepted": 0
+        }
+      },
+      "Wikimedia Pageviews": {
+        "A": {
+          "slots": 54,
+          "firstCorrect": 48,
+          "finalCorrect": 48,
+          "wrongAccepted": 6
+        },
+        "B": {
+          "slots": 54,
+          "firstCorrect": 51,
+          "finalCorrect": 51,
+          "wrongAccepted": 0
+        },
+        "C": {
+          "slots": 54,
+          "firstCorrect": 49,
+          "finalCorrect": 53,
+          "wrongAccepted": 0
+        },
+        "D": {
+          "slots": 54,
+          "firstCorrect": 46,
+          "finalCorrect": 53,
+          "wrongAccepted": 0
+        }
+      },
+      "World Bank WDI": {
+        "A": {
+          "slots": 54,
+          "firstCorrect": 48,
+          "finalCorrect": 48,
+          "wrongAccepted": 6
+        },
+        "B": {
+          "slots": 54,
+          "firstCorrect": 45,
+          "finalCorrect": 50,
+          "wrongAccepted": 0
+        },
+        "C": {
+          "slots": 54,
+          "firstCorrect": 40,
+          "finalCorrect": 50,
+          "wrongAccepted": 0
+        },
+        "D": {
+          "slots": 54,
+          "firstCorrect": 45,
+          "finalCorrect": 51,
+          "wrongAccepted": 0
+        }
+      }
+    }
+  },
+  "physicalUsage": {
+    "A": {
+      "initial": {
+        "returnedRequests": 540,
+        "inputTokens": 181437,
+        "outputTokens": 143125,
+        "roundTripMs": 3046886.281194993
+      },
+      "repair": {
+        "returnedRequests": 12,
+        "inputTokens": 7204,
+        "outputTokens": 6879,
+        "roundTripMs": 85984.1321289996
+      }
+    },
+    "B": {
+      "initial": {
+        "returnedRequests": 540,
+        "inputTokens": 392615,
+        "outputTokens": 132037,
+        "roundTripMs": 3015340.076034003
+      },
+      "repair": {
+        "returnedRequests": 85,
+        "inputTokens": 64623,
+        "outputTokens": 43271,
+        "roundTripMs": 599851.0746089969
+      }
+    },
+    "C": {
+      "initial": {
+        "returnedRequests": 540,
+        "inputTokens": 285240,
+        "outputTokens": 129197,
+        "roundTripMs": 3086421.0961430036
+      },
+      "repair": {
+        "returnedRequests": 99,
+        "inputTokens": 60207,
+        "outputTokens": 34846,
+        "roundTripMs": 632223.5652189988
+      }
+    },
+    "D": {
+      "initial": {
+        "returnedRequests": 540,
+        "inputTokens": 290040,
+        "outputTokens": 131428,
+        "roundTripMs": 3082714.00295101
+      },
+      "repair": {
+        "returnedRequests": 114,
+        "inputTokens": 66887,
+        "outputTokens": 42218,
+        "roundTripMs": 692602.2722859961
+      }
+    }
+  },
+  "descriptiveProjectBootstrap": {
+    "B-A": {
+      "finalCorrectDifference": 0.0037386443046820593,
+      "percentile95": [
+        -0.03329839273235498,
+        0.035220125786163535
+      ],
+      "clusters": 10,
+      "DComparisonArithmeticOnly": false
+    },
+    "C-B": {
+      "finalCorrectDifference": -0.007267645003494061,
+      "percentile95": [
+        -0.04060097833682739,
+        0.02264150943396225
+      ],
+      "clusters": 10,
+      "DComparisonArithmeticOnly": false
+    },
+    "D-C": {
+      "finalCorrectDifference": -0.02777777777777778,
+      "percentile95": [
+        -0.06666666666666668,
+        0.0
+      ],
+      "clusters": 10,
+      "DComparisonArithmeticOnly": true
+    }
+  }
+}
