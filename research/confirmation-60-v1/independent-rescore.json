@@ -1,0 +1,34 @@
+{
+  "sourceSha256": "9b453956472b4afc1db8b0af23160248cfdf37be6d5700d3e3ac2ec8abd66c53",
+  "scope": "offline rescore; not new inference",
+  "byArm": {
+    "A": {
+      "slots": 540,
+      "firstCorrect": 494,
+      "finalCorrect": 507,
+      "wrongAccepted": 27,
+      "correctRejected": 0
+    },
+    "B": {
+      "slots": 540,
+      "firstCorrect": 436,
+      "finalCorrect": 489,
+      "wrongAccepted": 0,
+      "correctRejected": 0
+    },
+    "C": {
+      "slots": 540,
+      "firstCorrect": 446,
+      "finalCorrect": 485,
+      "wrongAccepted": 0,
+      "correctRejected": 0
+    },
+    "D": {
+      "slots": 540,
+      "firstCorrect": 409,
+      "finalCorrect": 463,
+      "wrongAccepted": 0,
+      "correctRejected": 0
+    }
+  }
+}

@@ -378,6 +378,7 @@ async def main():
                 except asyncio.QueueEmpty:
                     break
 
+                client.slot = dict(slot)
                 case = by_id[slot["caseId"]]
                 arm = slot["arm"]
                 model = slot["model"]
