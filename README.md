@@ -65,10 +65,13 @@ source .venv/bin/activate
 pip install -e '.[dev]'
 cp .env.example .env
 heschema dataset
+ruff check src tests
 pytest -q
 heschema benchmark --provider mock --repeats 1 --repairs 0 --out results/offline
 heschema serve
 ```
+
+The `dev` extra includes `pytest-asyncio` for async tests and `psycopg[binary]` for PostgreSQL tests. No database server is needed for the unit suite; real restart and multi-process checks are documented in [P1 verification](docs/p1-verification.md).
 
 Windows can use `.venv\Scripts\activate`; the default Python validator works there. The optional Blaze worker uses a POSIX pipe timeout.
 
