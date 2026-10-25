@@ -1,9 +1,12 @@
 """Single-line drop-in Python SDK decorator and validator for HESchema contracts."""
 
+import copy
 import functools
+import hashlib
 import inspect
 import json
 from pathlib import Path
+from threading import RLock
 from typing import Any, Callable, Dict, List, Optional, Union
 
 from .calculations import validate_with_calculations
@@ -11,6 +14,8 @@ from .contracts import Contract
 from .schema import SchemaEngine
 
 _CONTRACT_CACHE: Dict[str, Contract] = {}
+_FILE_CONTRACT_CACHE: Dict[str, tuple[str, Contract]] = {}
+_FILE_CONTRACT_LOCK = RLock()
 _DEFAULT_ENGINE: Optional[SchemaEngine] = None
 
 
@@ -36,14 +41,19 @@ def load_contract(contract_spec: Union[str, Path, dict, Contract]) -> Contract:
         return contract_spec
 
     if isinstance(contract_spec, (str, Path)):
-        resolved_path = str(Path(contract_spec).resolve())
-        if resolved_path in _CONTRACT_CACHE:
-            return _CONTRACT_CACHE[resolved_path]
-        raw_text = Path(contract_spec).read_text(encoding="utf-8")
-        data = json.loads(raw_text)
-        contract = Contract(**data)
-        _CONTRACT_CACHE[resolved_path] = contract
-        return contract
+        # Read current bytes on every explicit load. Metadata alone misses edits
+        # that preserve timestamps/size. Errors never fall back to an old entry.
+        with _FILE_CONTRACT_LOCK:
+            path = Path(contract_spec).resolve()
+            raw = path.read_bytes()
+            fingerprint = hashlib.sha256(raw).hexdigest()
+            cached = _FILE_CONTRACT_CACHE.get(str(path))
+            if cached is not None and cached[0] == fingerprint:
+                return copy.deepcopy(cached[1])
+            data = json.loads(raw.decode("utf-8"))
+            contract = Contract(**data)
+            _FILE_CONTRACT_CACHE[str(path)] = (fingerprint, contract)
+            return copy.deepcopy(contract)
 
     if isinstance(contract_spec, dict):
         contract_id = contract_spec.get("id", "")
@@ -162,7 +172,7 @@ class Guard:
         snapshot: Optional[dict] = None,
         provider: Optional[Any] = None,
     ):
-        """Decorate a sync or async function with contract enforcement."""
+        """Decorate with a pinned contract snapshot; re-decorate to adopt file edits."""
         loaded_contract = load_contract(contract)
         schema_engine = engine or get_default_engine()
 
