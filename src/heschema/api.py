@@ -14,8 +14,6 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
 
-from .telemetry import generate_metrics, record_request, record_validation_latency, set_active_jobs
-
 from .benchmark import ARMS, messages_for
 from .cli_integration import (
     PRESETS,
@@ -38,6 +36,7 @@ from .repair import RepairLimits, coordinate, request_generation
 from .runtime_api import install_contract_routes
 from .schema import SchemaEngine, check_schema, typed_minimal
 from .state import StateStore
+from .telemetry import generate_metrics
 from .validation import ENVELOPE, envelope, evaluate, generation_gate
 
 

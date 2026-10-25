@@ -1,5 +1,5 @@
-import concurrent.futures
 import pytest
+
 from heschema.schema import check_schema
 from heschema.security import check_regex_safety, check_schema_complexity
 from heschema.state import StateStore

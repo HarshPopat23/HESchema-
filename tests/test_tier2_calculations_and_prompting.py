@@ -1,4 +1,5 @@
 import pytest
+
 from heschema import Contract, guard
 from heschema.calculations import calculation_plan, validate_with_calculations
 from heschema.contract_prompt import contract_messages

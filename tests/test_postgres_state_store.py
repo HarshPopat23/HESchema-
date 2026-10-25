@@ -1,12 +1,10 @@
 """TDD test suite for pluggable PostgreSQL StateStore and multi-pod horizontal scaling."""
 
-import json
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from heschema.contracts import Contract
-from heschema.state import BaseStateStore, PostgresStateStore, SQLiteStateStore, StateStore
+from heschema.state import PostgresStateStore, SQLiteStateStore, StateStore
 
 
 def test_state_store_factory_routing(tmp_path):
