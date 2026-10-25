@@ -58,3 +58,21 @@ def test_postgres_reads_do_not_fall_back_to_stale_cache(monkeypatch, operation):
             registry.get('persistence-test', '1')
         else:
             registry.list()
+
+
+def test_postgres_immutability_keeps_boolean_and_number_distinct(monkeypatch):
+    from heschema.contracts import Contract
+    from heschema.jsonio import canonical
+
+    connection = MagicMock()
+    connection.__enter__.return_value = connection
+    cursor = connection.cursor.return_value.__enter__.return_value
+    cursor.fetchall.return_value = []
+    cursor.fetchone.return_value = (canonical(Contract(
+        'typed-constant', '1', {'const': True}
+    ).as_dict()),)
+    monkeypatch.setattr(psycopg, 'connect', MagicMock(return_value=connection))
+    registry = ContractRegistry('postgresql://test')
+    with pytest.raises(ValueError, match='immutable'):
+        registry.register(Contract('typed-constant', '1', {'const': 1}))
+    assert registry._definitions == {}

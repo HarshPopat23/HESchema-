@@ -52,7 +52,7 @@ class ContractRegistry:
                             row = cur.fetchone()
                             if row is None:
                                 raise RuntimeError('Contract write was not persisted')
-                            if loads(row[0]) != data:
+                            if canonical(loads(row[0])) != canonical(data):
                                 raise ValueError('An existing contract version is immutable; use a new version')
                 else:
                     with sqlite3.connect(self.path) as db:
