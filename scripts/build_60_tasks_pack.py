@@ -1,16 +1,26 @@
 """Extract and build the 60-task prospective confirmation dataset pack from markdown."""
 
+import argparse
+import hashlib
 import json
 import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-MD_PATH = ROOT / "HESchema_60_Real_Record_Tasks.md"
+MD_PATH = ROOT / "docs" / "reports" / "HESchema_60_Real_Record_Tasks.md"
+SOURCE_SHA256 = "060e80615cf0d739208eba646d82a9f69a5fa77a5d527414b02aa60dc58c6957"
+FROZEN_CASES_SHA256 = "545846f456d88072d3059b793f5b15f4a40aeb9cc6db87985a4028c1bfb49c1c"
 TARGET_DIR = ROOT / "research" / "confirmation-60-v1"
 
 
-def parse_60_tasks():
-    content = MD_PATH.read_text(encoding="utf-8").replace("\r\n", "\n")
+def parse_60_tasks(source=None):
+    source = Path(source) if source is not None else MD_PATH
+    raw = source.read_bytes()
+    actual = hashlib.sha256(raw).hexdigest()
+    if actual != SOURCE_SHA256:
+        raise ValueError(f"Pinned H60 source hash changed: expected {SOURCE_SHA256}, got {actual}. "
+                         "Review source changes and version the dataset explicitly; do not overwrite historical evidence.")
+    content = raw.decode("utf-8").replace("\r\n", "\n")
     sections = re.split(r"\n### (H60-\d{2})\s+[—\-]\s+", content)
     
     tasks = []
@@ -72,24 +82,54 @@ def parse_60_tasks():
     return tasks
 
 
-def main():
-    TARGET_DIR.mkdir(parents=True, exist_ok=True)
+def validate_tasks(tasks):
+    expected_ids = [f"H60-{i:02}" for i in range(1, 61)]
+    if [t["id"] for t in tasks] != expected_ids:
+        raise ValueError("Expected exactly 60 unique ordered H60 task IDs")
+    for task in tasks:
+        for key in ("contract", "expected", "prompt", "project", "family"):
+            if not task.get(key):
+                raise ValueError(f"Missing {key}: {task['id']}")
+        if not task["snapshot"]["data"]:
+            raise ValueError(f"Missing facts: {task['id']}")
+
+
+def rebuild(output_dir=TARGET_DIR, check=False):
     tasks = parse_60_tasks()
-    print(f"Extracted {len(tasks)} tasks.")
-    
-    missing_c = [t["id"] for t in tasks if not t["contract"]]
-    missing_f = [t["id"] for t in tasks if not t["snapshot"]["data"]]
-    missing_e = [t["id"] for t in tasks if not t["expected"]]
-    missing_p = [t["id"] for t in tasks if not t["prompt"]]
-    
-    assert not missing_c, f"Missing contract: {missing_c}"
-    assert not missing_f, f"Missing facts: {missing_f}"
-    assert not missing_e, f"Missing expected: {missing_e}"
-    assert not missing_p, f"Missing prompt: {missing_p}"
-    
-    out_file = TARGET_DIR / "cases.json"
-    out_file.write_text(json.dumps(tasks, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    print(f"Successfully saved 60 tasks to {out_file} ({out_file.stat().st_size} bytes)")
+    validate_tasks(tasks)
+    raw = (json.dumps(tasks, indent=2, ensure_ascii=False) + "\n").encode("utf-8")
+    rebuilt_hash = hashlib.sha256(raw).hexdigest()
+    if rebuilt_hash != FROZEN_CASES_SHA256:
+        raise ValueError("Parser output differs from pinned H60 cases; review semantic and serialization changes")
+    out_file = Path(output_dir) / "cases.json"
+    previous = out_file.read_bytes() if out_file.exists() else None
+    report = {
+        "source": str(MD_PATH.relative_to(ROOT)), "sourceSha256": SOURCE_SHA256,
+        "caseCount": len(tasks), "rebuiltSha256": rebuilt_hash,
+        "existingSha256": hashlib.sha256(previous).hexdigest() if previous is not None else None,
+        "byteIdentical": previous == raw,
+        "semanticEqual": json.loads(previous) == tasks if previous is not None else None,
+    }
+    if check:
+        print(json.dumps(report, indent=2))
+        if not report["byteIdentical"]:
+            raise ValueError("H60 byte hash differs; semanticEqual distinguishes formatting from content changes. "
+                             "Check mode does not rewrite historical files.")
+    else:
+        if previous is not None and previous != raw:
+            raise ValueError("Refusing to replace different existing cases; use --check or a new --output-dir")
+        out_file.parent.mkdir(parents=True, exist_ok=True)
+        out_file.write_bytes(raw)
+        print(json.dumps(report, indent=2))
+    return report
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output-dir", type=Path, default=TARGET_DIR)
+    parser.add_argument("--check", action="store_true", help="Compare existing cases without writing")
+    args = parser.parse_args()
+    rebuild(args.output_dir, args.check)
 
 
 if __name__ == "__main__":

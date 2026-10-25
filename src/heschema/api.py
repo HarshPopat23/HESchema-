@@ -227,7 +227,16 @@ def create_app(db_path=None, contract_registry=None):
         yield
         engine.close()
 
-    app = FastAPI(title="HESchema", version="0.1.0", lifespan=lifespan)
+    app = FastAPI(
+        title="HESchema", version="0.1.0", lifespan=lifespan,
+        description=(
+            "Single-operator validation service. HESCHEMA_API_TOKEN, when configured, "
+            "is one shared bearer credential: all authenticated clients act as operator. "
+            "Without it, protected routes use local-operator without authentication. "
+            "Tenant/user headers do not establish identities or tenant isolation. "
+            "Health, metrics, model discovery, documentation and frontend assets are public."
+        ),
+    )
 
     allowed_origins = os.getenv("HESCHEMA_ALLOWED_ORIGINS", "*").split(",")
     app.add_middleware(
@@ -248,9 +257,16 @@ def create_app(db_path=None, contract_registry=None):
         response.headers["Server-Timing"] = f"total;dur={duration_ms:.2f}"
         return response
 
-    bearer = HTTPBearer(auto_error=False)
+    bearer = HTTPBearer(
+        auto_error=False,
+        description=(
+            "Shared HESCHEMA_API_TOKEN for the single backend operator; not a per-user "
+            "or per-tenant credential. Optional only when the server has no token configured."
+        ),
+    )
 
     def owner(credentials: HTTPAuthorizationCredentials | None = Depends(bearer)):
+        """Return a shared operator identity, never a caller-supplied tenant/user ID."""
         token = os.getenv("HESCHEMA_API_TOKEN", "")
         if token:
             if not credentials or not secrets.compare_digest(credentials.credentials, token):

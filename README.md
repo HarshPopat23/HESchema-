@@ -21,7 +21,7 @@ A runnable **schema-effect experiment harness + state-aware tool-argument valida
 
 ```mermaid
 flowchart TD
-    Client["Client / SPA / Agent UI"] -->|OpenAI SDK / SSE Stream / REST| Proxy["JHSchema Proxy & API<br/>• CORS & Correlation Middleware (X-Request-ID, Server-Timing)<br/>• Multitenant Tenant-Isolated Authentication"]
+    Client["Client / SPA / Agent UI"] -->|OpenAI SDK / SSE Stream / REST| Proxy["JHSchema Proxy & API<br/>• CORS & Correlation Middleware (X-Request-ID, Server-Timing)<br/>• Single-Operator Bearer Authentication"]
     
     Proxy --> StateStore["StateStore<br/>• SQLite (WAL Mode) / PostgreSQL<br/>• Versioning & Optimistic Locking"]
     Proxy --> Registry["ContractRegistry<br/>• Immutable Schemas<br/>• Relationship Rules"]
@@ -424,6 +424,8 @@ report.md    human-readable summary
 Raw generations/prompts/state values in logs can be sensitive. `results/`, `data/`, `.env`, and local caches are ignored by Git. Add retention/redaction/encryption policies before using real customer data. Never publish reports with secrets or personal data without review.
 
 ## Security and limits
+
+See [authentication boundaries](docs/authentication.md), [contract-file loading](docs/contract-file-loading.md), and [H60 rebuilding](docs/h60-rebuilding.md) for explicit runtime and reproducibility policies.
 
 - Default server binds localhost. Set `HESCHEMA_API_TOKEN` before `heschema serve --host 0.0.0.0`; send `Authorization: Bearer ...` on protected endpoints.
 - This is a **single-operator service**, not a multi-tenant authentication system. An API token authenticates the backend operator; it does not cryptographically attest who confirmed a state. Add a trusted identity provider, role separation, TLS, and audit events for production. Do not expose an unauthenticated ASGI factory directly.
