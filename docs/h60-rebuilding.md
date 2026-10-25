@@ -17,6 +17,9 @@ python scripts/build_60_tasks_pack.py --output-dir /tmp/h60-rebuild --check
 python scripts/build_60_tasks_pack.py --check
 ```
 
+The two pinned files have `text eol=lf` attributes so Windows checkouts with
+`core.autocrlf=true` preserve the exact bytes used by the hashes.
+
 Paths are resolved relative to the script's checkout, so the script may also be
 invoked by absolute path from another working directory. Default execution writes
 the historical cases path only when absent or already byte-identical. It refuses

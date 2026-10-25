@@ -1,2 +1,6 @@
 # Preserve the IANA snapshot's original CRLF bytes and frozen SHA-256.
 research/confirmation-v1/sources/media-types.csv -text whitespace=cr-at-eol
+
+# Frozen H60 reconstruction hashes use LF on every checkout, including Windows.
+docs/reports/HESchema_60_Real_Record_Tasks.md text eol=lf
+research/confirmation-60-v1/cases.json text eol=lf
