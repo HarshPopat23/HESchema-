@@ -1,6 +1,5 @@
 """Single-line drop-in Python SDK decorator and validator for HESchema contracts."""
 
-import asyncio
 import functools
 import inspect
 import json
@@ -10,7 +9,6 @@ from typing import Any, Callable, Dict, List, Optional, Union
 from .calculations import validate_with_calculations
 from .contracts import Contract
 from .schema import SchemaEngine
-from .validation import validate_contract
 
 _CONTRACT_CACHE: Dict[str, Contract] = {}
 _DEFAULT_ENGINE: Optional[SchemaEngine] = None
@@ -120,6 +118,7 @@ def _apply_repaired_arguments(bound_args: inspect.BoundArguments, repaired_value
 def _prepare_payload_for_calculations(payload: dict, contract: Contract) -> dict:
     """Strip application calculation targets so the calculation engine can compute and assemble them."""
     import copy
+
     from .calculations import calculation_plan
     from .diagnostics import parts
     try:

@@ -1,7 +1,8 @@
 """LangChain and LangGraph middleware & tool interceptor for HESchema."""
 
-import copy
-from typing import Any, Callable, Dict, List, Optional, Union
+from functools import wraps
+from inspect import signature
+from typing import Any, Dict, Optional, Union
 
 from ..contracts import Contract
 from ..guard import ContractViolationError, guard, load_contract
@@ -16,45 +17,39 @@ class HESchemaToolInterceptor:
         on_fail: str = "repair",
         snapshot: Optional[dict] = None,
     ):
+        if on_fail not in {"raise", "refuse", "repair"}:
+            raise ValueError("on_fail must be raise, refuse, or repair")
         self.contracts = {name: load_contract(c) for name, c in contracts.items()}
         self.on_fail = on_fail
         self.snapshot = snapshot
 
-    def intercept(self, tool_name: str, arguments: dict) -> dict:
-        """Validate and repair arguments for a specific tool call."""
+    def intercept(self, tool_name: str, arguments: Any) -> dict:
+        """Return validated assembled arguments, or raise before execution.
+
+        Repair uses only declared application calculations. There is no model
+        repair callback here; an unsuccessful repair fails closed. Refusal is
+        converted to a result only at the execution wrapper, never into args.
+        """
         contract = self.contracts.get(tool_name)
-        if not contract:
+        if contract is None:
             return arguments
-
         res = guard.validate(arguments, contract, snapshot=self.snapshot)
+        parsed = res.get("parsed")
         if res.get("accepted"):
-            # Check if calculation repaired any arguments
-            calc_info = res.get("calculation", {})
-            if calc_info.get("status") == "applied" and calc_info.get("values"):
-                repaired = copy.deepcopy(arguments)
-                for item in calc_info["values"]:
-                    key = item["target"].lstrip("/").split("/")[0]
-                    repaired[key] = item["value"]
-                return repaired
-            return arguments
-
-        # Failed validation
-        if self.on_fail == "raise":
-            err_summary = "; ".join(e.get("message", e.get("code", "error")) for e in res.get("errors", []))
-            raise ContractViolationError(
-                f"LangChain tool '{tool_name}' violated contract {contract.id}: {err_summary}",
-                errors=res.get("errors", []),
-                result=res,
-            )
-        elif self.on_fail == "refuse":
-            return {
-                "__error__": True,
-                "action": "refuse",
-                "reason": f"Tool arguments for '{tool_name}' violated contract {contract.id}",
-                "errors": res.get("errors", []),
-            }
-
-        return arguments
+            if contract.outputKind == "tool_envelope":
+                if (isinstance(parsed, dict) and parsed.get("action") == "call_tool"
+                        and parsed.get("tool") == contract.tool == tool_name):
+                    parsed = parsed.get("arguments")
+                else:
+                    parsed = None
+            if isinstance(parsed, dict):
+                # The core already applied full JSON Pointers and validated this
+                # assembled document. Never replay calculations independently.
+                return parsed
+        raise ContractViolationError(
+            f"LangChain tool '{tool_name}' violated contract {contract.id}",
+            errors=res.get("errors", []), result=res,
+        )
 
     def intercept_message(self, message: Any) -> Any:
         """Inspect and intercept tool_calls in an AIMessage or message dict."""
@@ -62,8 +57,8 @@ class HESchemaToolInterceptor:
         if isinstance(message, dict) and "tool_calls" in message:
             for tc in message["tool_calls"]:
                 tool_name = tc.get("name") or tc.get("function", {}).get("name")
-                args = tc.get("args") or tc.get("function", {}).get("arguments")
-                if isinstance(args, dict) and tool_name in self.contracts:
+                args = tc.get("args", tc.get("function", {}).get("arguments"))
+                if tool_name in self.contracts:
                     repaired = self.intercept(tool_name, args)
                     if "args" in tc:
                         tc["args"] = repaired
@@ -76,7 +71,7 @@ class HESchemaToolInterceptor:
             for tc in message.tool_calls:
                 tool_name = tc.get("name")
                 args = tc.get("args")
-                if isinstance(args, dict) and tool_name in self.contracts:
+                if tool_name in self.contracts:
                     repaired = self.intercept(tool_name, args)
                     tc["args"] = repaired
             return message
@@ -94,28 +89,60 @@ class HESchemaToolInterceptor:
         return state
 
 
-def guard_tool(tool: Any, contract: Union[str, dict, Contract], on_fail: str = "repair") -> Any:
-    """Wrap a LangChain BaseTool so that tool invocation is guarded by HESchema."""
-    loaded_contract = load_contract(contract)
-    interceptor = HESchemaToolInterceptor({getattr(tool, "name", "tool"): loaded_contract}, on_fail=on_fail)
+def guard_tool(tool: Any, contract: Union[str, dict, Contract], on_fail: str = "repair",
+               snapshot: Optional[dict] = None) -> Any:
+    """Guard sync/async tool entry points; refusal returns without execution.
 
-    # Wrap invoke/run
-    original_invoke = getattr(tool, "invoke", None)
-    if original_invoke:
-        def guarded_invoke(input_data, *args, **kwargs):
-            if isinstance(input_data, dict):
-                input_data = interceptor.intercept(getattr(tool, "name", "tool"), input_data)
-            return original_invoke(input_data, *args, **kwargs)
+    All input forms are validated. The caller still owns execution permission
+    and authorization; contract acceptance alone does not authorize a side effect.
+    """
+    name = getattr(tool, "name", "tool")
+    interceptor = HESchemaToolInterceptor({name: contract}, on_fail=on_fail, snapshot=snapshot)
 
-        tool.invoke = guarded_invoke
+    def prepare(data):
+        return interceptor.intercept(name, data)
 
-    original_run = getattr(tool, "run", None)
-    if original_run:
-        def guarded_run(tool_input, *args, **kwargs):
-            if isinstance(tool_input, dict):
-                tool_input = interceptor.intercept(getattr(tool, "name", "tool"), tool_input)
-            return original_run(tool_input, *args, **kwargs)
+    def refusal(error):
+        return {"__error__": True, "action": "refuse", "reason": str(error),
+                "errors": error.errors}
 
-        tool.run = guarded_run
+    def prepare_call(original_signature, args, kwargs):
+        bound = original_signature.bind(*args, **kwargs)
+        bound.apply_defaults()
+        first = next(iter(original_signature.parameters))
+        bound.arguments[first] = prepare(bound.arguments[first])
+        return bound
 
+    def wrap_sync(original):
+        original_signature = signature(original)
+
+        @wraps(original)
+        def guarded(*args, **kwargs):
+            try:
+                accepted = prepare_call(original_signature, args, kwargs)
+            except ContractViolationError as error:
+                if on_fail == "refuse":
+                    return refusal(error)
+                raise
+            return original(*accepted.args, **accepted.kwargs)
+        return guarded
+
+    def wrap_async(original):
+        original_signature = signature(original)
+
+        @wraps(original)
+        async def guarded(*args, **kwargs):
+            try:
+                accepted = prepare_call(original_signature, args, kwargs)
+            except ContractViolationError as error:
+                if on_fail == "refuse":
+                    return refusal(error)
+                raise
+            return await original(*accepted.args, **accepted.kwargs)
+        return guarded
+
+    for method in ("invoke", "run", "ainvoke", "arun"):
+        original = getattr(tool, method, None)
+        if callable(original):
+            setattr(tool, method, wrap_async(original) if method.startswith("a") else wrap_sync(original))
     return tool

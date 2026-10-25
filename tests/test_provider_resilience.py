@@ -1,5 +1,5 @@
 import asyncio
-import json
+
 import httpx
 import pytest
 
@@ -20,7 +20,6 @@ def test_provider_retries_transient_transport_error(monkeypatch):
 
     async def check():
         # Monkeypatch asyncio.sleep to fast-forward backoff in tests
-        orig_sleep = asyncio.sleep
         sleep_durations = []
 
         async def fast_sleep(sec):

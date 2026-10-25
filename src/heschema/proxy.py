@@ -1,16 +1,16 @@
 """OpenAI / LiteLLM reverse-proxy routes for transparent HESchema validation and repair."""
 
 import json
-import os
 import time
 from typing import Any, Dict, List, Optional
+
 from fastapi import APIRouter, Header, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from .contracts import Contract
 from .guard import guard
-from .jsonio import canonical, loads
+from .jsonio import loads
 from .providers import Provider, ProviderError, registry
 
 router = APIRouter(prefix="/v1", tags=["OpenAI Proxy"])

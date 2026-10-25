@@ -5,6 +5,7 @@ Compiles Pydantic models into HESchema contracts and enforces contract validatio
 
 import copy
 from typing import Any, Dict, List, Optional, Type, TypeVar
+
 from pydantic import BaseModel
 
 from ..contracts import Contract

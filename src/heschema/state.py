@@ -3,7 +3,6 @@ Supports pluggable storage backends: SQLite (single-node WAL) and PostgreSQL (di
 """
 
 import abc
-import os
 import secrets
 import sqlite3
 from contextlib import contextmanager
@@ -154,6 +153,7 @@ class SQLiteStateStore(StateStore):
 
     def create_context(self, owner: str, contract: Any, data: Dict[str, Any], approved_pointers: list, facts: Optional[list] = None, expires_at: Optional[str] = None) -> Dict[str, Any]:
         from datetime import datetime, timezone
+
         from .context_schema import ContextError, check_context, effective_schema
         from .diagnostics import resolve
 
@@ -316,6 +316,7 @@ class PostgresStateStore(StateStore):
 
     def create_context(self, owner: str, contract: Any, data: Dict[str, Any], approved_pointers: list, facts: Optional[list] = None, expires_at: Optional[str] = None) -> Dict[str, Any]:
         from datetime import datetime, timezone
+
         from .context_schema import ContextError, check_context, effective_schema
         from .diagnostics import resolve
 

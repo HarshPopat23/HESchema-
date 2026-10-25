@@ -10,9 +10,8 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from heschema.api import create_app
-from heschema.providers import Provider, Generation, ProviderError
-from heschema.proxy import router as proxy_router, ChatCompletionRequest
+from heschema.providers import Generation, Provider
+from heschema.proxy import router as proxy_router
 from heschema.state import StateStore
 
 
@@ -20,7 +19,7 @@ from heschema.state import StateStore
 @pytest.mark.asyncio
 async def test_g1_provider_concurrency_lock_decoupling():
     """Verify pacing lock is released during network calls so concurrent requests pipeline."""
-    provider = Provider("mock", interval=0.05)
+    Provider("mock", interval=0.05)
 
     concurrent_count = 0
     max_concurrent = 0

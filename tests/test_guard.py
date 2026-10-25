@@ -1,8 +1,9 @@
 import asyncio
 import json
+
 import pytest
 
-from heschema import Contract, ContractViolationError, guard
+from heschema import ContractViolationError, guard
 
 CONTRACT_DOC = {
     "id": "refund_contract",
