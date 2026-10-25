@@ -43,3 +43,32 @@ jobs:
       - run: npm ci --prefix native
       - run: HESCHEMA_TEST_BLAZE=1 JSONSCHEMA_CLI="$PWD/native/node_modules/.bin/jsonschema" pytest -q tests/test_blaze.py tests/test_validator_controls.py tests/test_validator_references.py
       - run: JSONSCHEMA_CLI="$PWD/native/node_modules/.bin/jsonschema" heschema research-audit --engine blaze
+
+  postgres-registry:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: heschema
+          POSTGRES_PASSWORD: disposable-ci-password
+          POSTGRES_DB: heschema_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U heschema -d heschema_test"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      HESCHEMA_TEST_POSTGRES_DSN: postgresql://heschema:disposable-ci-password@localhost:5432/heschema_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -e '.[dev]'
+      - run: python scripts/check_registry_postgres.py before "$RUNNER_TEMP/registry-restart.json"
+      - name: Restart the actual PostgreSQL server
+        run: docker restart "${{ job.services.postgres.id }}"
+      - run: python scripts/check_registry_postgres.py after "$RUNNER_TEMP/registry-restart.json"

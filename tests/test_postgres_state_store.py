@@ -1,5 +1,6 @@
 """TDD test suite for pluggable PostgreSQL StateStore and multi-pod horizontal scaling."""
 
+import os
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -124,12 +125,14 @@ def test_postgres_state_store_lifecycle_and_optimistic_locking():
 def test_api_discovers_database_url_from_environment(tmp_path, monkeypatch):
     """Verify FastAPI create_app discovers HESCHEMA_DATABASE_URL."""
     from heschema.api import create_app
+    from heschema.registry import ContractRegistry
 
     monkeypatch.setenv("HESCHEMA_DATABASE_URL", "postgresql://user:pass@k8s-pg-service:5432/heschema_prod")
     monkeypatch.delenv("HESCHEMA_API_TOKEN", raising=False)
 
-    with patch("psycopg.connect") as mock_pg_connect:
-        mock_conn = MagicMock()
-        mock_pg_connect.return_value = mock_conn
-        app = create_app()
+    with patch("heschema.api.StateStore", wraps=StateStore) as store_factory:
+        # This test covers state-store DSN discovery, not registry SQL behavior.
+        # Use the explicit registry injection rather than a truthy MagicMock row.
+        app = create_app(contract_registry=ContractRegistry())
         assert app is not None
+        store_factory.assert_called_once_with(os.environ["HESCHEMA_DATABASE_URL"])

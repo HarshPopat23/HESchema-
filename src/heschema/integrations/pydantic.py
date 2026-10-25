@@ -21,21 +21,26 @@ def _inline_defs(schema: dict) -> dict:
     if not defs:
         return result
 
-    def resolve_node(node):
+    def resolve_node(node, active=frozenset()):
         if isinstance(node, dict):
             if "$ref" in node:
                 ref = node["$ref"]
                 if ref.startswith("#/$defs/"):
                     target_key = ref.split("/")[-1]
                     if target_key in defs:
+                        if target_key in active:
+                            raise ValueError(
+                                f"Recursive Pydantic model reference {ref!r} is not supported "
+                                "by contract conversion; use an explicit bundled JSON Schema contract"
+                            )
                         resolved = copy.deepcopy(defs[target_key])
                         # Merge any sibling keys
                         node.pop("$ref")
                         resolved.update(node)
-                        return resolve_node(resolved)
-            return {k: resolve_node(v) for k, v in node.items()}
+                        return resolve_node(resolved, active | {target_key})
+            return {k: resolve_node(v, active) for k, v in node.items()}
         elif isinstance(node, list):
-            return [resolve_node(x) for x in node]
+            return [resolve_node(x, active) for x in node]
         return node
 
     resolved = resolve_node(result)
