@@ -433,7 +433,7 @@ See [authentication boundaries](docs/authentication.md), [contract-file loading]
 - Declared policies currently cover numeric ceilings and ordered ISO date fields. They are not comprehensive fraud/compliance/safety logic.
 - Arbitrary schemas can be computationally expensive. External references are rejected, but schema size/depth/regex budgets, sandboxing, tenant quotas, and request limits require additional hardening for untrusted deployments.
 - Fixed contract + exact canonical argument comparison is intentionally strict; equivalent aliases/timezones need independently reviewed normalization rules, not ad-hoc model judging.
-- Concurrent state changes are detected, but because no external action executes here, there is no atomic booking/payment transaction. Never assume `PASS` solves a future executor's race conditions.
+- The validation/API paths do not execute external actions. The opt-in SDK workflow can invoke a caller-supplied callback after validation, but it does not make that callback atomic with the context store or provide a booking/payment transaction. Never assume `PASS` solves a future executor's race conditions.
 - API adapters are protocol-tested using mocked HTTP; hosted model/account compatibility must be checked with your credentials. No automatic fallback model is used because it would confound experiments.
 - Keep benchmark labels independent of candidate/model output. Version your dataset, hold out test cases, use model snapshots where possible, and record actual model IDs/pricing.
 
@@ -504,6 +504,7 @@ The [APP CALC regression audit](research/app-calc-regressions-v1/README.md) inve
 Crossref/PyPI failures and an observed filename-copy error from the resumed pilot.
 It includes aggregate findings, private-archive replay tooling and public-source controls.
 
+- [Dry-run-first SDK workflow: approved facts → diagnostics → explicit callback](docs/sdk-workflow.md)
 - [Contract/API and approval semantics](docs/contracts-and-repair.md)
 - [Controlled decoding and saved-output repair experiments](docs/experiments.md)
 - [Protocol 2 migration and baseline](docs/migration.md)
