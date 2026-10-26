@@ -96,7 +96,15 @@ def guarded_model(
     relationships: Optional[List[Dict[str, Any]]] = None,
     bindings: Optional[List[Dict[str, Any]]] = None,
 ):
-    """Class decorator for Pydantic v2 models that binds HESchema validation to model instantiation."""
+    """Validate JSON-compatible keyword input and initialize from assembled output.
+
+    Only document models and raise/repair policies are supported. Both policies
+    use explicitly declared calculations; neither performs an LLM repair.
+    """
+    if on_fail not in ("raise", "repair"):
+        raise ValueError("guarded_model on_fail must be raise or repair")
+    if output_kind != "document":
+        raise ValueError("guarded_model supports document output only")
 
     def decorator(cls: Type[T]) -> Type[T]:
         contract = contract_from_model(
@@ -112,10 +120,8 @@ def guarded_model(
 
         def new_init(self, *args, **kwargs):
             if args:
-                # If positional arguments or dict passed
-                data = args[0] if isinstance(args[0], dict) else kwargs
-            else:
-                data = kwargs
+                raise TypeError("guarded_model supports keyword arguments only")
+            data = kwargs
 
             # Validate with HESchema guard
             validation = guard.validate(data, contract)
@@ -127,15 +133,9 @@ def guarded_model(
                     result=validation,
                 )
 
-            # If calculations applied repaired values, merge them in
-            calc_info = validation.get("calculation", {})
-            if calc_info.get("status") == "applied" and calc_info.get("values"):
-                for v in calc_info["values"]:
-                    target_key = v["target"].lstrip("/").split("/")[0]
-                    if target_key:
-                        kwargs[target_key] = v["value"]
-
-            original_init(self, *args, **kwargs)
+            # The core already assembled and revalidated the complete document.
+            # Replaying pointer targets here would lose nested parents/siblings.
+            original_init(self, **validation["parsed"])
 
         cls.__init__ = new_init
         cls.as_contract = classmethod(lambda c: c.__contract__)

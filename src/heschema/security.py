@@ -1,4 +1,4 @@
-"""Schema complexity budget and DoS defense."""
+"""Structural budgets and heuristic regex screening; not a resource sandbox."""
 
 import re
 
@@ -51,9 +51,9 @@ def check_schema_complexity(schema, max_depth: int = MAX_SCHEMA_DEPTH, max_prope
             check_regex_safety(node["pattern"])
 
         if "patternProperties" in node and isinstance(node["patternProperties"], dict):
-            for pat, subschema in node["patternProperties"].items():
+            for pat in node["patternProperties"]:
                 check_regex_safety(pat)
-                walk(subschema, current_depth + 1)
+            # schema_children visits each pattern subschema once below.
 
         if "properties" in node and isinstance(node["properties"], dict):
             prop_count += len(node["properties"])

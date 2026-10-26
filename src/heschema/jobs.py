@@ -1,4 +1,8 @@
-"""Background experiment job manager for browser-driven benchmarks."""
+"""Process-local experiment jobs, not a durable or distributed queue.
+
+Completed report files can be rediscovered; live tasks, ownership metadata and
+cancellation state are not recovered across processes. See docs/local-jobs.md.
+"""
 
 import asyncio
 import datetime
