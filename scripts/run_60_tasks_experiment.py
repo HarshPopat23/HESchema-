@@ -19,6 +19,9 @@ import httpx
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(ROOT / "scripts"))
+
+from rescore_confirmation60 import correct
 
 from heschema.contracts import Contract
 from heschema.context_schema import effective_schema, trusted_information
@@ -164,9 +167,8 @@ def evaluate_attempt(raw_text, arm, case, contract, engine):
         detector_accepted = (len(schema_errors) == 0)
         schema_accepted = detector_accepted
 
-        # Oracle evaluation: Complete contract validation (facts bindings + relationships)
-        oracle_res = validate_contract(raw_text, engine, contract, snapshot)
-        oracle_correct = bool(oracle_res["accepted"] and oracle_res.get("success", False))
+        # Independent task oracle, never the detector's acceptance/success flag.
+        oracle_correct = correct(raw_text, case, arm)
 
         diag = "\n".join(schema_errors) if schema_errors else ""
         return {
@@ -182,7 +184,7 @@ def evaluate_attempt(raw_text, arm, case, contract, engine):
     if arm == "D" and case.get("d_calc"):
         res = validate_with_calculations(raw_text, engine, contract, snapshot)
         detector_accepted = bool(res["accepted"])
-        oracle_correct = bool(res["accepted"] and res.get("success", False))
+        oracle_correct = correct(raw_text, case, arm)
         diag_errs = [e.get("message", str(e)) for e in res.get("errors", [])]
         return {
             "accepted": detector_accepted,
@@ -196,7 +198,7 @@ def evaluate_attempt(raw_text, arm, case, contract, engine):
     # Arm B & C Detector: validate_contract (HESchema full verification)
     res = validate_contract(raw_text, engine, contract, snapshot)
     detector_accepted = bool(res["accepted"])
-    oracle_correct = bool(res["accepted"] and res.get("success", False))
+    oracle_correct = correct(raw_text, case, arm)
     diag_errs = [e.get("message", str(e)) for e in res.get("errors", [])]
     return {
         "accepted": detector_accepted,
@@ -275,7 +277,7 @@ class GroqClient:
         await self.client.aclose()
 
 
-def load_existing_runs(path: Path):
+def load_existing_runs(path: Path, cases):
     if not path.exists():
         return {}
     completed = {}
@@ -287,9 +289,17 @@ def load_existing_runs(path: Path):
             try:
                 row = json.loads(line)
                 k = (row["caseId"], row["model"], row["repeat"], row["arm"])
+                case = cases[row["caseId"]]
+                first = correct(row["rawResponse1"], case, row["arm"])
+                last = row["rawResponse2"] if row["repairAttempted"] else row["rawResponse1"]
+                if not isinstance(row["rawResponse1"], str) or not isinstance(last, str):
+                    raise ValueError('Missing raw response evidence')
+                final = correct(last, case, row["arm"])
+                row.update(firstCorrect=first, finalCorrect=final,
+                           falseAcceptance=bool(row["finalAccepted"] and not final))
                 completed[k] = row
-            except Exception:
-                pass
+            except (ValueError, KeyError, TypeError) as exc:
+                raise ValueError('Cannot resume H60 results without valid raw evidence') from exc
     return completed
 
 
@@ -319,6 +329,7 @@ def compute_summary(rows, total_slots):
         }
 
     return {
+        "correctnessOracle": "independent-h60-v1",
         "updatedAt": datetime.now(timezone.utc).isoformat(),
         "totalCompleted": len(rows),
         "totalPlanned": total_slots,
@@ -346,7 +357,9 @@ async def main():
     summary_path = RUNS_DIR / "summary.json"
     events_path = RUNS_DIR / "events.jsonl"
 
-    existing = load_existing_runs(runs_path)
+    existing = load_existing_runs(runs_path, by_id)
+    if existing:
+        print("Rescored saved responses with independent-h60-v1; original JSONL records are unchanged.")
     pending = [s for s in slots if slot_key(s) not in existing]
     all_rows = list(existing.values())
 
