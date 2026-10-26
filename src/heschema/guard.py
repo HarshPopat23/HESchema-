@@ -172,7 +172,12 @@ class Guard:
         snapshot: Optional[dict] = None,
         provider: Optional[Any] = None,
     ):
-        """Decorate with a pinned contract snapshot; re-decorate to adopt file edits."""
+        """Pin a contract snapshot; reject unsupported on_fail policies at construction.
+
+        Supported policies are raise, refuse and repair. Re-decorate to adopt file edits.
+        """
+        if not isinstance(on_fail, str) or on_fail not in ("raise", "refuse", "repair"):
+            raise ValueError("on_fail must be one of: raise, refuse, repair")
         loaded_contract = load_contract(contract)
         schema_engine = engine or get_default_engine()
 
