@@ -504,6 +504,10 @@ The [APP CALC regression audit](research/app-calc-regressions-v1/README.md) inve
 Crossref/PyPI failures and an observed filename-copy error from the resumed pilot.
 It includes aggregate findings, private-archive replay tooling and public-source controls.
 
+- [Adapter support and safety boundaries](docs/adapter-support.md)
+- [Wheel installation check](docs/sdk-installation.md)
+- [Local job limits](docs/local-jobs.md)
+- [Schema budget limits](docs/security-budgets.md)
 - [Dry-run-first SDK workflow: approved facts → diagnostics → explicit callback](docs/sdk-workflow.md)
 - [Contract/API and approval semantics](docs/contracts-and-repair.md)
 - [Controlled decoding and saved-output repair experiments](docs/experiments.md)
