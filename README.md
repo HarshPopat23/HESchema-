@@ -19,6 +19,13 @@ A runnable **schema-effect experiment harness + state-aware tool-argument valida
 
 ## System Architecture
 
+For SDK onboarding, start with the [dry-run-first workflow](docs/sdk-workflow.md)
+and read the [adapter support matrix](docs/adapter-support.md) before choosing an
+integration. Approved-context execution, direct validation, Pydantic construction
+and LangChain wrapping provide different guarantees; they are not interchangeable
+authorization boundaries. In particular, direct validation executes no function,
+and arbitrary Pydantic or LangChain entry points are outside the tested boundary.
+
 ```mermaid
 flowchart TD
     Client["Client / SPA / Agent UI"] -->|OpenAI SDK / SSE Stream / REST| Proxy["JHSchema Proxy & API<br/>• CORS & Correlation Middleware (X-Request-ID, Server-Timing)<br/>• Single-Operator Bearer Authentication"]
@@ -439,8 +446,19 @@ See [authentication boundaries](docs/authentication.md), [contract-file loading]
 
 ## Development
 
+CI and local development use `ruff check .` for all checked-in Python, including
+root helpers, `scripts/` and historical `research/` runners. Keep these runners
+lint-clean for reproducibility; their presence does not certify current provider
+support or make old studies new evidence. Saved datasets, raw evidence and reports
+are not rewritten during lint cleanup. Do not exclude maintained helpers merely
+to pass lint. Retire a helper only after checking its documented/reproduction use.
+
+The [adapter support matrix](docs/adapter-support.md) is the compatibility contract
+for onboarding. Update it and the relevant handoff tests when changing an adapter;
+do not transfer one interface's execution or approval guarantees to another.
+
 ```bash
-ruff check src tests
+ruff check .
 pytest -q
 heschema dataset --build
 heschema dataset
@@ -558,7 +576,7 @@ execution boundaries. Required unknown vocabularies are rejected.
 
 ```sh
 pip install -e '.[dev]'
-ruff check src tests
+ruff check .
 pytest -q
 npm ci --prefix frontend
 npm test --prefix frontend              # DOM events against the real local API

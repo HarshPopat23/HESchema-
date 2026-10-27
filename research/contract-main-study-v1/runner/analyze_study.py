@@ -17,7 +17,6 @@ Generates:
 
 import csv
 import json
-import math
 import pathlib
 import sys
 from collections import defaultdict
@@ -30,6 +29,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[3]
 BASE_DIR = ROOT / "research" / "contract-main-study-v1"
 ANALYSIS_DIR = BASE_DIR / "analysis"
 REPORTS_DIR = BASE_DIR / "reports"
+RUNS_DIR = BASE_DIR / "runs"
 
 
 def compute_metrics_for_group(attempts: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -43,7 +43,6 @@ def compute_metrics_for_group(attempts: List[Dict[str, Any]]) -> Dict[str, Any]:
     final_accepted = sum(1 for a in attempts if a['final']['accepted'])
 
     # False acceptance: detector accepted, but oracle incorrect
-    false_accept_first = sum(1 for a in attempts if a['first_pass']['accepted'] and not a['first_pass']['correct'])
     false_accept_final = sum(1 for a in attempts if a['final']['accepted'] and not a['final']['correct'])
 
     # False rejection: detector rejected, but oracle correct
@@ -508,7 +507,7 @@ HESchema contracts act like a strict proofreader. They stop the AI from making u
     (REPORTS_DIR / "EXECUTIVE_SUMMARY.md").write_text(exec_summary, encoding="utf-8")
 
     # --- 3. LIMITATIONS.md ---
-    limitations_md = f"""# Study Boundaries and Limitations
+    limitations_md = """# Study Boundaries and Limitations
 
 This evaluation adheres strictly to the evidence boundaries defined in the study protocol:
 

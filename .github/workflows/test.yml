@@ -12,9 +12,10 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - run: pip install -e '.[dev]'
-      - run: ruff check src tests
+      - run: ruff check .
       - run: python scripts/build_60_tasks_pack.py --check
       - run: pytest -q
+      - run: pytest -q research/contract-main-study-v1/tests/test_study_components.py
       - run: heschema dataset
       - run: heschema research-audit
       - run: python -m heschema.confirmation_run

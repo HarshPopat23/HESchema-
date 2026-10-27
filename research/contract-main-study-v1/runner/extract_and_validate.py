@@ -8,15 +8,16 @@ import pathlib
 import re
 import sys
 import zipfile
+
 from jsonschema import Draft202012Validator, FormatChecker
 
-ROOT = pathlib.Path(__file__).resolve().parents[3]
-sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[3] / "src"))
 
-from heschema.contracts import Contract
 from heschema.context_schema import effective_schema
+from heschema.contracts import Contract
 from heschema.rules import evaluate_rules
-from heschema.diagnostics import resolve
+
+ROOT = pathlib.Path(__file__).resolve().parents[3]
 
 STUDY_MD = ROOT / "research" / "HESchema_Main_Study_100_Inputs.md"
 BASE_DIR = ROOT / "research" / "contract-main-study-v1"
@@ -91,10 +92,9 @@ def main():
     # 7. Check context values against original source JSON Pointers
     # Build a lookup of source files in SOURCES_DIR
     source_leaf_count = 0
-    loaded_source_cache = {}
     for c in cases:
         src_info = c['source']
-        snapshot_id = src_info['source_snapshot_id']
+        src_info['source_snapshot_id']  # Preserve the required-key check.
         # Find matching source file for this snapshot
         # Let's see: sources are named or listed in manifest
         # Let's inspect manifest files to see how snapshots map

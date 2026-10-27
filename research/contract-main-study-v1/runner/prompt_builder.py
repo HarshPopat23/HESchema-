@@ -2,8 +2,9 @@
 
 import json
 from typing import Any, Dict, List
-from heschema.contracts import Contract
+
 from heschema.context_schema import effective_schema
+from heschema.contracts import Contract
 
 MAX_DIAGNOSTIC_CHARS = 1000
 

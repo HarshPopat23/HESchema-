@@ -19,8 +19,7 @@ from pathlib import Path
 
 import httpx
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from heschema.cli_integration import (
     CLI_PAIRS,
@@ -28,6 +27,8 @@ from heschema.cli_integration import (
     generate_command_previews,
 )
 from heschema.schema import SchemaEngine
+
+ROOT = Path(__file__).resolve().parents[1]
 
 RESULTS_DIR = ROOT / "results/cli_integration"
 RESULTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -43,9 +44,9 @@ async def run_pair(pair_id: str, pair_data: dict, client: httpx.AsyncClient, eng
     expected = pair_data.get("expected")
     notes = pair_data.get("notes", "")
 
-    print(f"\n==================================================")
+    print("\n==================================================")
     print(f"Executing {pair_id}: {title}")
-    print(f"==================================================")
+    print("==================================================")
 
     # ----------------------------------------------------
     # 1. Preview Request & Command
@@ -94,7 +95,6 @@ async def run_pair(pair_id: str, pair_data: dict, client: httpx.AsyncClient, eng
     }
 
     raw_content = ""
-    parsed_json = None
     diag = {}
     if api_resp.status_code == 200:
         api_data = api_resp.json()
@@ -110,9 +110,9 @@ async def run_pair(pair_id: str, pair_data: dict, client: httpx.AsyncClient, eng
         diag = evaluate_document_diagnostics(schema, raw_content, engine)
         api_result["diagnostics"] = diag
         try:
-            parsed_json = json.loads(raw_content)
+            json.loads(raw_content)
         except Exception:
-            parsed_json = None
+            pass
         print(f"  -> HTTP 200 | Latency: {api_latency_ms:.0f}ms | Schema Valid: {diag.get('heschemaSchemaValid')}")
     else:
         api_result["error"] = api_resp.text
@@ -331,7 +331,7 @@ async def main():
         pid = r["id"]
         md_lines.append(f"### {r['title']}")
         md_lines.append(f"- **Focus**: {r['notes']}")
-        md_lines.append(f"- **API Test Output**:")
+        md_lines.append("- **API Test Output**:")
         md_lines.append("```json")
         md_lines.append(r["api_test"].get("content", "(No output)"))
         md_lines.append("```")

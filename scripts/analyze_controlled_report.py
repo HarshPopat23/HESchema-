@@ -9,7 +9,9 @@ import os
 import random
 from collections import defaultdict
 from pathlib import Path
+
 import numpy as np
+
 
 def load_jsonl(path):
     if not os.path.exists(path):

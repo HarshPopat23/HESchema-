@@ -6,7 +6,6 @@ repair handling, and streaming checkpointing.
 
 import argparse
 import asyncio
-import copy
 import json
 import os
 import random
@@ -17,20 +16,25 @@ from pathlib import Path
 
 import httpx
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "src"))
-sys.path.insert(0, str(ROOT / "scripts"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 
+from jsonschema import Draft202012Validator, FormatChecker
 from rescore_confirmation60 import correct
 
-from heschema.contracts import Contract
+from heschema.calculations import (
+    calculation_input_schema,
+    calculation_plan,
+    validate_with_calculations,
+)
 from heschema.context_schema import effective_schema, trusted_information
 from heschema.contract_prompt import contract_messages
-from heschema.calculations import calculation_input_schema, calculation_plan, validate_with_calculations
+from heschema.contracts import Contract
 from heschema.jsonio import canonical, loads
 from heschema.schema import SchemaEngine
 from heschema.validation import validate_contract
-from jsonschema import Draft202012Validator, FormatChecker
+
+ROOT = Path(__file__).resolve().parents[1]
 
 DATA_DIR = ROOT / "research" / "confirmation-60-v1"
 RUNS_DIR = DATA_DIR / "runs"
@@ -364,7 +368,7 @@ async def main():
     all_rows = list(existing.values())
 
     keys = get_groq_keys()
-    print(f"=== HESchema 60-Task Experiment ===")
+    print("=== HESchema 60-Task Experiment ===")
     print(f"Total planned slots: {len(slots)}")
     print(f"Already completed: {len(existing)}")
     print(f"Pending to execute: {len(pending)}")

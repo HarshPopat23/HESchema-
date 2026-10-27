@@ -5,7 +5,7 @@ from pathlib import Path
 p = Path('research/confirmation-60-v1/runs/runs.jsonl')
 s = Path('research/confirmation-60-v1/runs/summary.json')
 
-rows = [json.loads(l) for l in p.read_text(encoding='utf-8').splitlines() if l.strip()]
+rows = [json.loads(line) for line in p.read_text(encoding='utf-8').splitlines() if line.strip()]
 summary = json.loads(s.read_text(encoding='utf-8'))
 
 print(f"Total Completed: {len(rows)} / {summary['totalPlanned']} ({summary['completionPct']}%)")

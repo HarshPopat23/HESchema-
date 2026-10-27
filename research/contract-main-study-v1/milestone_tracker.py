@@ -3,7 +3,6 @@ Auto-computes and logs cumulative statistical results every 50 counts.
 """
 
 import json
-import os
 import pathlib
 import time
 
@@ -69,7 +68,7 @@ def main():
     print("Milestone tracker initialized. Monitoring attempts.jsonl every 5s...")
     while True:
         if ATTEMPTS_FILE.exists():
-            attempts = [json.loads(l) for l in open(ATTEMPTS_FILE, encoding="utf-8") if l.strip()]
+            attempts = [json.loads(line) for line in open(ATTEMPTS_FILE, encoding="utf-8") if line.strip()]
             total = len(attempts)
             for milestone in range(450, total + 1, 50):
                 if milestone not in reported_milestones and milestone <= total:

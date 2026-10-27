@@ -2,16 +2,18 @@
 
 import json
 import pathlib
-import pytest
 import sys
 
-BASE_DIR = pathlib.Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(BASE_DIR))
-sys.path.insert(0, str(BASE_DIR.parents[1] / "src"))
+import pytest
 
-from runner.strict_parser import StrictParseError, json_semantic_equal, parse_strict_json
-from runner.oracle import CorrectnessOracle, reconstruct_reference_output
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[3] / "src"))
+
 from runner.detector import detect_acceptance
+from runner.oracle import CorrectnessOracle, reconstruct_reference_output
+from runner.strict_parser import StrictParseError, json_semantic_equal, parse_strict_json
+
+BASE_DIR = pathlib.Path(__file__).resolve().parents[1]
 
 
 @pytest.fixture
@@ -79,3 +81,4 @@ def test_detectors_accept_all_100_gold_outputs(cases):
         for arm in ("A", "B", "C", "D"):
             det = detect_acceptance(c, gold_str, arm)
             assert det.accepted is True, f"Arm {arm} falsely rejected gold output for {c['id']}: {det.diagnostics}"
+

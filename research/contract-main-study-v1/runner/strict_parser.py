@@ -12,7 +12,6 @@ Rules:
 """
 
 import json
-import re
 
 
 class StrictParseError(ValueError):

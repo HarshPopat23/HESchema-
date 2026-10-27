@@ -7,6 +7,7 @@ from collections import Counter
 from pathlib import Path
 
 from jsonschema import Draft202012Validator, FormatChecker
+
 from heschema.context_schema import ContextError
 from heschema.contracts import Contract
 from heschema.experiments import _score, _task, dry_run
