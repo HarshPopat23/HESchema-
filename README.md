@@ -533,6 +533,15 @@ assert result["result"] == "NOT_CHECKED"  # Intent was not approved or independe
 assert result["executionAuthorized"] is False
 ```
 
+Registry versions are immutable canonical JSON definitions: object-key order is
+ignored, but booleans differ from numbers and `1` differs from `1.0`. This is
+definition identity, not a test of schema equivalence. Use a new version for a
+different definition. With a SQLite file path or PostgreSQL DSN, `get` and `list`
+read committed storage on each call, including registrations from other processes;
+they do not fall back to a startup snapshot when a database read fails. A registry
+without a path remains process-local. These live reads do not coordinate jobs or
+make separate application operations transactional.
+
 `/docs` and `/openapi.json` describe registration, context confirmation/invalidation,
 existing-output validation, and bounded generation. Schema validity, approved
 agreement, relationships, generation completion, provider enforcement evidence and
