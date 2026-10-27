@@ -7,7 +7,7 @@ import sys
 import pytest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
-sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "src"))
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[3] / "src"))
 
 from runner.detector import detect_acceptance
 from runner.oracle import CorrectnessOracle, reconstruct_reference_output
@@ -81,3 +81,4 @@ def test_detectors_accept_all_100_gold_outputs(cases):
         for arm in ("A", "B", "C", "D"):
             det = detect_acceptance(c, gold_str, arm)
             assert det.accepted is True, f"Arm {arm} falsely rejected gold output for {c['id']}: {det.diagnostics}"
+
