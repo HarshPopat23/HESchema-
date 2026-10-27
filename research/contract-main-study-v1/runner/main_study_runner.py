@@ -5,9 +5,6 @@ and HESchema contracts with approved context (Arm B), plus optional controls C/D
 """
 
 import argparse
-import asyncio
-import copy
-import hashlib
 import json
 import os
 import pathlib
@@ -16,7 +13,7 @@ import sys
 import threading
 import time
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import httpx
 from dotenv import load_dotenv
@@ -24,23 +21,18 @@ from dotenv import load_dotenv
 ROOT = pathlib.Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "src"))
 
-from heschema.contracts import Contract
-from heschema.context_schema import effective_schema
-
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 try:
-    from .strict_parser import StrictParseError, parse_strict_json, json_semantic_equal
-    from .oracle import CorrectnessOracle, reconstruct_reference_output
-    from .prompt_builder import build_generation_messages, build_repair_messages
-    from .detector import detect_acceptance, DetectionResult
+    from .detector import detect_acceptance
     from .failure_classifier import classify_failure
+    from .oracle import CorrectnessOracle
+    from .prompt_builder import build_generation_messages, build_repair_messages
 except ImportError:
-    from strict_parser import StrictParseError, parse_strict_json, json_semantic_equal
-    from oracle import CorrectnessOracle, reconstruct_reference_output
-    from prompt_builder import build_generation_messages, build_repair_messages
-    from detector import detect_acceptance, DetectionResult
+    from detector import detect_acceptance
     from failure_classifier import classify_failure
+    from oracle import CorrectnessOracle
+    from prompt_builder import build_generation_messages, build_repair_messages
 
 BASE_DIR = ROOT / "research" / "contract-main-study-v1"
 INPUTS_DIR = BASE_DIR / "inputs"

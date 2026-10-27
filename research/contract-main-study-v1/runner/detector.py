@@ -1,13 +1,14 @@
 """Acceptance detectors for Arms A, B, and controls C, D."""
 
-import copy
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
+
 from jsonschema import Draft202012Validator, FormatChecker
 
-from heschema.contracts import Contract
 from heschema.context_schema import effective_schema
+from heschema.contracts import Contract
 from heschema.rules import evaluate_rules
+
 try:
     from .strict_parser import StrictParseError, parse_strict_json
 except ImportError:

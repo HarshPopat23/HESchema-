@@ -3,20 +3,18 @@
 import argparse
 import asyncio
 import json
-import sys
-from pathlib import Path
 
+from heschema.benchmark import messages_for
 from heschema.domains import DOMAINS, reference_schema
+from heschema.jsonio import loads
 from heschema.providers import Provider, ProviderError
 from heschema.schema import SchemaEngine
-from heschema.validation import ENVELOPE, envelope, evaluate
-from heschema.benchmark import messages_for
-from heschema.jsonio import loads
+from heschema.validation import evaluate
 
 
 def display_result(prompt, domain, raw_text, parsed, validation, latency_ms):
     print("\n" + "=" * 65)
-    print(f"  HESchema Local Test Result")
+    print("  HESchema Local Test Result")
     print("=" * 65)
     print(f"Domain:           {domain} (tool: {DOMAINS[domain]['tool']})")
     print(f"User Prompt:      \"{prompt}\"")

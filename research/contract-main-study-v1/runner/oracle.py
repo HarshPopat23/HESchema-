@@ -5,6 +5,7 @@ of HESchema's PASS/FAIL result, and evaluates candidate objects strictly.
 """
 
 from typing import Any, Dict, Optional, Tuple
+
 try:
     from .strict_parser import StrictParseError, json_semantic_equal, parse_strict_json
 except ImportError:

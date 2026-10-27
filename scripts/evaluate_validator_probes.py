@@ -1,20 +1,21 @@
 """Evaluate the 77 offline validator probes and differential projection audit across candidate instances."""
 
 import copy
-import hashlib
 import json
 from pathlib import Path
+
 from jsonschema import Draft202012Validator, FormatChecker
 
-from heschema.contracts import Contract
 from heschema.context_schema import ContextError
-from heschema.experiments import _task, _score
+from heschema.contracts import Contract
+from heschema.experiments import _score, _task
 from heschema.schema import SchemaEngine
 from heschema.validation import validate_contract
 
+
 def evaluate_probes(cases_path, probes_path):
-    cases = [json.loads(l) for l in Path(cases_path).read_text(encoding="utf-8").splitlines() if l.strip()]
-    probes = [json.loads(l) for l in Path(probes_path).read_text(encoding="utf-8").splitlines() if l.strip()]
+    cases = [json.loads(line) for line in Path(cases_path).read_text(encoding="utf-8").splitlines() if line.strip()]
+    probes = [json.loads(line) for line in Path(probes_path).read_text(encoding="utf-8").splitlines() if line.strip()]
     by_id = {c["id"]: c for c in cases}
     engine = SchemaEngine("jsonschema")
     results = []
@@ -99,7 +100,7 @@ def evaluate_probes(cases_path, probes_path):
     return results
 
 def run_differential_projection_audit(cases_path):
-    cases = [json.loads(l) for l in Path(cases_path).read_text(encoding="utf-8").splitlines() if l.strip()]
+    cases = [json.loads(line) for line in Path(cases_path).read_text(encoding="utf-8").splitlines() if line.strip()]
     audits = []
 
     for case in cases:

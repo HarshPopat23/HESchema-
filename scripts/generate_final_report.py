@@ -12,7 +12,7 @@ WORKSPACE_REPORT = ROOT / "HESchema_60_Experiment_Report.md"
 runs_file = RUNS_DIR / "runs.jsonl"
 summary_file = RUNS_DIR / "summary.json"
 
-rows = [json.loads(l) for l in runs_file.read_text(encoding="utf-8").splitlines() if l.strip()]
+rows = [json.loads(line) for line in runs_file.read_text(encoding="utf-8").splitlines() if line.strip()]
 summary = json.loads(summary_file.read_text(encoding="utf-8"))
 
 total_slots = len(rows)

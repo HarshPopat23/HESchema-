@@ -8,10 +8,19 @@ promise of compatibility with every Pydantic or LangChain release.
 |---|---|---|---|---|
 | `run_workflow` | Trusted confirmed snapshot required; active bindings required for execution | Blocks rejection, controls and schema-only outcomes; default dry-run | Declared application calculations; complete validated object/arguments copied to callback | One explicit synchronous object callback; no automatic retries/transactions |
 | `guard.validate` | Optional snapshot | Returns core diagnostics; accepted control/schema-only responses are possible | Supports declared calculations; inspect parsed assembled output | No function execution |
-| `@guard` | Snapshot or callable snapshot | `raise`, `refuse`, `repair`; invalid policy rejected at construction; validation exceptions may propagate | Applies supported calculated fields to bound function arguments | Sync/async functions; acceptance is not a business authorization decision |
+| `@guard` | Snapshot or callable snapshot | `raise`, `refuse`, `repair`; invalid policy rejected at construction; validation exceptions may propagate | Replays calculated fields into named bound arguments; single-dictionary calculation handoff is not reliable | Sync/async functions; acceptance is not a business authorization decision |
 | `contract_from_model` | Emits declarations; does not obtain approval | Converts nonrecursive Pydantic v2 schemas; cycles fail clearly | Contract construction only | None |
 | `@guarded_model` | No snapshot parameter; required bindings without evidence cannot succeed | Document models only; `raise` / `repair` only; rejects before Pydantic initialization | Hands the core's complete parsed/assembled document to the original initializer | Wrapped direct keyword construction only; not an external-action gate |
 | LangChain interceptor / wrapped tool | Snapshot supported by documented integration methods | Registered tools checked; controls are not executable; unknown tools are outside registered scope | Complete validated assembled arguments | Mutable duck-typed tool methods; not universal BaseTool/Pydantic wrapper compatibility |
+| OpenAI-compatible tools endpoint | Does not obtain approved context for tool proposals | Tool output is an action proposal; the current tools branch can emit schema-invalid arguments | No complete contract/approval execution guarantee | Does not execute tools; callers must independently validate and authorize proposals |
+
+For a decorated function taking one dictionary, application-calculated values
+may pass validation without replacing the corresponding values handed to the
+function. Use `run_workflow` for assembled-object execution until that adapter
+handoff is corrected. This limitation does not mean that every decorator call
+or other adapter fails. The compatibility tools endpoint is likewise not a
+substitute for the workflow's approved-context execution gate. These are current
+support limits, not claims that this documentation change fixes those paths.
 
 For `guarded_model`, both supported policy names use only declared deterministic
 calculations. Neither invokes a model for repair. `refuse` cannot return an

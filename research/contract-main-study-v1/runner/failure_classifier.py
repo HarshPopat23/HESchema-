@@ -1,13 +1,13 @@
 from typing import Any, Dict, List, Optional
 
 try:
-    from .strict_parser import StrictParseError, parse_strict_json
     from .detector import DetectionResult
-    from .oracle import reconstruct_reference_output, json_semantic_equal
+    from .oracle import json_semantic_equal, reconstruct_reference_output
+    from .strict_parser import StrictParseError, parse_strict_json
 except ImportError:
-    from strict_parser import StrictParseError, parse_strict_json
     from detector import DetectionResult
-    from oracle import reconstruct_reference_output, json_semantic_equal
+    from oracle import json_semantic_equal, reconstruct_reference_output
+    from strict_parser import StrictParseError, parse_strict_json
 
 
 FAILURE_TAXONOMY = [
@@ -80,17 +80,14 @@ def classify_failure(
 
         # Check arithmetic / sum / count fields
         arithmetic_keys = {"totalSizeBytes", "totalCapacity", "fileCount", "stationCount", "listedAuthorCount"}
-        has_arithmetic_err = False
         for k in arithmetic_keys:
             if k in expected and k in parsed:
                 if parsed[k] != expected[k]:
                     labels.append("arithmetic")
-                    has_arithmetic_err = True
                     break
 
         # Check source field values vs arithmetic
         val_mismatch = False
-        rel_mismatch = False
         for k, v in expected.items():
             if k not in parsed:
                 labels.append("task_misunderstanding")
@@ -110,4 +107,4 @@ def classify_failure(
         labels.append("unresolved")
 
     # Multi-label deduplication while preserving taxonomy order
-    return [l for l in FAILURE_TAXONOMY if l in labels]
+    return [label for label in FAILURE_TAXONOMY if label in labels]
