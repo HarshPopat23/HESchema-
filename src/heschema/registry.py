@@ -10,6 +10,11 @@ from .jsonio import canonical, loads
 
 
 class ContractRegistry:
+    """Immutable canonical definitions; persistent lookups read committed storage.
+
+    Definition identity preserves JSON types and numeric serialization: boolean
+    and number constants differ, as do 1 and 1.0. Object key order is ignored.
+    """
     def __init__(self, path=None):
         self._definitions = {}
         self._lock = threading.RLock()
@@ -38,7 +43,7 @@ class ContractRegistry:
         contract = definition if isinstance(definition, Contract) else Contract(**definition)
         key, data = (contract.id, contract.version), contract.as_dict()
         with self._lock:
-            if key in self._definitions and self._definitions[key] != data:
+            if key in self._definitions and canonical(self._definitions[key]) != canonical(data):
                 raise ValueError('An existing contract version is immutable; use a new version')
             if self.path:
                 if self._is_postgres:
@@ -58,7 +63,7 @@ class ContractRegistry:
                     with sqlite3.connect(self.path) as db:
                         db.execute('INSERT OR IGNORE INTO contracts VALUES (?, ?, ?)', (*key, canonical(data)))
                         stored = db.execute('SELECT definition FROM contracts WHERE id=? AND version=?', key).fetchone()[0]
-                        if stored != canonical(data):
+                        if canonical(loads(stored)) != canonical(data):
                             raise ValueError('An existing contract version is immutable; use a new version')
             self._definitions[key] = copy.deepcopy(data)
         return self.get(*key)
@@ -71,6 +76,13 @@ class ContractRegistry:
                     with conn.cursor() as cur:
                         cur.execute('SELECT definition FROM contracts WHERE id=%s AND version=%s', (contract_id, version))
                         row = cur.fetchone()
+                if row is None:
+                    raise KeyError('Unknown contract/version')
+                return Contract(**loads(row[0]))
+            if self.path:
+                with sqlite3.connect(self.path) as db:
+                    row = db.execute('SELECT definition FROM contracts WHERE id=? AND version=?',
+                                     (contract_id, version)).fetchone()
                 if row is None:
                     raise KeyError('Unknown contract/version')
                 return Contract(**loads(row[0]))
@@ -87,6 +99,10 @@ class ContractRegistry:
                     with conn.cursor() as cur:
                         cur.execute('SELECT definition FROM contracts ORDER BY id, version')
                         return [Contract(**loads(row[0])).as_dict() for row in cur.fetchall()]
+            if self.path:
+                with sqlite3.connect(self.path) as db:
+                    rows = db.execute('SELECT definition FROM contracts ORDER BY id, version').fetchall()
+                return [Contract(**loads(row[0])).as_dict() for row in rows]
             return [self.get(*key).as_dict() for key in sorted(self._definitions)]
 
 
