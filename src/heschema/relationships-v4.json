@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$dynamicAnchor": "meta",
+  "$vocabulary": {
+    "https://json-schema.org/draft/2020-12/vocab/core": true,
+    "https://json-schema.org/draft/2020-12/vocab/applicator": true,
+    "https://json-schema.org/draft/2020-12/vocab/unevaluated": true,
+    "https://json-schema.org/draft/2020-12/vocab/validation": true,
+    "https://json-schema.org/draft/2020-12/vocab/meta-data": true,
+    "https://json-schema.org/draft/2020-12/vocab/format-annotation": true,
+    "https://json-schema.org/draft/2020-12/vocab/content": true,
+    "https://raw.githubusercontent.com/HarshPopat23/HESchema-/main/vocabulary/field-comparison/v1/README.md": true,
+    "https://raw.githubusercontent.com/HarshPopat23/HESchema-/main/vocabulary/keyed-uniqueness/v1/README.md": true,
+    "https://raw.githubusercontent.com/HarshPopat23/HESchema-/main/vocabulary/relationships/v2/README.md": true,
+    "https://raw.githubusercontent.com/HarshPopat23/HESchema-/main/vocabulary/relationships/v3/README.md": true,
+    "https://raw.githubusercontent.com/HarshPopat23/HESchema-/main/vocabulary/relationships/v4/README.md": true
+  },
+  "$id": "https://raw.githubusercontent.com/HarshPopat23/HESchema-/main/src/heschema/relationships-v4.json",
+  "title": "HESchema Relationships v4 dialect",
+  "allOf": [
+    {
+      "$ref": "https://raw.githubusercontent.com/HarshPopat23/HESchema-/main/src/heschema/relationships-v3.json"
+    }
+  ],
+  "properties": {
+    "arithmeticEquals": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "left",
+          "right",
+          "operation",
+          "result"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "left": {
+            "$ref": "https://raw.githubusercontent.com/HarshPopat23/HESchema-/main/src/heschema/field-comparison-v1.json#/$defs/pointer"
+          },
+          "right": {
+            "$ref": "https://raw.githubusercontent.com/HarshPopat23/HESchema-/main/src/heschema/field-comparison-v1.json#/$defs/pointer"
+          },
+          "result": {
+            "$ref": "https://raw.githubusercontent.com/HarshPopat23/HESchema-/main/src/heschema/field-comparison-v1.json#/$defs/pointer"
+          },
+          "operation": {
+            "enum": [
+              "add",
+              "subtract",
+              "multiply",
+              "divide",
+              "percentOf"
+            ]
+          },
+          "rounding": {
+            "type": "object",
+            "required": [
+              "scale",
+              "mode"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "scale": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 18
+              },
+              "mode": {
+                "enum": [
+                  "half-even",
+                  "half-up",
+                  "toward-zero"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

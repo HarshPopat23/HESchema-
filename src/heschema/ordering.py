@@ -15,12 +15,11 @@ from .rules import calendar_date, exact_integer
 
 META_SCHEMA = json.loads(files('heschema').joinpath('relationships-v3.json').read_text(encoding='utf-8'))
 DIALECT = META_SCHEMA['$id']
-META_VALIDATOR = Draft202012Validator(
-    META_SCHEMA,
-    registry=relationships_v2.META_REGISTRY.with_resource(
-        relationships_v2.DIALECT, Resource.from_contents(relationships_v2.META_SCHEMA),
-    ),
+META_REGISTRY = relationships_v2.META_REGISTRY.with_resource(
+    relationships_v2.DIALECT, Resource.from_contents(relationships_v2.META_SCHEMA),
 )
+META_VALIDATOR = Draft202012Validator(META_SCHEMA, registry=META_REGISTRY)
+
 
 _TIMESTAMP = re.compile(
     r'([0-9]{4}-[0-9]{2}-[0-9]{2})T([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9])'

@@ -1,0 +1,83 @@
+[
+  {
+    "description": "Exact addition and representation",
+    "schema": {"arithmeticEquals": [{"left": "/a", "right": "/b", "result": "/r", "operation": "add"}]},
+    "tests": [
+      {"description": "Exact decimal tenths", "data": {"a": "0.1", "b": "0.2", "r": "0.3"}, "valid": true},
+      {"description": "Binary floating-point residue", "data": {"a": "0.1", "b": "0.2", "r": "0.30000000000000004"}, "valid": false},
+      {"description": "JSON numeric input rejected", "data": {"a": 0.1, "b": "0.2", "r": "0.3"}, "valid": false},
+      {"description": "Trailing zeros and negative zero", "data": {"a": "-0.00", "b": "0.0", "r": "0"}, "valid": true},
+      {"description": "Exponent rejected", "data": {"a": "1e1", "b": "2", "r": "12"}, "valid": false},
+      {"description": "Whitespace rejected", "data": {"a": " 1", "b": "2", "r": "3"}, "valid": false},
+      {"description": "Leading zero rejected", "data": {"a": "01", "b": "2", "r": "3"}, "valid": false},
+      {"description": "Non-ASCII digit rejected", "data": {"a": "\uff11", "b": "2", "r": "3"}, "valid": false},
+      {"description": "Signed positive value rejected", "data": {"a": "+1", "b": "2", "r": "3"}, "valid": false},
+      {"description": "38-digit value is valid", "data": {"a": "99999999999999999999999999999999999999", "b": "0", "r": "99999999999999999999999999999999999999"}, "valid": true},
+      {"description": "39-digit input rejected", "data": {"a": "100000000000000000000000000000000000000", "b": "0", "r": "0"}, "valid": false},
+      {"description": "Result magnitude overflow", "data": {"a": "99999999999999999999999999999999999999", "b": "1", "r": "0"}, "valid": false},
+      {"description": "Fractional input precision exceeded", "data": {"a": "0.0000000000000000001", "b": "0", "r": "0"}, "valid": false}
+    ]
+  },
+  {
+    "description": "Subtract and convert units",
+    "schema": {"arithmeticEquals": [{"left": "/a", "right": "/b", "result": "/r", "operation": "subtract"}]},
+    "tests": [
+      {"description": "Signed difference", "data": {"a": "1.25", "b": "2.5", "r": "-1.25"}, "valid": true}
+    ]
+  },
+  {
+    "description": "Multiplication",
+    "schema": {"arithmeticEquals": [{"left": "/a", "right": "/b", "result": "/r", "operation": "multiply"}]},
+    "tests": [
+      {"description": "Kilometers to meters", "data": {"a": "1.25", "b": "1000", "r": "1250.0"}, "valid": true},
+      {"description": "Exact result scale overflow", "data": {"a": "0.000000000000000001", "b": "0.1", "r": "0"}, "valid": false}
+    ]
+  },
+  {
+    "description": "Division without implicit rounding",
+    "schema": {"arithmeticEquals": [{"left": "/a", "right": "/b", "result": "/r", "operation": "divide"}]},
+    "tests": [
+      {"description": "Terminating quotient", "data": {"a": "1", "b": "8", "r": "0.125"}, "valid": true},
+      {"description": "Repeating quotient cannot match", "data": {"a": "1", "b": "3", "r": "0.333333333333333333"}, "valid": false},
+      {"description": "Negative zero denominator", "data": {"a": "1", "b": "-0.000", "r": "0"}, "valid": false}
+    ]
+  },
+  {
+    "description": "Percentage and explicit half-even rounding",
+    "schema": {"arithmeticEquals": [{"left": "/a", "right": "/b", "result": "/r", "operation": "percentOf", "rounding": {"scale": 2, "mode": "half-even"}}]},
+    "tests": [
+      {"description": "Twenty percent", "data": {"a": "12.50", "b": "20", "r": "2.50"}, "valid": true},
+      {"description": "Even tie rounds down", "data": {"a": "10.05", "b": "10", "r": "1.00"}, "valid": true},
+      {"description": "Odd tie rounds up", "data": {"a": "10.15", "b": "10", "r": "1.02"}, "valid": true},
+      {"description": "Incorrect negative tie", "data": {"a": "-10.05", "b": "10", "r": "-1.01"}, "valid": false}
+    ]
+  },
+  {
+    "description": "Rounded multiplication",
+    "schema": {"arithmeticEquals": [{"left": "/a", "right": "/b", "result": "/r", "operation": "multiply", "rounding": {"scale": 2, "mode": "half-even"}}]},
+    "tests": [
+      {"description": "Invoice line", "data": {"a": "3", "b": "12.505", "r": "37.52"}, "valid": true},
+      {"description": "Scale is value rounding rather than formatting", "data": {"a": "2", "b": "1.25", "r": "2.500"}, "valid": true},
+      {"description": "Rounds only once", "data": {"a": "1", "b": "1.2451", "r": "1.25"}, "valid": true}
+    ]
+  },
+  {
+    "description": "Half-up ties away from zero",
+    "schema": {"arithmeticEquals": [{"left": "/a", "right": "/b", "result": "/r", "operation": "divide", "rounding": {"scale": 2, "mode": "half-up"}}]},
+    "tests": [
+      {"description": "Positive tie", "data": {"a": "1", "b": "8", "r": "0.13"}, "valid": true},
+      {"description": "Negative tie", "data": {"a": "-1", "b": "8", "r": "-0.13"}, "valid": true},
+      {"description": "Rounded repeating quotient", "data": {"a": "2", "b": "3", "r": "0.67"}, "valid": true},
+      {"description": "Rounding cannot repair division by zero", "data": {"a": "1", "b": "0", "r": "0"}, "valid": false}
+    ]
+  },
+  {
+    "description": "Truncate toward zero",
+    "schema": {"arithmeticEquals": [{"left": "/a", "right": "/b", "result": "/r", "operation": "divide", "rounding": {"scale": 2, "mode": "toward-zero"}}]},
+    "tests": [
+      {"description": "Positive truncation", "data": {"a": "2", "b": "3", "r": "0.66"}, "valid": true},
+      {"description": "Negative truncation", "data": {"a": "-2", "b": "3", "r": "-0.66"}, "valid": true},
+      {"description": "Negative value rounds to zero", "data": {"a": "-1", "b": "300", "r": "-0"}, "valid": true}
+    ]
+  }
+]
