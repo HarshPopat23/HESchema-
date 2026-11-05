@@ -10,10 +10,16 @@ import threading
 import time
 from collections import OrderedDict
 from pathlib import Path
+from urllib.parse import unquote
 
 from jsonschema import Draft202012Validator, FormatChecker, SchemaError
 
-from .diagnostics import pointer, schema_error
+from .diagnostics import parts, pointer, schema_error
+from .field_comparison import (
+    FIELD_COMPARISON_VALIDATOR,
+    META_VALIDATOR,
+    uses_field_comparison_dialect,
+)
 from .jsonio import canonical, digest, loads
 
 DIALECT = "https://json-schema.org/draft/2020-12/schema"
@@ -21,7 +27,7 @@ DIALECT = "https://json-schema.org/draft/2020-12/schema"
 
 def schema_children(node):
     """Visit schema-valued keywords, never JSON data inside const/enum/default/examples."""
-    for keyword in ('properties', 'patternProperties', '$defs', 'dependentSchemas'):
+    for keyword in ('properties', 'patternProperties', '$defs', 'definitions', 'dependentSchemas'):
         for name, child in node.get(keyword, {}).items():
             yield (keyword, name), child
     for keyword in ('allOf', 'anyOf', 'oneOf', 'prefixItems'):
@@ -40,12 +46,18 @@ def child_environment():
 
 
 def check_schema(schema):
+    custom = uses_field_comparison_dialect(schema)
     try:
-        Draft202012Validator.check_schema(schema)
+        if custom:
+            error = next(META_VALIDATOR.iter_errors(schema), None)
+            if error:
+                raise ValueError(f"Invalid JSON Schema at {pointer(error.absolute_path)}: {error.message}")
+        else:
+            Draft202012Validator.check_schema(schema)
     except SchemaError as exc:
         raise ValueError(f"Invalid JSON Schema: {exc.message}") from None
-    if isinstance(schema, dict) and schema.get("$schema", DIALECT) != DIALECT:
-        raise ValueError("This release accepts Draft 2020-12 only; convert other dialects explicitly")
+    if not custom and isinstance(schema, dict) and schema.get("$schema", DIALECT) != DIALECT:
+        raise ValueError("This release accepts Draft 2020-12 and the HESchema field comparison dialect only")
     known_vocabularies = {'https://json-schema.org/draft/2020-12/vocab/' + name for name in
                           ('core', 'applicator', 'validation', 'unevaluated', 'meta-data', 'format-annotation', 'format-assertion', 'content')}
     if isinstance(schema, dict) and any(required and uri not in known_vocabularies for uri, required in schema.get('$vocabulary', {}).items()):
@@ -54,15 +66,40 @@ def check_schema(schema):
     from .security import check_schema_complexity
     check_schema_complexity(schema)
 
-    def walk(node):
+    schema_locations, comparison_refs = set(), set()
+
+    def walk(node, path=()):
+        if custom:
+            schema_locations.add(pointer(path))
         if isinstance(node, dict):
+            if path and '$schema' in node and (custom or uses_field_comparison_dialect(node)):
+                raise ValueError("The field comparison dialect must be declared at the root without nested dialects")
+            if not custom and 'compareFields' in node:
+                raise ValueError("compareFields requires the HESchema field comparison dialect")
             for key in ("$ref", "$dynamicRef"):
                 if key in node and not node[key].startswith("#"):
                     raise ValueError("External schema references must be bundled before registration")
-            for _, child in schema_children(node):
-                walk(child)
+            if custom:
+                if (path and '$id' in node) or '$dynamicRef' in node:
+                    raise ValueError("The field comparison dialect supports one schema resource and static references only")
+                if '$ref' in node:
+                    target = unquote(node['$ref'][1:])
+                    parts(target)
+                    comparison_refs.add(target)
+            for tokens, child in schema_children(node):
+                walk(child, (*path, *tokens))
 
     walk(schema)
+    if comparison_refs - schema_locations:
+        raise ValueError("Field comparison references must point to schema nodes in the same resource")
+
+
+def python_validator(schema):
+    if uses_field_comparison_dialect(schema):
+        # Keep Draft 2020-12 reference resolution and inherit our keyword in subschemas.
+        schema = {key: value for key, value in schema.items() if key != '$schema'}
+        return FIELD_COMPARISON_VALIDATOR(schema, format_checker=FormatChecker())
+    return Draft202012Validator(schema, format_checker=FormatChecker())
 
 
 def typed_minimal(schema):
@@ -157,7 +194,9 @@ class SchemaEngine:
                 self.cache.move_to_end(key)
                 return key
             check_schema(schema)
-            validator = Draft202012Validator(copy.deepcopy(schema), format_checker=FormatChecker())
+            if self.backend == "blaze" and uses_field_comparison_dialect(schema):
+                raise ValueError("Blaze does not support the field comparison dialect; use the jsonschema backend")
+            validator = python_validator(copy.deepcopy(schema))
             locations = {}
             def collect(node, path=()):
                 if isinstance(node, dict):
