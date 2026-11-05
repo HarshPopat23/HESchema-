@@ -1,0 +1,70 @@
+[
+  {
+    "description": "Ascending numeric order with ties",
+    "schema": {"sortedBy": {"key": "/key", "mode": "number", "direction": "ascending", "ties": "allow"}},
+    "tests": [
+      {"description": "Equal numeric aliases tie", "data": [{"key": 1}, {"key": 1.0}, {"key": 2}], "valid": true},
+      {"description": "Unsorted input", "data": [{"key": 2}, {"key": 1}], "valid": false},
+      {"description": "One item must have a key", "data": [{}], "valid": false},
+      {"description": "No coercion", "data": [{"key": "1"}], "valid": false},
+      {"description": "Boolean rejected", "data": [{"key": true}], "valid": false},
+      {"description": "Non-array ignored", "data": {"key": 1}, "valid": true},
+      {"description": "Empty array", "data": [], "valid": true}
+    ]
+  },
+  {
+    "description": "Strict descending calendar date order",
+    "schema": {"sortedBy": {"key": "", "mode": "date", "direction": "descending", "ties": "forbid"}},
+    "tests": [
+      {"description": "Valid leap day", "data": ["2024-03-01", "2024-02-29"], "valid": true},
+      {"description": "Calendar date ties forbidden", "data": ["2024-03-01", "2024-03-01"], "valid": false},
+      {"description": "Invalid calendar date", "data": ["2025-02-29"], "valid": false}
+    ]
+  },
+  {
+    "description": "Strict instant order",
+    "schema": {"sortedBy": {"key": "", "mode": "date-time", "direction": "ascending", "ties": "forbid"}},
+    "tests": [
+      {"description": "Offset crosses midnight", "data": ["2026-01-02T00:00:00+02:00", "2026-01-01T23:00:00Z"], "valid": true},
+      {"description": "Equivalent timestamps tie", "data": ["2026-01-02T00:00:00.10+02:00", "2026-01-01T22:00:00.1Z"], "valid": false},
+      {"description": "Sub-microsecond distinction retained", "data": ["2026-01-01T00:00:00.12345671Z", "2026-01-01T00:00:00.12345672Z"], "valid": true},
+      {"description": "Zone required", "data": ["2026-01-01T00:00:00"], "valid": false},
+      {"description": "Leap second outside profile", "data": ["2016-12-31T23:59:60Z"], "valid": false}
+    ]
+  },
+  {
+    "description": "Half-open code-point spans",
+    "schema": {"nonOverlapping": {"start": "/start", "end": "/end", "mode": "code-point-offset", "bounds": "half-open"}},
+    "tests": [
+      {"description": "Adjacent unsorted spans", "data": [{"start": 3, "end": 5}, {"start": 0, "end": 3}], "valid": true},
+      {"description": "Nested span overlaps", "data": [{"start": 0, "end": 8}, {"start": 2, "end": 4}], "valid": false},
+      {"description": "Empty interval inside another span", "data": [{"start": 0, "end": 8}, {"start": 2, "end": 2}], "valid": true},
+      {"description": "Reversed endpoints", "data": [{"start": 3, "end": 2}], "valid": false},
+      {"description": "Fractional offset", "data": [{"start": 0.5, "end": 2}], "valid": false},
+      {"description": "Negative offset", "data": [{"start": -1, "end": 2}], "valid": false},
+      {"description": "Missing end", "data": [{"start": 0}], "valid": false}
+    ]
+  },
+  {
+    "description": "Closed byte ranges",
+    "schema": {"nonOverlapping": {"start": "/0", "end": "/1", "mode": "byte-offset", "bounds": "closed"}},
+    "tests": [
+      {"description": "Disjoint closed ranges", "data": [[0, 2], [3, 4]], "valid": true},
+      {"description": "Shared endpoint overlaps", "data": [[0, 2], [2, 4]], "valid": false},
+      {"description": "Repeated single-point intervals", "data": [[2, 2], [2, 2]], "valid": false}
+    ]
+  },
+  {
+    "description": "Calendar periods and offset-normalized schedule slots",
+    "schema": {
+      "properties": {
+        "periods": {"nonOverlapping": {"start": "/start", "end": "/end", "mode": "date", "bounds": "closed"}},
+        "slots": {"nonOverlapping": {"start": "/start", "end": "/end", "mode": "date-time", "bounds": "half-open"}}
+      }
+    },
+    "tests": [
+      {"description": "Adjacent slots across offsets", "data": {"slots": [{"start": "2026-01-01T01:00:00+01:00", "end": "2026-01-01T02:00:00+01:00"}, {"start": "2026-01-01T01:00:00Z", "end": "2026-01-01T03:00:00Z"}]}, "valid": true},
+      {"description": "Calendar periods share a closed end", "data": {"periods": [{"start": "2026-01-01", "end": "2026-01-03"}, {"start": "2026-01-03", "end": "2026-01-04"}]}, "valid": false}
+    ]
+  }
+]
