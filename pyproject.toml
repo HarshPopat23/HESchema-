@@ -28,7 +28,7 @@ heschema = "heschema.cli:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-heschema = ["field-comparison-v1.json", "relationships-v1.json", "relationships-v2.json", "relationships-v3.json"]
+heschema = ["field-comparison-v1.json", "relationships-v1.json", "relationships-v2.json", "relationships-v3.json", "ml-v1.json"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

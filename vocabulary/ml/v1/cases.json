@@ -1,0 +1,52 @@
+[
+  {
+    "description": "Embeddings and labels share a batch dimension",
+    "schema": {"tensorShapes": [{"path": "/embeddings", "shape": ["batch", 3]}, {"path": "/labels", "shape": ["batch"]}]},
+    "tests": [
+      {"description": "Matching nonempty batch", "data": {"embeddings": [[1, 2, 3], [4, 5, 6]], "labels": [0, 1]}, "valid": true},
+      {"description": "Wrong fixed width", "data": {"embeddings": [[1, 2]], "labels": [0]}, "valid": false},
+      {"description": "Mismatched batch sizes", "data": {"embeddings": [[1, 2, 3]], "labels": [0, 1]}, "valid": false},
+      {"description": "Both batches empty", "data": {"embeddings": [], "labels": []}, "valid": true},
+      {"description": "Empty batch binds zero", "data": {"embeddings": [], "labels": [1]}, "valid": false},
+      {"description": "Required tensor missing", "data": {"embeddings": []}, "valid": false}
+    ]
+  },
+  {
+    "description": "An anonymous dimension still requires rectangular data",
+    "schema": {"tensorShapes": [{"path": "", "shape": [null, null]}]},
+    "tests": [
+      {"description": "Rectangular", "data": [[1, 2], [3, 4]], "valid": true},
+      {"description": "Ragged", "data": [[1, 2], [3]], "valid": false},
+      {"description": "Empty rows consistent", "data": [[], []], "valid": true},
+      {"description": "Empty and populated rows differ", "data": [[], [1]], "valid": false},
+      {"description": "Too shallow", "data": [1, 2], "valid": false},
+      {"description": "Too deep", "data": [[[1]]], "valid": false},
+      {"description": "Null leaf rejected", "data": [[null]], "valid": false},
+      {"description": "Object leaf rejected", "data": [[{}]], "valid": false}
+    ]
+  },
+  {
+    "description": "Repeat one symbol across axes",
+    "schema": {"tensorShapes": [{"path": "", "shape": ["side", "side"]}]},
+    "tests": [
+      {"description": "Square", "data": [[1, 2], [3, 4]], "valid": true},
+      {"description": "Rectangle is not square", "data": [[1, 2, 3], [4, 5, 6]], "valid": false}
+    ]
+  },
+  {
+    "description": "A hidden dimension does not bind a symbol",
+    "schema": {"tensorShapes": [{"path": "/rows", "shape": [0, "width"]}, {"path": "/weights", "shape": ["width"]}]},
+    "tests": [
+      {"description": "Width observed only on weights", "data": {"rows": [], "weights": [1, 2]}, "valid": true},
+      {"description": "Outer dimension must be zero", "data": {"rows": [[1, 2]], "weights": [1, 2]}, "valid": false}
+    ]
+  },
+  {
+    "description": "Escaped pointer to a scalar",
+    "schema": {"tensorShapes": [{"path": "/a~1b/0/~0", "shape": []}]},
+    "tests": [
+      {"description": "Scalar boolean", "data": {"a/b": [{"~": true}]}, "valid": true},
+      {"description": "Array is not a scalar", "data": {"a/b": [{"~": []}]}, "valid": false}
+    ]
+  }
+]
