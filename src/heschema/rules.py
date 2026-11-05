@@ -77,7 +77,7 @@ def calendar_date(value):
     return date.fromisoformat(value)
 
 
-def _integer(value):
+def exact_integer(value):
     if type(value) is int:
         return value
     # JSON Schema integers are semantic numbers. Integral reals are safe only
@@ -101,7 +101,7 @@ def calculation_value(document, rule):
     precision = rule.get('precision')
     tolerance = rule.get('tolerance')
     is_float_mode = (precision is not None) or (tolerance is not None) or (kind in {'division_equals', 'percentage_of'})
-    parser = _number if is_float_mode else _integer
+    parser = _number if is_float_mode else exact_integer
 
     if kind in {'product_equals', 'sum_equals'}:
         raw_ops = [resolve(document, p) for p in rule['operands']]
@@ -152,7 +152,7 @@ def evaluate_rules(document, rules, context=None, trusted_locations=None):
         precision = rule.get('precision')
         tolerance = rule.get('tolerance')
         is_float_mode = (precision is not None) or (tolerance is not None) or (kind in {'division_equals', 'percentage_of'})
-        parser = _number if is_float_mode else _integer
+        parser = _number if is_float_mode else exact_integer
         try:
             if kind in {'product_equals', 'sum_equals', 'division_equals', 'percentage_of'}:
                 # Preserve existing missing-evidence precedence before type checks.
@@ -191,7 +191,7 @@ def evaluate_rules(document, rules, context=None, trusted_locations=None):
                     actual, expected = resolve(document, rule['target']), items
                     valid = any(json_equal(actual, item) for item in items)
                 elif kind == 'count_equals':
-                    actual = _integer(resolve(document, rule['target']))
+                    actual = exact_integer(resolve(document, rule['target']))
                     expected = calculation_value(document, rule)
                     valid = actual == expected
                 elif kind == 'sum_items_equals':
