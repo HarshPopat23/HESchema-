@@ -16,13 +16,29 @@ from jsonschema import Draft202012Validator, FormatChecker, SchemaError
 
 from .diagnostics import parts, pointer, schema_error
 from .field_comparison import (
+    FIELD_COMPARISON_DIALECT,
     FIELD_COMPARISON_VALIDATOR,
     META_VALIDATOR,
-    uses_field_comparison_dialect,
 )
 from .jsonio import canonical, digest, loads
+from .unique_keys import (
+    RELATIONSHIPS_DIALECT,
+    RELATIONSHIPS_META_VALIDATOR,
+    RELATIONSHIPS_VALIDATOR,
+)
+
+_CUSTOM_DIALECTS = {
+    FIELD_COMPARISON_DIALECT: (META_VALIDATOR, FIELD_COMPARISON_VALIDATOR),
+    RELATIONSHIPS_DIALECT: (RELATIONSHIPS_META_VALIDATOR, RELATIONSHIPS_VALIDATOR),
+}
+_CUSTOM_KEYWORDS = ('compareFields', 'uniqueKeys')
 
 DIALECT = "https://json-schema.org/draft/2020-12/schema"
+
+
+def custom_dialect(schema):
+    identifier = schema.get('$schema') if isinstance(schema, dict) else None
+    return identifier if isinstance(identifier, str) and identifier in _CUSTOM_DIALECTS else None
 
 
 def schema_children(node):
@@ -46,10 +62,10 @@ def child_environment():
 
 
 def check_schema(schema):
-    custom = uses_field_comparison_dialect(schema)
+    custom = custom_dialect(schema)
     try:
         if custom:
-            error = next(META_VALIDATOR.iter_errors(schema), None)
+            error = next(_CUSTOM_DIALECTS[custom][0].iter_errors(schema), None)
             if error:
                 raise ValueError(f"Invalid JSON Schema at {pointer(error.absolute_path)}: {error.message}")
         else:
@@ -57,7 +73,7 @@ def check_schema(schema):
     except SchemaError as exc:
         raise ValueError(f"Invalid JSON Schema: {exc.message}") from None
     if not custom and isinstance(schema, dict) and schema.get("$schema", DIALECT) != DIALECT:
-        raise ValueError("This release accepts Draft 2020-12 and the HESchema field comparison dialect only")
+        raise ValueError("This release accepts Draft 2020-12 and the HESchema custom dialects only")
     known_vocabularies = {'https://json-schema.org/draft/2020-12/vocab/' + name for name in
                           ('core', 'applicator', 'validation', 'unevaluated', 'meta-data', 'format-annotation', 'format-assertion', 'content')}
     if isinstance(schema, dict) and any(required and uri not in known_vocabularies for uri, required in schema.get('$vocabulary', {}).items()):
@@ -72,16 +88,18 @@ def check_schema(schema):
         if custom:
             schema_locations.add(pointer(path))
         if isinstance(node, dict):
-            if path and '$schema' in node and (custom or uses_field_comparison_dialect(node)):
-                raise ValueError("The field comparison dialect must be declared at the root without nested dialects")
-            if not custom and 'compareFields' in node:
-                raise ValueError("compareFields requires the HESchema field comparison dialect")
+            if path and '$schema' in node and (custom or custom_dialect(node)):
+                raise ValueError("The custom dialect must be declared at the root without nested dialects")
+            supported = _CUSTOM_DIALECTS[custom][1].VALIDATORS if custom else ()
+            for keyword in _CUSTOM_KEYWORDS:
+                if keyword in node and keyword not in supported:
+                    raise ValueError(f"{keyword} requires the HESchema dialect that declares it")
             for key in ("$ref", "$dynamicRef"):
                 if key in node and not node[key].startswith("#"):
                     raise ValueError("External schema references must be bundled before registration")
             if custom:
                 if (path and '$id' in node) or '$dynamicRef' in node:
-                    raise ValueError("The field comparison dialect supports one schema resource and static references only")
+                    raise ValueError("HESchema custom dialects support one schema resource and static references only")
                 if '$ref' in node:
                     target = unquote(node['$ref'][1:])
                     parts(target)
@@ -91,14 +109,14 @@ def check_schema(schema):
 
     walk(schema)
     if comparison_refs - schema_locations:
-        raise ValueError("Field comparison references must point to schema nodes in the same resource")
+        raise ValueError("Custom dialect references must point to schema nodes in the same resource")
 
 
 def python_validator(schema):
-    if uses_field_comparison_dialect(schema):
+    if dialect := custom_dialect(schema):
         # Keep Draft 2020-12 reference resolution and inherit our keyword in subschemas.
         schema = {key: value for key, value in schema.items() if key != '$schema'}
-        return FIELD_COMPARISON_VALIDATOR(schema, format_checker=FormatChecker())
+        return _CUSTOM_DIALECTS[dialect][1](schema, format_checker=FormatChecker())
     return Draft202012Validator(schema, format_checker=FormatChecker())
 
 
@@ -194,8 +212,8 @@ class SchemaEngine:
                 self.cache.move_to_end(key)
                 return key
             check_schema(schema)
-            if self.backend == "blaze" and uses_field_comparison_dialect(schema):
-                raise ValueError("Blaze does not support the field comparison dialect; use the jsonschema backend")
+            if self.backend == "blaze" and custom_dialect(schema):
+                raise ValueError("Blaze does not support HESchema custom dialects; use the jsonschema backend")
             validator = python_validator(copy.deepcopy(schema))
             locations = {}
             def collect(node, path=()):

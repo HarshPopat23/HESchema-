@@ -9,8 +9,8 @@ from pathlib import Path
 import httpx
 from dotenv import load_dotenv
 
-from .field_comparison import uses_field_comparison_dialect
 from .jsonio import canonical, digest, loads, read_json
+from .schema import custom_dialect
 from .timing import ProviderTiming
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -189,8 +189,8 @@ class Provider:
         return base + "/chat/completions", {**headers, "Authorization": "Bearer " + self.key}, payload
 
     async def generate(self, messages, seed=0, max_tokens=1024, temperature=None, format_schema=None, retry=True):
-        if uses_field_comparison_dialect(format_schema):
-            raise ProviderError("Field comparisons require local validation; use prompt_only mode",
+        if custom_dialect(format_schema):
+            raise ProviderError("HESchema custom dialects require local validation; use prompt_only mode",
                                 code="unsupported_mode", requests=0)
         timing = ProviderTiming()
         try:

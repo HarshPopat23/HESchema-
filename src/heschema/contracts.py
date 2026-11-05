@@ -4,9 +4,8 @@ import copy
 from dataclasses import dataclass, field
 
 from .diagnostics import parts
-from .field_comparison import FIELD_COMPARISON_DIALECT, uses_field_comparison_dialect
 from .jsonio import digest
-from .schema import check_schema, schema_children
+from .schema import check_schema, custom_dialect, schema_children
 from .validation import ENVELOPE
 
 
@@ -80,7 +79,7 @@ def generation_envelope(contract, arguments_schema):
             branch['properties']['missingFields']['minItems'] = 1
         branches.append(branch)
     envelope = {'oneOf': branches}
-    if uses_field_comparison_dialect(arguments_schema):
+    if dialect := custom_dialect(arguments_schema):
         branches[0]['properties']['arguments'].pop('$schema')
-        envelope['$schema'] = FIELD_COMPARISON_DIALECT
+        envelope['$schema'] = dialect
     return envelope

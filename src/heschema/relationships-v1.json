@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$dynamicAnchor": "meta",
+  "$vocabulary": {
+    "https://json-schema.org/draft/2020-12/vocab/core": true,
+    "https://json-schema.org/draft/2020-12/vocab/applicator": true,
+    "https://json-schema.org/draft/2020-12/vocab/unevaluated": true,
+    "https://json-schema.org/draft/2020-12/vocab/validation": true,
+    "https://json-schema.org/draft/2020-12/vocab/meta-data": true,
+    "https://json-schema.org/draft/2020-12/vocab/format-annotation": true,
+    "https://json-schema.org/draft/2020-12/vocab/content": true,
+    "https://raw.githubusercontent.com/HarshPopat23/HESchema-/main/vocabulary/field-comparison/v1/README.md": true,
+    "https://raw.githubusercontent.com/HarshPopat23/HESchema-/main/vocabulary/keyed-uniqueness/v1/README.md": true
+  },
+  "$id": "https://raw.githubusercontent.com/HarshPopat23/HESchema-/main/src/heschema/relationships-v1.json",
+  "title": "HESchema Relationships v1 dialect",
+  "allOf": [
+    {
+      "$ref": "https://raw.githubusercontent.com/HarshPopat23/HESchema-/main/src/heschema/field-comparison-v1.json"
+    }
+  ],
+  "properties": {
+    "uniqueKeys": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "https://raw.githubusercontent.com/HarshPopat23/HESchema-/main/src/heschema/field-comparison-v1.json#/$defs/pointer"
+      }
+    }
+  }
+}

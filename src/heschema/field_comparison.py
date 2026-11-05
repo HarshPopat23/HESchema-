@@ -17,10 +17,6 @@ _OPERATORS = {'eq': operator.eq, 'ne': operator.ne, 'lt': operator.lt,
               'lte': operator.le, 'gt': operator.gt, 'gte': operator.ge}
 
 
-def uses_field_comparison_dialect(schema):
-    return isinstance(schema, dict) and schema.get('$schema') == FIELD_COMPARISON_DIALECT
-
-
 def _compare_fields(_validator, comparisons, instance, _schema):
     for index, comparison in enumerate(comparisons):
         left_path, right_path = comparison['left'], comparison['right']
