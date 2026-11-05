@@ -14,7 +14,7 @@ from urllib.parse import unquote
 
 from jsonschema import Draft202012Validator, FormatChecker, SchemaError
 
-from . import relationships_v2
+from . import ordering, relationships_v2
 from .diagnostics import parts, pointer, schema_error
 from .field_comparison import (
     FIELD_COMPARISON_DIALECT,
@@ -32,8 +32,9 @@ _CUSTOM_DIALECTS = {
     FIELD_COMPARISON_DIALECT: (META_VALIDATOR, FIELD_COMPARISON_VALIDATOR),
     RELATIONSHIPS_DIALECT: (RELATIONSHIPS_META_VALIDATOR, RELATIONSHIPS_VALIDATOR),
     relationships_v2.DIALECT: (relationships_v2.META_VALIDATOR, relationships_v2.VALIDATOR),
+    ordering.DIALECT: (ordering.META_VALIDATOR, ordering.VALIDATOR),
 }
-_CUSTOM_KEYWORDS = ('compareFields', 'uniqueKeys', 'aggregateCompare', 'localReferences')
+_CUSTOM_KEYWORDS = ('compareFields', 'uniqueKeys', 'aggregateCompare', 'localReferences', 'sortedBy', 'nonOverlapping')
 
 DIALECT = "https://json-schema.org/draft/2020-12/schema"
 
@@ -96,11 +97,10 @@ def check_schema(schema):
             for keyword in _CUSTOM_KEYWORDS:
                 if keyword in node and keyword not in supported:
                     raise ValueError(f"{keyword} requires the HESchema dialect that declares it")
-            if custom == relationships_v2.DIALECT:
-                for index, rule in enumerate(node.get('localReferences', [])):
-                    if len(rule['source']['keys']) != len(rule['target']['keys']):
-                        location = pointer((*path, 'localReferences', index))
-                        raise ValueError(f"Invalid JSON Schema at {location}: source and target key lengths must match")
+            for index, rule in enumerate(node.get('localReferences', [])):
+                if len(rule['source']['keys']) != len(rule['target']['keys']):
+                    location = pointer((*path, 'localReferences', index))
+                    raise ValueError(f"Invalid JSON Schema at {location}: source and target key lengths must match")
             for key in ("$ref", "$dynamicRef"):
                 if key in node and not node[key].startswith("#"):
                     raise ValueError("External schema references must be bundled before registration")

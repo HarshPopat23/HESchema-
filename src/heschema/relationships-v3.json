@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$dynamicAnchor": "meta",
+  "$vocabulary": {
+    "https://json-schema.org/draft/2020-12/vocab/core": true,
+    "https://json-schema.org/draft/2020-12/vocab/applicator": true,
+    "https://json-schema.org/draft/2020-12/vocab/unevaluated": true,
+    "https://json-schema.org/draft/2020-12/vocab/validation": true,
+    "https://json-schema.org/draft/2020-12/vocab/meta-data": true,
+    "https://json-schema.org/draft/2020-12/vocab/format-annotation": true,
+    "https://json-schema.org/draft/2020-12/vocab/content": true,
+    "https://raw.githubusercontent.com/HarshPopat23/HESchema-/main/vocabulary/field-comparison/v1/README.md": true,
+    "https://raw.githubusercontent.com/HarshPopat23/HESchema-/main/vocabulary/keyed-uniqueness/v1/README.md": true,
+    "https://raw.githubusercontent.com/HarshPopat23/HESchema-/main/vocabulary/relationships/v2/README.md": true,
+    "https://raw.githubusercontent.com/HarshPopat23/HESchema-/main/vocabulary/relationships/v3/README.md": true
+  },
+  "$id": "https://raw.githubusercontent.com/HarshPopat23/HESchema-/main/src/heschema/relationships-v3.json",
+  "title": "HESchema Relationships v3 dialect",
+  "allOf": [
+    {
+      "$ref": "https://raw.githubusercontent.com/HarshPopat23/HESchema-/main/src/heschema/relationships-v2.json"
+    }
+  ],
+  "properties": {
+    "sortedBy": {
+      "type": "object",
+      "required": [
+        "key",
+        "mode",
+        "direction",
+        "ties"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "$ref": "https://raw.githubusercontent.com/HarshPopat23/HESchema-/main/src/heschema/field-comparison-v1.json#/$defs/pointer"
+        },
+        "mode": {
+          "enum": [
+            "number",
+            "date",
+            "date-time"
+          ]
+        },
+        "direction": {
+          "enum": [
+            "ascending",
+            "descending"
+          ]
+        },
+        "ties": {
+          "enum": [
+            "allow",
+            "forbid"
+          ]
+        }
+      }
+    },
+    "nonOverlapping": {
+      "type": "object",
+      "required": [
+        "start",
+        "end",
+        "mode",
+        "bounds"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "start": {
+          "$ref": "https://raw.githubusercontent.com/HarshPopat23/HESchema-/main/src/heschema/field-comparison-v1.json#/$defs/pointer"
+        },
+        "end": {
+          "$ref": "https://raw.githubusercontent.com/HarshPopat23/HESchema-/main/src/heschema/field-comparison-v1.json#/$defs/pointer"
+        },
+        "mode": {
+          "enum": [
+            "date",
+            "date-time",
+            "byte-offset",
+            "code-point-offset"
+          ]
+        },
+        "bounds": {
+          "enum": [
+            "half-open",
+            "closed"
+          ]
+        }
+      }
+    }
+  }
+}

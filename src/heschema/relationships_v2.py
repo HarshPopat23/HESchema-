@@ -19,12 +19,10 @@ from .unique_keys import (
 
 META_SCHEMA = json.loads(files('heschema').joinpath('relationships-v2.json').read_text(encoding='utf-8'))
 DIALECT = META_SCHEMA['$id']
-META_VALIDATOR = Draft202012Validator(
-    META_SCHEMA,
-    registry=FIELD_COMPARISON_REGISTRY.with_resource(
-        RELATIONSHIPS_DIALECT, Resource.from_contents(RELATIONSHIPS_META_SCHEMA),
-    ),
+META_REGISTRY = FIELD_COMPARISON_REGISTRY.with_resource(
+    RELATIONSHIPS_DIALECT, Resource.from_contents(RELATIONSHIPS_META_SCHEMA),
 )
+META_VALIDATOR = Draft202012Validator(META_SCHEMA, registry=META_REGISTRY)
 
 
 def _value_at(instance, location, path=()):
