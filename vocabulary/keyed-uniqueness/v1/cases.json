@@ -1,0 +1,42 @@
+[
+  {
+    "description": "Single keys and missing values",
+    "schema": {"uniqueKeys": ["/sku"]},
+    "tests": [
+      {"description": "Distinct SKUs", "data": [{"sku": "A"}, {"sku": "B"}], "valid": true},
+      {"description": "Duplicate SKU with different payload", "data": [{"sku": "A", "price": 1}, {"sku": "A", "price": 2}], "valid": false},
+      {"description": "Missing differs from null", "data": [{}, {"sku": null}], "valid": true},
+      {"description": "Two missing keys duplicate", "data": [{}, {"price": 2}], "valid": false},
+      {"description": "Two null keys duplicate", "data": [{"sku": null}, {"sku": null}], "valid": false},
+      {"description": "Empty array", "data": [], "valid": true},
+      {"description": "Non-array ignored", "data": {"sku": "A"}, "valid": true}
+    ]
+  },
+  {
+    "description": "Compound keys",
+    "schema": {"uniqueKeys": ["/datasetId", "/sampleId"]},
+    "tests": [
+      {"description": "Shared sample ID across datasets", "data": [{"datasetId": "a", "sampleId": "1"}, {"datasetId": "b", "sampleId": "1"}], "valid": true},
+      {"description": "Same tuple with different label", "data": [{"datasetId": "a", "sampleId": "1", "label": 1}, {"datasetId": "a", "sampleId": "1", "label": 2}], "valid": false},
+      {"description": "Same missing component but different datasets", "data": [{"datasetId": "a"}, {"datasetId": "b"}], "valid": true},
+      {"description": "Same missing component and same dataset", "data": [{"datasetId": "a"}, {"datasetId": "a"}], "valid": false}
+    ]
+  },
+  {
+    "description": "JSON equality and escaped paths",
+    "schema": {"uniqueKeys": ["/id~1source/0/~0"]},
+    "tests": [
+      {"description": "Objects with numeric aliases and different member order", "data": [{"id/source": [{"~": {"a": 1, "b": null}}]}, {"id/source": [{"~": {"b": null, "a": 1.0}}]}], "valid": false},
+      {"description": "Boolean differs from number", "data": [{"id/source": [{"~": true}]}, {"id/source": [{"~": 1}]}], "valid": true}
+    ]
+  },
+  {
+    "description": "Whole item pointers",
+    "schema": {"uniqueKeys": [""]},
+    "tests": [
+      {"description": "Array order is significant", "data": [[1, 2], [2, 1]], "valid": true},
+      {"description": "Nested number aliases compare equal", "data": [[1, [2.0]], [1.0, [2]]], "valid": false},
+      {"description": "Scalar values", "data": [1, 1.0], "valid": false}
+    ]
+  }
+]
