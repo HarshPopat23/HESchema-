@@ -14,7 +14,7 @@ from urllib.parse import unquote
 
 from jsonschema import Draft202012Validator, FormatChecker, SchemaError
 
-from . import ordering, relationships_v2, tensor_shapes
+from . import exact_arithmetic, ordering, relationships_v2, tensor_shapes
 from .diagnostics import parts, pointer, schema_error
 from .field_comparison import (
     FIELD_COMPARISON_DIALECT,
@@ -33,9 +33,10 @@ _CUSTOM_DIALECTS = {
     RELATIONSHIPS_DIALECT: (RELATIONSHIPS_META_VALIDATOR, RELATIONSHIPS_VALIDATOR),
     relationships_v2.DIALECT: (relationships_v2.META_VALIDATOR, relationships_v2.VALIDATOR),
     ordering.DIALECT: (ordering.META_VALIDATOR, ordering.VALIDATOR),
+    exact_arithmetic.DIALECT: (exact_arithmetic.META_VALIDATOR, exact_arithmetic.VALIDATOR),
     tensor_shapes.DIALECT: (tensor_shapes.META_VALIDATOR, tensor_shapes.VALIDATOR),
 }
-_CUSTOM_KEYWORDS = ('compareFields', 'uniqueKeys', 'aggregateCompare', 'localReferences', 'sortedBy', 'nonOverlapping', 'tensorShapes')
+_CUSTOM_KEYWORDS = ('compareFields', 'uniqueKeys', 'aggregateCompare', 'localReferences', 'sortedBy', 'nonOverlapping', 'tensorShapes', 'arithmeticEquals')
 
 DIALECT = "https://json-schema.org/draft/2020-12/schema"
 
