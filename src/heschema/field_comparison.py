@@ -13,8 +13,10 @@ from .rules import calendar_date, json_equal
 META_SCHEMA = json.loads(files('heschema').joinpath('field-comparison-v1.json').read_text(encoding='utf-8'))
 FIELD_COMPARISON_DIALECT = META_SCHEMA['$id']
 META_VALIDATOR = Draft202012Validator(META_SCHEMA)
-_OPERATORS = {'eq': operator.eq, 'ne': operator.ne, 'lt': operator.lt,
-              'lte': operator.le, 'gt': operator.gt, 'gte': operator.ge}
+COMPARISON_OPERATORS = {
+    'eq': operator.eq, 'ne': operator.ne, 'lt': operator.lt,
+    'lte': operator.le, 'gt': operator.gt, 'gte': operator.ge,
+}
 
 
 def _compare_fields(_validator, comparisons, instance, _schema):
@@ -46,7 +48,7 @@ def _compare_fields(_validator, comparisons, instance, _schema):
             equal = json_equal(left, right)
             valid = equal if op == 'eq' else not equal
         else:
-            valid = _OPERATORS[op](left, right)
+            valid = COMPARISON_OPERATORS[op](left, right)
         if not valid:
             yield ValidationError(f'Comparison {index} failed: {left_path!r} {op} {right_path!r} ({mode})')
 
