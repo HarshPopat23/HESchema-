@@ -1,0 +1,34 @@
+[
+  {
+    "description": "Numeric bounds",
+    "schema": {"compareFields": [{"left": "/min", "right": "/max", "operator": "lte", "mode": "number"}]},
+    "tests": [
+      {"description": "Equal bounds", "data": {"min": 2, "max": 2.0}, "valid": true},
+      {"description": "Reversed bounds", "data": {"min": 3, "max": 2}, "valid": false},
+      {"description": "No numeric coercion", "data": {"min": "1", "max": 2}, "valid": false},
+      {"description": "Boolean is not a number", "data": {"min": true, "max": 2}, "valid": false},
+      {"description": "Missing bound", "data": {"min": 1}, "valid": false}
+    ]
+  },
+  {
+    "description": "Strict calendar order",
+    "schema": {"compareFields": [{"left": "/start", "right": "/end", "operator": "lt", "mode": "date"}]},
+    "tests": [
+      {"description": "Valid leap day", "data": {"start": "2024-02-29", "end": "2024-03-01"}, "valid": true},
+      {"description": "Invalid leap day", "data": {"start": "2025-02-29", "end": "2025-03-01"}, "valid": false},
+      {"description": "Same day", "data": {"start": "2024-02-29", "end": "2024-02-29"}, "valid": false},
+      {"description": "Timestamp is outside date mode", "data": {"start": "2024-02-29T00:00:00Z", "end": "2024-03-01"}, "valid": false}
+    ]
+  },
+  {
+    "description": "JSON equality and escaped pointers within items",
+    "schema": {"type": "array", "items": {"compareFields": [{"left": "/id~1source", "right": "/id~0copy", "operator": "eq", "mode": "json"}]}},
+    "tests": [
+      {"description": "Object order and numeric aliases", "data": [{"id/source": {"a": 1, "b": null}, "id~copy": {"b": null, "a": 1.0}}], "valid": true},
+      {"description": "Null values are present", "data": [{"id/source": null, "id~copy": null}], "valid": true},
+      {"description": "Null differs from missing", "data": [{"id/source": null}], "valid": false},
+      {"description": "Boolean differs from number", "data": [{"id/source": true, "id~copy": 1}], "valid": false},
+      {"description": "Array order matters", "data": [{"id/source": [1, 2], "id~copy": [2, 1]}], "valid": false}
+    ]
+  }
+]

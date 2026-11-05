@@ -71,7 +71,7 @@ def check_rules(rules):
                 parts(p)
 
 
-def _date(value):
+def calendar_date(value):
     if not isinstance(value, str) or not re.fullmatch(r'\d{4}-\d{2}-\d{2}', value):
         raise ValueError('Expected YYYY-MM-DD date')
     return date.fromisoformat(value)
@@ -171,7 +171,7 @@ def evaluate_rules(document, rules, context=None, trusted_locations=None):
                     valid = abs(float(actual) - float(expected)) < 1e-9
             elif kind == 'date_before':
                 actual, expected = resolve(document, rule['left']), resolve(document, rule['right'])
-                valid = _date(actual) < _date(expected)
+                valid = calendar_date(actual) < calendar_date(expected)
             elif kind == 'equals':
                 actual, expected = resolve(document, rule['left']), resolve(document, rule['right'])
                 valid = json_equal(actual, expected)

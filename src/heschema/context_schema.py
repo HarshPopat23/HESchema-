@@ -5,11 +5,9 @@ import re
 from datetime import datetime, timezone
 from urllib.parse import quote
 
-from jsonschema import Draft202012Validator, FormatChecker
-
 from .diagnostics import parts, pointer, resolve
 from .jsonio import digest
-from .schema import schema_children
+from .schema import python_validator, schema_children
 
 
 class ContextError(ValueError):
@@ -106,10 +104,10 @@ def effective_schema(contract, snapshot=None):
                     if tokens[0] not in {'if', 'not', 'anyOf', 'oneOf', 'contains'}:
                         omit_required(child)
         omit_required(partial)
-        errors = list(Draft202012Validator(partial, format_checker=FormatChecker()).iter_errors(data))
+        errors = list(python_validator(partial).iter_errors(data))
         if errors:
             raise ContextError('Context data violates its declared schema: ' + errors[0].message)
-    original_validator = Draft202012Validator(original, format_checker=FormatChecker())
+    original_validator = python_validator(original)
     for binding in contract.bindings:
         source = binding['contextLocation']
         try:

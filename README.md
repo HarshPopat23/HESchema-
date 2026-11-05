@@ -8,6 +8,8 @@
 - 🔬 **[60-Task Results Correction](docs/reports/HESchema_60_Experiment_Report.md)**: Independent rescoring corrects a membership-scoring defect. A new 2,160-slot replication reports 2,156 matched primary slots after evidence exclusions, scoped token savings and conventional-check replay; general accuracy, speed and vocabulary claims remain unestablished.
 - 📋 **[60 Real Record Tasks](docs/reports/HESchema_60_Real_Record_Tasks.md)**: Complete task inventory, output schemas, and reference answers.
 
+For declarative comparisons between JSON fields, see the [Field Comparison vocabulary](vocabulary/field-comparison/v1/README.md).
+
 For prospective research on property relationships, see [the research protocol](docs/relationship-research.md) and the [category pack](research/relationship-categories-v1/README.md). For confirmation across 30 public-record tasks, see the [confirmation study](research/confirmation-v1/README.md).
 
 A runnable **schema-effect experiment harness + state-aware tool-argument validator**. It answers two different questions:
