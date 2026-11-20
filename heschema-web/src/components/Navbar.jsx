@@ -78,11 +78,6 @@ export default function Navbar({ activeTab, setActiveTab, onOpenSearch }) {
             <span>Search docs...</span>
             <kbd className="kbd-shortcut">/</kbd>
           </button>
-
-          <div className="status-indicator" title="Localhost client & engine active">
-            <span className="status-dot"></span>
-            <span className="status-text">Localhost Active</span>
-          </div>
         </div>
       </div>
     </header>

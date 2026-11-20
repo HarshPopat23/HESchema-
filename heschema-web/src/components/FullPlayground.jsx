@@ -325,7 +325,7 @@ export default function FullPlayground() {
             onClick={() => setActiveTab('backend')}
           >
             <Wifi size={16} />
-            <span>4. Localhost API Bridge</span>
+            <span>4. FastAPI / Custom API Bridge</span>
           </button>
         </div>
 
