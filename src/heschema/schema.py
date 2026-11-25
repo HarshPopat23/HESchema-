@@ -102,7 +102,9 @@ def check_schema(schema):
                     raise ValueError(f"{keyword} requires the HESchema dialect that declares it")
             if 'assertExpression' in node and custom == assert_expression.DIALECT:
                 try:
-                    assert_expression.check_expression(node['assertExpression'])
+                    assert_expression.require_type(
+                        assert_expression.check_expression(node['assertExpression']), {'bool'},
+                    )
                 except (ValueError, TypeError) as error:
                     raise ValueError(f"Invalid assertExpression at {pointer(path)}: {error}") from None
             for index, rule in enumerate(node.get('localReferences', [])):

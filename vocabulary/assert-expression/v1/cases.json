@@ -1,0 +1,636 @@
+{
+  "groups": [
+    {
+      "gap": 1,
+      "description": "Literal dotted keys",
+      "expression": {
+        "eq": [
+          {
+            "get": {
+              "from": "root",
+              "path": "/a.b"
+            }
+          },
+          {
+            "literal": 1
+          }
+        ]
+      },
+      "tests": [
+        {
+          "description": "passes",
+          "data": {
+            "a.b": 1
+          },
+          "valid": true
+        },
+        {
+          "description": "rejects",
+          "data": {
+            "a": {
+              "b": 1
+            }
+          },
+          "valid": false
+        }
+      ]
+    },
+    {
+      "gap": 2,
+      "description": "Literal objects",
+      "expression": {
+        "eq": [
+          {
+            "get": {
+              "from": "root",
+              "path": ""
+            }
+          },
+          {
+            "literal": {
+              "status": "ok"
+            }
+          }
+        ]
+      },
+      "tests": [
+        {
+          "description": "passes",
+          "data": {
+            "status": "ok"
+          },
+          "valid": true
+        },
+        {
+          "description": "rejects",
+          "data": {
+            "status": "bad"
+          },
+          "valid": false
+        }
+      ]
+    },
+    {
+      "gap": 3,
+      "description": "Presence",
+      "expression": {
+        "exists": {
+          "from": "root",
+          "path": "/email"
+        }
+      },
+      "tests": [
+        {
+          "description": "passes",
+          "data": {
+            "email": null
+          },
+          "valid": true
+        },
+        {
+          "description": "rejects",
+          "data": {},
+          "valid": false
+        }
+      ]
+    },
+    {
+      "gap": 4,
+      "description": "Structural equality",
+      "expression": {
+        "eq": [
+          {
+            "get": {
+              "from": "root",
+              "path": "/a"
+            }
+          },
+          {
+            "get": {
+              "from": "root",
+              "path": "/b"
+            }
+          }
+        ]
+      },
+      "tests": [
+        {
+          "description": "passes",
+          "data": {
+            "a": {
+              "x": [
+                1
+              ]
+            },
+            "b": {
+              "x": [
+                1.0
+              ]
+            }
+          },
+          "valid": true
+        },
+        {
+          "description": "rejects",
+          "data": {
+            "a": true,
+            "b": 1
+          },
+          "valid": false
+        }
+      ]
+    },
+    {
+      "gap": 5,
+      "description": "Outer scope",
+      "expression": {
+        "all": {
+          "array": {
+            "get": {
+              "from": "root",
+              "path": "/items"
+            }
+          },
+          "as": "item",
+          "test": {
+            "lte": [
+              {
+                "get": {
+                  "from": "item",
+                  "path": "/quantity"
+                }
+              },
+              {
+                "get": {
+                  "from": "root",
+                  "path": "/limit"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "tests": [
+        {
+          "description": "passes",
+          "data": {
+            "limit": 3,
+            "items": [
+              {
+                "quantity": 2
+              }
+            ]
+          },
+          "valid": true
+        },
+        {
+          "description": "rejects",
+          "data": {
+            "limit": 3,
+            "items": [
+              {
+                "quantity": 4
+              }
+            ]
+          },
+          "valid": false
+        }
+      ]
+    },
+    {
+      "gap": 6,
+      "description": "Dynamic regex",
+      "expression": {
+        "matches": [
+          {
+            "get": {
+              "from": "root",
+              "path": "/text"
+            }
+          },
+          {
+            "get": {
+              "from": "root",
+              "path": "/pattern"
+            }
+          }
+        ]
+      },
+      "tests": [
+        {
+          "description": "passes",
+          "data": {
+            "text": "AB12",
+            "pattern": "^[A-Z]+[0-9]+$"
+          },
+          "valid": true
+        },
+        {
+          "description": "rejects",
+          "data": {
+            "text": "12AB",
+            "pattern": "^[A-Z]+[0-9]+$"
+          },
+          "valid": false
+        }
+      ]
+    },
+    {
+      "gap": 7,
+      "description": "Timestamp instants",
+      "expression": {
+        "lt": [
+          {
+            "timestamp": {
+              "get": {
+                "from": "root",
+                "path": ""
+              }
+            }
+          },
+          {
+            "timestamp": {
+              "literal": "2025-01-01T00:00:00Z"
+            }
+          }
+        ]
+      },
+      "tests": [
+        {
+          "description": "passes",
+          "data": "2025-01-01T00:30:00+01:00",
+          "valid": true
+        },
+        {
+          "description": "rejects",
+          "data": "2025-01-01T00:30:00Z",
+          "valid": false
+        }
+      ]
+    },
+    {
+      "gap": 8,
+      "description": "Exact decimals",
+      "expression": {
+        "eq": [
+          {
+            "add": [
+              {
+                "decimal": {
+                  "get": {
+                    "from": "root",
+                    "path": "/a"
+                  }
+                }
+              },
+              {
+                "decimal": {
+                  "get": {
+                    "from": "root",
+                    "path": "/b"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "decimal": "0.3"
+          }
+        ]
+      },
+      "tests": [
+        {
+          "description": "passes",
+          "data": {
+            "a": "0.1",
+            "b": "0.2"
+          },
+          "valid": true
+        },
+        {
+          "description": "rejects",
+          "data": {
+            "a": "0.1",
+            "b": "0.3"
+          },
+          "valid": false
+        }
+      ]
+    },
+    {
+      "gap": 9,
+      "description": "Exact integer tokens",
+      "expression": {
+        "lt": [
+          {
+            "get": {
+              "from": "root",
+              "path": "/a"
+            }
+          },
+          {
+            "get": {
+              "from": "root",
+              "path": "/b"
+            }
+          }
+        ]
+      },
+      "tests": [
+        {
+          "description": "passes",
+          "data": {
+            "a": 9007199254740992,
+            "b": 9007199254740993
+          },
+          "valid": true
+        },
+        {
+          "description": "rejects",
+          "data": {
+            "a": 9007199254740993,
+            "b": 9007199254740992
+          },
+          "valid": false
+        }
+      ]
+    },
+    {
+      "gap": 10,
+      "description": "Unicode code points",
+      "expression": {
+        "eq": [
+          {
+            "slice": {
+              "value": {
+                "get": {
+                  "from": "root",
+                  "path": ""
+                }
+              },
+              "start": 0,
+              "end": 1,
+              "unit": "codePoint"
+            }
+          },
+          {
+            "literal": "😀"
+          }
+        ]
+      },
+      "tests": [
+        {
+          "description": "passes",
+          "data": "😀X",
+          "valid": true
+        },
+        {
+          "description": "rejects",
+          "data": "AX",
+          "valid": false
+        }
+      ]
+    },
+    {
+      "gap": 11,
+      "description": "Diagnostic provenance",
+      "expression": {
+        "lt": [
+          {
+            "get": {
+              "from": "root",
+              "path": "/quantity"
+            }
+          },
+          {
+            "literal": 3
+          }
+        ]
+      },
+      "tests": [
+        {
+          "description": "passes",
+          "data": {
+            "quantity": 2
+          },
+          "valid": true
+        },
+        {
+          "description": "rejects",
+          "data": {
+            "quantity": 4
+          },
+          "valid": false
+        }
+      ]
+    },
+    {
+      "gap": 12,
+      "description": "Checked rule",
+      "expression": {
+        "if": {
+          "test": {
+            "literal": true
+          },
+          "then": {
+            "get": {
+              "from": "root",
+              "path": "/accepted"
+            }
+          },
+          "else": {
+            "literal": false
+          }
+        }
+      },
+      "tests": [
+        {
+          "description": "passes",
+          "data": {
+            "accepted": true
+          },
+          "valid": true
+        },
+        {
+          "description": "rejects",
+          "data": {
+            "accepted": false
+          },
+          "valid": false
+        }
+      ]
+    },
+    {
+      "gap": 13,
+      "description": "Empty array all",
+      "expression": {
+        "all": {
+          "array": {
+            "get": {
+              "from": "root",
+              "path": ""
+            }
+          },
+          "as": "x",
+          "test": {
+            "get": {
+              "from": "x",
+              "path": ""
+            }
+          }
+        }
+      },
+      "tests": [
+        {
+          "description": "passes",
+          "data": [],
+          "valid": true
+        },
+        {
+          "description": "rejects",
+          "data": [
+            false
+          ],
+          "valid": false
+        }
+      ]
+    },
+    {
+      "gap": 14,
+      "description": "Explicit integer conversion",
+      "expression": {
+        "lt": [
+          {
+            "toInteger": {
+              "get": {
+                "from": "root",
+                "path": ""
+              }
+            }
+          },
+          {
+            "literal": 5
+          }
+        ]
+      },
+      "tests": [
+        {
+          "description": "passes",
+          "data": "4",
+          "valid": true
+        },
+        {
+          "description": "rejects",
+          "data": "4kg",
+          "valid": false
+        }
+      ]
+    },
+    {
+      "gap": 15,
+      "description": "Lazy JSON function",
+      "expression": {
+        "define": {
+          "name": "choose",
+          "params": [
+            "condition",
+            "yes",
+            "no"
+          ],
+          "body": {
+            "if": {
+              "test": {
+                "get": {
+                  "from": "condition",
+                  "path": ""
+                }
+              },
+              "then": {
+                "get": {
+                  "from": "yes",
+                  "path": ""
+                }
+              },
+              "else": {
+                "get": {
+                  "from": "no",
+                  "path": ""
+                }
+              }
+            }
+          },
+          "in": {
+            "call": {
+              "name": "choose",
+              "args": [
+                {
+                  "get": {
+                    "from": "root",
+                    "path": "/use"
+                  }
+                },
+                {
+                  "literal": true
+                },
+                {
+                  "eq": [
+                    {
+                      "divide": [
+                        {
+                          "decimal": "1"
+                        },
+                        {
+                          "decimal": "0"
+                        }
+                      ]
+                    },
+                    {
+                      "decimal": "0"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      },
+      "tests": [
+        {
+          "description": "passes",
+          "data": {
+            "use": true
+          },
+          "valid": true
+        },
+        {
+          "description": "rejects",
+          "data": {
+            "use": false
+          },
+          "valid": false
+        }
+      ]
+    }
+  ],
+  "schemaTests": [
+    {
+      "description": "Invalid type in untaken branch",
+      "expression": {
+        "if": {
+          "test": {
+            "literal": true
+          },
+          "then": {
+            "literal": true
+          },
+          "else": {
+            "not": {
+              "literal": 1
+            }
+          }
+        }
+      },
+      "valid": false
+    }
+  ]
+}

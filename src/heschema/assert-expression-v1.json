@@ -20,9 +20,596 @@
   ],
   "properties": {
     "assertExpression": {
-      "type": "object",
-      "minProperties": 1,
-      "maxProperties": 1
+      "$ref": "#/$defs/expression"
+    }
+  },
+  "$defs": {
+    "expression": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "literal"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "literal": true
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "get"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "get": {
+              "type": "object",
+              "required": [
+                "from",
+                "path"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "from": {
+                  "type": "string"
+                },
+                "path": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "exists"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "exists": {
+              "type": "object",
+              "required": [
+                "from",
+                "path"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "from": {
+                  "type": "string"
+                },
+                "path": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "eq"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "eq": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "$ref": "#/$defs/expression"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "ne"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "ne": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "$ref": "#/$defs/expression"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "lt"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "lt": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "$ref": "#/$defs/expression"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "lte"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "lte": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "$ref": "#/$defs/expression"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "gt"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "gt": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "$ref": "#/$defs/expression"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "gte"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "gte": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "$ref": "#/$defs/expression"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "add"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "add": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "$ref": "#/$defs/expression"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "subtract"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "subtract": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "$ref": "#/$defs/expression"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "multiply"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "multiply": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "$ref": "#/$defs/expression"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "divide"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "divide": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "$ref": "#/$defs/expression"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "matches"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "matches": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 2,
+              "items": {
+                "$ref": "#/$defs/expression"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "not"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "not": {
+              "$ref": "#/$defs/expression"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "date"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "date": {
+              "$ref": "#/$defs/expression"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "timestamp"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "timestamp": {
+              "$ref": "#/$defs/expression"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "toInteger"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "toInteger": {
+              "$ref": "#/$defs/expression"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "length"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "length": {
+              "$ref": "#/$defs/expression"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "decimal"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "decimal": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "$ref": "#/$defs/expression"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "and"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "and": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/$defs/expression"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "or"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "or": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/$defs/expression"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "if"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "if": {
+              "type": "object",
+              "required": [
+                "test",
+                "then",
+                "else"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "test": {
+                  "$ref": "#/$defs/expression"
+                },
+                "then": {
+                  "$ref": "#/$defs/expression"
+                },
+                "else": {
+                  "$ref": "#/$defs/expression"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "all"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "all": {
+              "type": "object",
+              "required": [
+                "array",
+                "as",
+                "test"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "array": {
+                  "$ref": "#/$defs/expression"
+                },
+                "as": {
+                  "type": "string"
+                },
+                "test": {
+                  "$ref": "#/$defs/expression"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "some"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "some": {
+              "type": "object",
+              "required": [
+                "array",
+                "as",
+                "test"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "array": {
+                  "$ref": "#/$defs/expression"
+                },
+                "as": {
+                  "type": "string"
+                },
+                "test": {
+                  "$ref": "#/$defs/expression"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "slice"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "slice": {
+              "type": "object",
+              "required": [
+                "value",
+                "start",
+                "end",
+                "unit"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "value": {
+                  "$ref": "#/$defs/expression"
+                },
+                "start": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "end": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "unit": {
+                  "enum": [
+                    "codePoint",
+                    "grapheme"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "round"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "round": {
+              "type": "object",
+              "required": [
+                "value",
+                "scale",
+                "mode"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "value": {
+                  "$ref": "#/$defs/expression"
+                },
+                "scale": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 18
+                },
+                "mode": {
+                  "enum": [
+                    "half-even",
+                    "half-up",
+                    "toward-zero"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "define"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "define": {
+              "type": "object",
+              "required": [
+                "name",
+                "params",
+                "body",
+                "in"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "params": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "uniqueItems": true
+                },
+                "body": {
+                  "$ref": "#/$defs/expression"
+                },
+                "in": {
+                  "$ref": "#/$defs/expression"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "call"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "call": {
+              "type": "object",
+              "required": [
+                "name",
+                "args"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "args": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/expression"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
     }
   }
 }
