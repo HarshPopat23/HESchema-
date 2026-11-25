@@ -66,6 +66,9 @@ def schema_error(error, locations=None):
     keyword_location = source + pointer([error.validator]) if source is not None and error.validator is not None else evaluated
     result = diagnostic('SCHEMA_INVALID', 'schema', location, error.message,
                         schemaLocation=keyword_location, evaluationLocation=evaluated, keyword=error.validator)
+    if hasattr(error, 'expression_reason'):
+        result['reasonCode'] = error.expression_reason
+        result['expressionLocation'] = keyword_location + error.expression_location
     result['path'] = location  # Legacy alias; root is the empty pointer.
     if error.context:
         result['details'] = [schema_error(child, locations) for child in error.context]
