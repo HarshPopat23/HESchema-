@@ -1,3 +1,5 @@
+import { ASSERT_EXPRESSION_PAGES } from './assertExpressionDocs';
+
 /**
  * Comprehensive HESchema Documentation Content
  * Complete technical reference, research data, architecture, examples, and vocabulary guides.
@@ -36,6 +38,7 @@ export const DOCS_SECTIONS = [
       { id: 'vocab-relationships-v2', title: 'Relationships v2 (Aggregates & References)' },
       { id: 'vocab-relationships-v3', title: 'Relationships v3 (Order & Intervals)' },
       { id: 'vocab-relationships-v4', title: 'Relationships v4 (Decimal Arithmetic)' },
+      { id: 'vocab-assert-expression-v1', title: 'JSON Assertion Expressions v1' },
       { id: 'vocab-ml-v1', title: 'ML v1 (Dense Tensor Shapes)' }
     ]
   },
@@ -51,6 +54,7 @@ export const DOCS_SECTIONS = [
       { id: 'kw-nonOverlapping', title: 'nonOverlapping', keywordId: 'nonOverlapping' },
       { id: 'kw-arithmeticEquals', title: 'arithmeticEquals', keywordId: 'arithmeticEquals' },
       { id: 'kw-tensorShapes', title: 'tensorShapes', keywordId: 'tensorShapes' },
+      { id: 'kw-assertExpression', title: 'assertExpression' },
       { id: 'kw-contract-assertions', title: 'Contract Assertions (bindings & rules)' }
     ]
   },
@@ -78,6 +82,7 @@ export const DOCS_SECTIONS = [
 ];
 
 export const DOCS_PAGES = {
+  ...ASSERT_EXPRESSION_PAGES,
   // --- GETTING STARTED ---
   'overview': {
     title: 'What is HESchema?',
@@ -105,7 +110,7 @@ HESchema specifically answers two separate, fundamental questions:
 Explore the primary sections of HESchema documentation:
 - **Concepts & Architecture:** Understand how StateStore, optimistic concurrency, and tool envelopes work.
 - **Custom Vocabularies:** Learn how Draft 2020-12 meta-schemas add cross-field, uniqueness, and temporal checks.
-- **Assertion Keywords:** Full technical references and embedded interactive playgrounds for all 8 keywords.
+- **Assertion Keywords:** Full technical references and embedded interactive playgrounds for the eight dedicated keywords, plus a JSON-only assertExpression reference.
 - **Empirical Research & Evaluations:** Rigorous data from our 65-case and 2,160-slot controlled experiments.
 - **Real-World Examples:** Ready-to-use contracts for flights, invoices, travel, and machine learning.
 
