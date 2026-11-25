@@ -14,7 +14,7 @@ from urllib.parse import unquote
 
 from jsonschema import Draft202012Validator, FormatChecker, SchemaError
 
-from . import exact_arithmetic, ordering, relationships_v2, tensor_shapes
+from . import assert_expression, exact_arithmetic, ordering, relationships_v2, tensor_shapes
 from .diagnostics import parts, pointer, schema_error
 from .field_comparison import (
     FIELD_COMPARISON_DIALECT,
@@ -29,6 +29,7 @@ from .unique_keys import (
 )
 
 _CUSTOM_DIALECTS = {
+    assert_expression.DIALECT: (assert_expression.META_VALIDATOR, assert_expression.VALIDATOR),
     FIELD_COMPARISON_DIALECT: (META_VALIDATOR, FIELD_COMPARISON_VALIDATOR),
     RELATIONSHIPS_DIALECT: (RELATIONSHIPS_META_VALIDATOR, RELATIONSHIPS_VALIDATOR),
     relationships_v2.DIALECT: (relationships_v2.META_VALIDATOR, relationships_v2.VALIDATOR),
@@ -36,7 +37,7 @@ _CUSTOM_DIALECTS = {
     exact_arithmetic.DIALECT: (exact_arithmetic.META_VALIDATOR, exact_arithmetic.VALIDATOR),
     tensor_shapes.DIALECT: (tensor_shapes.META_VALIDATOR, tensor_shapes.VALIDATOR),
 }
-_CUSTOM_KEYWORDS = ('compareFields', 'uniqueKeys', 'aggregateCompare', 'localReferences', 'sortedBy', 'nonOverlapping', 'tensorShapes', 'arithmeticEquals')
+_CUSTOM_KEYWORDS = ('assertExpression', 'compareFields', 'uniqueKeys', 'aggregateCompare', 'localReferences', 'sortedBy', 'nonOverlapping', 'tensorShapes', 'arithmeticEquals')
 
 DIALECT = "https://json-schema.org/draft/2020-12/schema"
 
@@ -99,6 +100,11 @@ def check_schema(schema):
             for keyword in _CUSTOM_KEYWORDS:
                 if keyword in node and keyword not in supported:
                     raise ValueError(f"{keyword} requires the HESchema dialect that declares it")
+            if 'assertExpression' in node and custom == assert_expression.DIALECT:
+                try:
+                    assert_expression.check_expression(node['assertExpression'])
+                except (ValueError, TypeError) as error:
+                    raise ValueError(f"Invalid assertExpression at {pointer(path)}: {error}") from None
             for index, rule in enumerate(node.get('localReferences', [])):
                 if len(rule['source']['keys']) != len(rule['target']['keys']):
                     location = pointer((*path, 'localReferences', index))

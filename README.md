@@ -1,5 +1,7 @@
 # HESchema
 
+For experimental JSON-only assertions, see [assertExpression v1](vocabulary/assert-expression/v1/README.md).
+
 ## Empirical Research & Evaluation Reports
 
 - **[Latest latency replication](docs/reports/HESchema_Latency_Report.md)**: 2,160 completed results across three sessions; 2,128 primary results. COMPACT used 17.42% fewer tokens than FULL; no latency or aggregate accuracy improvement was demonstrated. Contract checks accepted zero observed wrong answers versus 42 for ordinary schema validation. Raw evidence publication remains limited.
