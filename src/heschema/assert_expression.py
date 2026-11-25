@@ -272,14 +272,16 @@ def evaluate(node, bindings, budget, functions=None, location=(), depth=0):
             source = run(args['array'], ('array',))
             if not isinstance(source.value, list):
                 raise ValueError('Predicate input must be an array')
-            for i, item in enumerate(source.value):
-                path = (*source.path, i) if source.path is not None else None
+            array = source
+            for i, item in enumerate(array.value):
+                path = (*array.path, i) if array.path is not None else None
                 result = run(args['test'], ('test',), {
                     **bindings, args['as']: Result(item, path, here),
                 })
+                source = result
                 if boolean(result.value) == (op == 'some'):
                     return result
-            return Result(op == 'all', source.path, here)
+            return Result(op == 'all', array.path, here)
         if op in UNARY | {'decimal'}:
             source = Result(args, expression=here) if op == 'decimal' and isinstance(args, str) else run(args)
             value = source.value

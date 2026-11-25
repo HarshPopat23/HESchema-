@@ -293,3 +293,10 @@ def test_vocabulary_and_website_examples_match_implementation():
         '[conformance corpus](https://github.com/HarshPopat23/HESchema-/blob/main/vocabulary/assert-expression/v1/cases.json)',
     )
     assert website['kw-assertExpression']['content'] == expected
+
+
+def test_predicate_type_error_points_to_the_item():
+    error = run({'all': {'array': get('/items'), 'as': 'item', 'test': get('', 'item')}},
+                {'items': [True, 3]})[0]
+    assert error['reasonCode'] == 'ASSERT_EXPRESSION_ERROR'
+    assert error['instanceLocation'] == '/items/1'
